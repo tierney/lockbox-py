@@ -7,20 +7,33 @@ from M2Crypto import RSA
 
 # easy_install rsa
 #import rsa
+def encrypt(file_to_encrypt):
+    # generate random AES-256 (symmetric key) password. Put in file.
+    # head -c 32 /dev/urandom | openssl enc -base64 > file.password.txt
 
+    # encrypt file with symmetric key -> file.enc
+    # openssl enc -aes-256-cbc -a -salt -in file.txt -out file.enc -pass file:file.password.txt
+
+    # encrypt key file with public key -> key.enc
+    # openssl rsautl -in file.password.txt -inkey 'John Smith.iMac.public.pem' -pubin -encrypt -pkcs -out file.password.enc
+    pass
+
+def decrypt():
+    # decrypt key file with private key
+    # openssl rsautl -in file.password.enc -inkey 'John Smith.iMac.private.pem' -decrypt -pkcs -out file.password.dec
+    
+    # decrypt file with symmetric key -> file
+    # openssl enc -d -aes-256-cbc -a -in file.enc -pass file:file.password.dec
+    pass
+
+class RSAService:
+    def __init__(self, display_name, display_location):
+        pass
+
+    
 def main():
     display_name = "John Smith"
     display_location = "iMac"
-
-    # filename_priv_key = display_name+","+display_location+",key"
-    # filename_pub_key = filename_priv_key+".pub"
-    # keygen_cmd = "ssh-keygen -q -t rsa -f '%s' -C '%s@%s' -N ''" % (filename_priv_key, display_name, display_location)
-    # print keygen_cmd
-    # if os.path.exists(filename_priv_key):
-    #     os.remove(filename_priv_key)
-    # if os.path.exists(filename_pub_key):
-    #     os.remove(filename_pub_key)
-    # os.system(keygen_cmd)
 
     filename_priv_pem_key = "%s.%s.private.pem" % (display_name, display_location)
     filename_pub_pem_key = "%s.%s.public.pem" % (display_name, display_location)
@@ -30,22 +43,16 @@ def main():
         os.remove(filename_pub_pem_key)
     
     priv_key_cmd = "openssl genrsa -out '%s' 2048" % (filename_priv_pem_key)
-    #print priv_key_cmd
     pub_key_cmd = "openssl rsa -in '%s' -pubout -out '%s'" % (filename_priv_pem_key, filename_pub_pem_key)
-    #print pub_key_cmd
-    # os.system(priv_key_cmd)
-    # os.system(pub_key_cmd)
 
     # Quietly generate the private and public keys
     subprocess.Popen(priv_key_cmd, shell=True, stderr=subprocess.PIPE).communicate()
     subprocess.Popen(pub_key_cmd, shell=True, stderr=subprocess.PIPE).communicate()
 
-    # pub_key = ""
-    # with open(filename_pub_key) as fh:
-    #     pub_key = fh.readlines()[0].split()[1]
-
     rsa = RSA.load_pub_key(filename_pub_pem_key)
-    encrypted = rsa.public_encrypt("hello world", RSA.pkcs1_oaep_padding)
+    message = "1"*214
+    print len(message)
+    encrypted = rsa.public_encrypt(message, RSA.pkcs1_oaep_padding)
     print encrypted.encode('base64')
 
     # print pub_key

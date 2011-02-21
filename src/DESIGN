@@ -6,6 +6,16 @@ that directory.
 In order to properly sign the files, we should have locally available
 RSA public key that we can
 
+Must encrypt files using a strong symmetric key. The symmetric key
+must be encrypted with the public key and somehow linked with the
+symmetric key-encrypted file.
+
+# Generate symmetric key password with following:
+head -c 32 /dev/urandom | openssl enc -base64 > file.password.txt
+
+# AES encrypt file
+openssl enc -aes-256-cbc -a -salt -in file.txt -out file.enc -pass file:file.password.txt
+openssl enc -d -aes-256-cbc -a -in file.enc -pass file:file.password.txt
 
 WARNING. We use the RSA algorithm in order to encrypt and decrypt your
 messages. This is a commonly used algorithm and is well-respected for

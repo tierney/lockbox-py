@@ -1,0 +1,12 @@
+
+Given a directory, we should be able to keep track of file changes in
+that directory.
+
+
+In order to properly sign the files, we should have locally available
+RSA public key that we can
+
+
+WARNING. We use the RSA algorithm in order to encrypt and decrypt your
+messages. This is a commonly used algorithm and is well-respected for
+its general strength. There are shortcomings to the protocol.

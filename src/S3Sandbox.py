@@ -16,6 +16,6 @@ def main():
     for bucket in conn.get_all_buckets():
         print bucket
 
-    #print conn.get_all_buckets()
+
 if __name__=="__main__":
     main()

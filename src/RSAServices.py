@@ -65,6 +65,7 @@ def main():
     filename_priv_pem_key, filename_pub_pem_key = generate_pki_keys(display_name, display_location)
 
     encrypted_filename, encrypted_password_file = encrypt('DESIGN',filename_pub_pem_key)
+
     print encrypted_filename, encrypted_password_file
     # how to bundle these to be put on S3?
     # Could just

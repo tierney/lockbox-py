@@ -2,14 +2,30 @@
 
 import os, sys
 import stat
+import time
+
+IDLE_WINDOW = 1 # sec
 
 known_files = dict()
 # file -> (updated?, mtime)
 
+NOT_VISITED = 0
+UNCHANGED = 1
+UPDATED = 2
+
 def reset_known_files():
     for f in known_files:
-        known_files[f][0] = 0
-    
+        known_files[f][0] = NOT_VISITED
+
+def delete_not_visited_files():
+    delete_list = []
+    for filename in known_files:
+        if (NOT_VISITED == known_files[filename][0]):
+            print "Removing", filename
+            delete_list.append(filename)
+    for filename in delete_list:
+        del known_files[filename]
+
 # if file is in the dict, then check if it is up to date.
 #    if needs updating, then SIGN_AND_UPLOAD
 # if a file is new, then mark as NEW
@@ -41,12 +57,29 @@ def walktree_test():
 def print_mtime(file):
     print file, os.stat(file).st_mtime
 
+def mod_files(filename):
+    filename_mtime = os.stat(filename).st_mtime
+    if filename in known_files:
+        if (known_files[filename][1] < filename_mtime):
+            known_files[filename][0] = UPDATED
+            known_files[filename][1] = filename_mtime
+            print "Should encrypt and upload", filename
+        else:
+            known_files[filename][0] = UNCHANGED
+    else:
+        known_files[filename] = [UPDATED, filename_mtime]
+    
 def main():
+    while True:
+        # figure out who's new and who's updated
+        walktree('../test/data', mod_files)
 
-    # figure out who's new and who's updated
-    walktree('.',print_mtime)
-
-    # see if anyone needs removing
+        # see if anyone needs removing
+        print known_files
+        delete_not_visited_files()
+        reset_known_files()
+        
+        time.sleep(IDLE_WINDOW)
     
 if __name__ == '__main__':
     main()

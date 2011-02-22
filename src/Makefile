@@ -2,4 +2,4 @@ test:
 	./RSAServices.py
 
 clean:
-	rm -f *dec *enc *pem *~
+	rm -f *dec *enc *pem *~ *.aes256 *.pyc

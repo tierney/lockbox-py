@@ -7,20 +7,28 @@ import time
 IDLE_WINDOW = 1 # sec
 
 known_files = dict()
-# file -> (updated?, mtime)
+# file -> [updated?, file's mtime]
+
+STATUS = 0
+MTIME = 1
 
 NOT_VISITED = 0
 UNCHANGED = 1
 UPDATED = 2
 
 def reset_known_files():
-    for f in known_files:
-        known_files[f][0] = NOT_VISITED
+    for filename in known_files:
+        known_files[filename][STATUS] = NOT_VISITED
+
+def upload_updated_files():
+    pass
 
 def delete_not_visited_files():
     delete_list = []
     for filename in known_files:
-        if (NOT_VISITED == known_files[filename][0]):
+        if (NOT_VISITED == known_files[filename][STATUS]):
+            # k = b.s3.key.Key(b, filename)
+            # k.delete()
             print "Removing", filename
             delete_list.append(filename)
     for filename in delete_list:
@@ -34,6 +42,7 @@ def delete_not_visited_files():
 def walktree(top, callback):
     '''recursively descend the directory tree rooted at top,
        calling the callback function for each regular file'''
+    top = os.path.abspath(top)
 
     for f in os.listdir(top):
         pathname = os.path.join(top, f)
@@ -60,12 +69,12 @@ def print_mtime(file):
 def mod_files(filename):
     filename_mtime = os.stat(filename).st_mtime
     if filename in known_files:
-        if (known_files[filename][1] < filename_mtime):
-            known_files[filename][0] = UPDATED
-            known_files[filename][1] = filename_mtime
+        if (known_files[filename][MTIME] < filename_mtime):
+            known_files[filename][STATUS] = UPDATED
+            known_files[filename][MTIME] = filename_mtime
             print "Should encrypt and upload", filename
         else:
-            known_files[filename][0] = UNCHANGED
+            known_files[filename][STATUS] = UNCHANGED
     else:
         known_files[filename] = [UPDATED, filename_mtime]
     
@@ -76,6 +85,7 @@ def main():
 
         # see if anyone needs removing
         print known_files
+        uploaded_updated_files()
         delete_not_visited_files()
         reset_known_files()
         

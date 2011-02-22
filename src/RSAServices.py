@@ -9,26 +9,31 @@ def execute(cmd):
 def encrypt(file_to_encrypt, public_key_filename):
     # generate random AES-256 (symmetric key) password. Put in file.
     password_filename = "file.password.txt"
-    execute("head -c 128 /dev/urandom | openssl enc -base64 > '%s'" % (password_filename))
+    execute("head -c 128 /dev/urandom | openssl enc -base64 > '%s'" %
+            (password_filename))
 
     # encrypt file with symmetric key -> file.enc
     encrypted_filename = file_to_encrypt+".enc"
-    execute("openssl enc -aes-256-cbc -salt -in '%s' -out '%s' -pass file:'%s'" % (file_to_encrypt, encrypted_filename, password_filename))
+    execute("openssl enc -aes-256-cbc -salt -in '%s' -out '%s' -pass file:'%s'" %
+            (file_to_encrypt, encrypted_filename, password_filename))
 
     # encrypt key file with public key -> key.enc
     encrypted_password_file = password_filename+".enc"
-    execute("openssl rsautl -in '%s' -inkey '%s' -pubin -encrypt -pkcs -out '%s'" % (password_filename, public_key_filename, encrypted_password_file))
+    execute("openssl rsautl -in '%s' -inkey '%s' -pubin -encrypt -pkcs -out '%s'" %
+            (password_filename, public_key_filename, encrypted_password_file))
 
     return (encrypted_filename, encrypted_password_file)
 
 def decrypt(file_to_decrypt, encrypted_password_file, private_key_filename):
     # decrypt key file with private key
     decrypted_password_filename = 'password.txt.dec'
-    execute("openssl rsautl -in '%s' -inkey '%s' -decrypt -pkcs -out '%s'" % (encrypted_password_file, private_key_filename, decrypted_password_filename))
+    execute("openssl rsautl -in '%s' -inkey '%s' -decrypt -pkcs -out '%s'" %
+            (encrypted_password_file, private_key_filename, decrypted_password_filename))
     
     # decrypt file with symmetric key -> file
     decrypted_filename = file_to_decrypt+".dec"
-    execute("openssl enc -d -aes-256-cbc -in '%s' -pass file:'%s' -out '%s'" % (file_to_decrypt, decrypted_password_filename, decrypted_filename))
+    execute("openssl enc -d -aes-256-cbc -in '%s' -pass file:'%s' -out '%s'" %
+            (file_to_decrypt, decrypted_password_filename, decrypted_filename))
 
 class RSAService:
     def __init__(self, display_name, display_location):

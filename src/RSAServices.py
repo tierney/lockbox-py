@@ -4,7 +4,8 @@ import os
 import subprocess
 
 def execute(cmd):
-    subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+                     stderr=subprocess.PIPE).communicate()
 
 def encrypt(file_to_encrypt, public_key_filename):
     # generate random AES-256 (symmetric key) password. Put in file.
@@ -50,7 +51,8 @@ def generate_pki_keys(display_name, display_location):
         os.remove(filename_pub_pem_key)
     
     priv_key_cmd = "openssl genrsa -out '%s' 2048" % (filename_priv_pem_key)
-    pub_key_cmd = "openssl rsa -in '%s' -pubout -out '%s'" % (filename_priv_pem_key, filename_pub_pem_key)
+    pub_key_cmd = "openssl rsa -in '%s' -pubout -out '%s'" % (filename_priv_pem_key,
+                                                              filename_pub_pem_key)
 
     # Quietly generate the private and public keys
     execute(priv_key_cmd)
@@ -62,7 +64,8 @@ def main():
     display_name = "John Smith"
     display_location = "iMac"
 
-    filename_priv_pem_key, filename_pub_pem_key = generate_pki_keys(display_name, display_location)
+    filename_priv_pem_key, filename_pub_pem_key =\
+                           generate_pki_keys(display_name, display_location)
 
     encrypted_filename, encrypted_password_file = encrypt('DESIGN',filename_pub_pem_key)
 

@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+import ConfigParser
+import os
+import sys
 
 import boto
-import ConfigParser
 from S3BucketPolicy import string_to_dns_test
 
 class S3Bucket:
@@ -21,6 +23,8 @@ class S3Bucket:
     def _connect(self):
         self.conn = boto.connect_s3(self.aws_access_key_id,
                                     self.aws_secret_access_key)
+    def _set_bucket(self, bucket_name):
+        self.bucket = boto.s3.bucket.Bucket(self.conn, bucket_name)
 
     def create_bucket(self, bucket_name):
         self.conn.create_bucket(bucket_name)
@@ -33,9 +37,6 @@ class S3Bucket:
     def get_all_keys(self):
         # check if bucket exists?
         return self.bucket.get_all_keys()
-
-    def _set_bucket(self, bucket_name):
-        self.bucket = boto.s3.bucket.Bucket(self.conn, bucket_name)
 
     def send_filename(self, s3key, filename_src):
         key = boto.s3.key.Key(self.bucket, s3key)
@@ -53,16 +54,23 @@ class S3Bucket:
 def main():
     # User must setup an AWS account
     config = ConfigParser.ConfigParser()
-    #config.read("/home/tierney/conf/aws.cfg")
-    config.read("/Users/tierney/conf/aws.cfg")
+    sysname = os.uname()[0]
+    if ('Linux' == sysname):
+        config.read("/home/tierney/conf/aws.cfg")
+    elif ('Darwin' == sysname):
+        config.read("/Users/tierney/conf/aws.cfg")
+    else:
+        sys.exit(1)
+
     aws_access_key_id = config.get('aws','access_key_id')
     aws_secret_access_key = config.get('aws','secret_access_key')
 
-    b = S3Bucket("John Smith", "Bronx iMac", 'testfiles.sb', 
+    b = S3Bucket("John Smith", "Bronx iMac", 'testfiles.sdb', 
                  aws_access_key_id, aws_secret_access_key)
     b.init()
     print b.get_all_buckets()
-    print b.get_all_keys()
+    for k in b.get_all_keys():
+        print "   ",k
 
     b.send_filename('key1', 'DESIGN')
     b.get_filename('key1','key1.DESIGN')
@@ -71,18 +79,18 @@ def main():
     # b.add_email_grant(<AWS user's email address>)
     # b.configure_versioning(True)
 
-#     k = boto.s3.key.Key(b, 'key0')
-#     # k.add_email_grant(<AWS user's email address>)
-#     k.set_contents_from_filename("DESIGN.enc")
+    # k = boto.s3.key.Key(b, 'key0')
+    # # k.add_email_grant(<AWS user's email address>)
+    # k.set_contents_from_filename("DESIGN.enc")
 
-#     k = boto.s3.key.Key(b, 'dir0/dir1/dir2/key0')
-#     k.set_contents_from_filename("DESIGN.enc")
+    # k = boto.s3.key.Key(b, 'dir0/dir1/dir2/key0')
+    # k.set_contents_from_filename("DESIGN.enc")
 
-#     k = boto.s3.key.Key(b, 'dir0/dir1/dir3/key0')
-#     k.set_contents_from_filename("DESIGN.enc")
+    # k = boto.s3.key.Key(b, 'dir0/dir1/dir3/key0')
+    # k.set_contents_from_filename("DESIGN.enc")
 
-#     k = boto.s3.key.Key(b, 'dir0/dir1/dir2/key1')
-#     k.set_contents_from_filename("DESIGN.enc")
+    # k = boto.s3.key.Key(b, 'dir0/dir1/dir2/key1')
+    # k.set_contents_from_filename("DESIGN.enc")
 
 if __name__=="__main__":
     #string_to_dns_test()

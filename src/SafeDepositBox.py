@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
 import ConfigParser
+import logging
 import os
 import stat
+import sys
 import time
 from threading import Thread
 from S3BucketPolicy import string_to_dns
@@ -12,10 +14,11 @@ from util import execute
 
 class SafeDepositBox(Thread):
     def __init__(self, sdb_directory, admin_directory,
-                 display_name, location):
+                 display_name, location, debug=False):
         Thread.__init__(self)
         self.admin_directory = admin_directory
         self.sdb_directory = sdb_directory
+        self.prefix_to_ignore = os.path.split(os.path.abspath(self.sdb_directory))[0]+"/"
         self.display_name = display_name
         self.location = location
 
@@ -29,16 +32,35 @@ class SafeDepositBox(Thread):
         self.known_files = dict() # file -> [updated?, file's mtime]
         self.IDLE_WINDOW = 1 # sec
 
+        self.debug = debug
+
+    def init(self):
+        if self.debug:
+            log_filename = os.path.join(self.admin_directory, 'sdb.log')
+            logging.basicConfig(level = logging.DEBUG,
+                                format = "%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s",
+                                filename = log_filename,
+                                filemode='a')
+            # handler = logging.handlers.RotatingFileHandler(log_filename,
+            #                                                maxBytes=1048576,
+            #                                                backupCount=10)
+
+            # self.sdb_logger.addHandler(handler)
+            
     def init_encryption_service(self):
         self.enc_service = EncryptionService(self.display_name,
                                              self.location,
                                              self.admin_directory,
                                              use_default_location=True)
-
     def init_s3bucket(self):
         config = ConfigParser.ConfigParser()
-        #config.read("/home/tierney/conf/aws.cfg")
-        config.read("/Users/tierney/conf/aws.cfg")
+        sysname = os.uname()[0]
+        if ('Linux' == sysname):
+            config.read("/home/tierney/conf/aws.cfg")
+        elif ('Darwin' == sysname):
+            config.read("/Users/tierney/conf/aws.cfg")
+        else:
+            sys.exit(1)
         aws_access_key_id = config.get('aws','access_key_id')
         aws_secret_access_key = config.get('aws','secret_access_key')
     
@@ -47,8 +69,14 @@ class SafeDepositBox(Thread):
         self.s3bucket.init()
         
     def upload_file(self, filename):
+        # Should queue this operation.
+        #
+        # bundle(encrypt) the file
         bundle_filename = self.enc_service.bundle(filename)
-        self.s3bucket.send_filename(bundle_filename, bundle_filename)
+        # send the file
+        file_key = bundle_filename.replace(self.prefix_to_ignore,'',1)
+        self.s3bucket.send_filename(file_key, bundle_filename)
+        # Cleanup
         execute("rm -f %s" % bundle_filename)
         
     def download_file(self, filename):
@@ -73,14 +101,30 @@ class SafeDepositBox(Thread):
         for filename in delete_list:
             del self.known_files[filename]
 
+    def bad_file(self, filename):
+        extension = filename.split('.')[-1]
+        if ('swp' == extension):
+            return True
+        if '#' in filename:
+            return True
+        return False
     def walktree(self, top, callback):
         '''recursively descend the directory tree rooted at top,
            calling the callback function for each regular file'''
         top = os.path.abspath(top)
-
         for filename in os.listdir(top):
+            if self.bad_file(filename):
+                #self.sdb_logger.debug("Badfile: %s" % filename)
+                logging.debug("Badfile: %s" % filename)
+                continue
             pathname = os.path.join(top, filename)
-            mode = os.stat(pathname)[stat.ST_MODE]
+            try:
+                mode = os.stat(pathname)[stat.ST_MODE]
+            except OSError, e:
+                # means the file isn't there anymore
+                # market file for deletion
+                print e
+                continue
             if stat.S_ISDIR(mode):
                 # It's a directory, recurse into it
                 self.walktree(pathname, callback)
@@ -109,7 +153,7 @@ class SafeDepositBox(Thread):
         while True:
             # figure out who's new and who's updated
             self.walktree(self.sdb_directory, self.mod_files)
-
+            
             # see if anyone needs removing
             # print self.known_files
             # uploaded_updated_files()
@@ -129,7 +173,8 @@ if __name__ == '__main__':
     admin_directory = os.path.join(os.environ['HOME'],
                                    ".safedepositbox")
     s = SafeDepositBox(sdb_directory, admin_directory,
-                       display_name, display_location)
+                       display_name, display_location, debug=True)
+    s.init()
     s.init_encryption_service()
     s.init_s3bucket()
     # s.upload_file('DESIGN')

@@ -27,6 +27,9 @@ Upload, delete as necessary.
 Should upload a symmetric-key encrypted file with a password that the
 user sets for the application.
 
+super-backup that is symmetrically encrypted with user's fullname and
+security question answer.
+
 Users don't actually need to have AWS account. Make files public and
 allow users to download the files that a friend links for them. Just
 need to pass th pub key to the friend.

@@ -107,6 +107,7 @@ class SafeDepositBox(Thread):
         if '#' in filename:
             return True
         return False
+
     def walktree(self, top, callback):
         '''recursively descend the directory tree rooted at top,
            calling the callback function for each regular file'''

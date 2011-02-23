@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-
+import calendar
 import ConfigParser
 import logging
 import os
 import stat
 import sys
 import time
-from threading import Thread
+from threading import Thread, Lock
 from S3BucketPolicy import string_to_dns
 from EncryptionService import EncryptionService
 from S3Sandbox import S3Bucket
@@ -21,18 +21,22 @@ class SafeDepositBox(Thread):
         self.prefix_to_ignore = os.path.split(os.path.abspath(self.sdb_directory))[0]+"/"
         self.display_name = display_name
         self.location = location
-
+        self.debug = debug
+        
+        self.known_files = dict() # file -> [updated?, file's mtime]
+        self.known_files_lock = Lock()
+        self.known_files_locks = dict()
+        # known_files dict of list index
         self.STATUS = 0
         self.MTIME  = 1
-
+        self.LOCK   = 2
+        # File states
         self.NOT_VISITED = 0
         self.UNCHANGED   = 1
         self.UPDATED     = 2
-
-        self.known_files = dict() # file -> [updated?, file's mtime]
-        self.IDLE_WINDOW = 1 # sec
-
-        self.debug = debug
+        self.PNEW        = 3
+        
+        self.IDLE_WINDOW = 2 # sec
 
     def init(self):
         if self.debug:
@@ -89,16 +93,16 @@ class SafeDepositBox(Thread):
     def upload_updated_files(self):
         pass
 
-    def delete_not_visited_files(self):
-        delete_list = []
-        for filename in self.known_files:
-            if (self.NOT_VISITED == self.known_files[filename][self.STATUS]):
-                # k = b.s3.key.Key(b, filename)
-                # k.delete()
-                print "Removing", filename
-                delete_list.append(filename)
-        for filename in delete_list:
-            del self.known_files[filename]
+    # def delete_not_visited_files(self):
+    #     delete_list = []
+    #     for filename in self.known_files:
+    #         if (self.NOT_VISITED == self.known_files[filename][self.STATUS]):
+    #             # k = b.s3.key.Key(b, filename)
+    #             # k.delete()
+    #             print "Removing", filename
+    #             delete_list.append(filename)
+    #     for filename in delete_list:
+    #         del self.known_files[filename]
 
     def bad_file(self, filename):
         extension = filename.split('.')[-1]
@@ -135,30 +139,105 @@ class SafeDepositBox(Thread):
                 # Unknown file type, print a message
                 print 'Skipping %s' % pathname
 
-    def mod_files(self, filename):
+    def _lm_to_epoch(self, last_modified_time):
+        return calendar.timegm(time.strptime(last_modified_time.replace("Z",''), u"%Y-%m-%dT%H:%M:%S.000"))
+
+    def monitor_local_file(self, filename):
+        # Check for local file changes (make some queue of these results)
         filename_mtime = os.stat(filename).st_mtime
         if filename in self.known_files:
+            self.known_files[filename][self.LOCK].acquire()
             if (self.known_files[filename][self.MTIME] < filename_mtime):
                 self.known_files[filename][self.STATUS] = self.UPDATED
                 self.known_files[filename][self.MTIME] = filename_mtime
                 print "Should encrypt and upload", filename
-                self.upload_file(filename)
+                # DO THIS ASYNC: self.upload_file(filename)
             else:
                 self.known_files[filename][self.STATUS] = self.UNCHANGED
+            self.known_files[filename][self.LOCK].release()
         else:
-            self.known_files[filename] = [self.UPDATED, filename_mtime]
-            print "Check if file is already uploaded as current version", filename, filename_mtime
+            self.known_files[filename] = [self.PNEW, filename_mtime, Lock()]
+            print "Check if file is already uploaded as current version", self.known_files[filename]
+
+    def monitor_cloud_files(self):
+        keys = self.s3bucket.get_all_keys()
+        for key in keys:
+            print key, self._lm_to_epoch(key.last_modified)
+            
+    # def delete_not_visited_files(self):
+    #     delete_list = []
+    #     for filename in self.known_files:
+    #         if (self.NOT_VISITED == self.known_files[filename][self.STATUS]):
+    #             # k = b.s3.key.Key(b, filename)
+    #             # k.delete()
+    #             print "Removing", filename
+    #             delete_list.append(filename)
+    #     for filename in delete_list:
+    #         del self.known_files[filename]
+
+    def sync_files_thread(self):
+        # Do I want to handle here pulling files from the cloud?
+        #
+        # delete not visited files
+        while True:
+            keys = self.s3bucket.get_all_keys()
+            print keys
+            for filename in self.known_files:
+                self.known_files[filename][self.LOCK].acquire()                
+                fpath = os.path.join(self.sdb_directory, filename)
+                if not os.path.exists(fpath):
+                    delete_list.append(filename)
+
+                filename_mtime = time.gmtime(os.stat(filename).st_mtime)
+                if (self.PNEW == self.known_files[filename][self.STATUS]):
+                    if (filename not in keys):
+                        # upload
+                        self.upload_file(filename)
+                        self.known_files[filename][self.STATUS] = self.UPDATED
+                        self.known_files[filename][self.MTIME] = filename_mtime
+                    else:
+                        key = keys.get(filename)
+                        mtime = key.last_modified
+                        key_mtime = time.strptime(mtime.replace("Z",''),
+                                                  u"%Y-%m-%dT%H:%M:%S.000")
+                        print key.md5sum
+                        assert(key.md5sum != None)
+                        
+                        with open(filename) as fp:
+                            local_md5 = self.s3bucket.compute_md5(fp)[0]
+                            
+                        if (key.md5) != (local_md5):
+                            if (key_mtime > filename_mtime):
+                                self.download_file(filename)
+                            elif (key_mtime < filename_mtime):
+                                self.upload_file(filename)
+                elif ():
+                    pass
+                
+                self.known_files[filename][self.LOCK].release()
+
+        # maybe we want to store that the file's state is deleted
+        # locally but keep the key in the cloud?
+
+        # reset file when update
+        pass
 
     def run(self):
         while True:
             # figure out who's new and who's updated
-            self.walktree(self.sdb_directory, self.mod_files)
+            self.walktree(self.sdb_directory, self.monitor_local_file)
             
             # see if anyone needs removing
-            # print self.known_files
+            print time.time()
+            for f in self.known_files:
+                print " ", f, self.known_files.get(f)
+
+            self.monitor_cloud_files()
+            
             # uploaded_updated_files()
-            self.delete_not_visited_files()
-            self.reset_known_files()
+
+            # self.delete_not_visited_files()
+            # self.reset_known_files()
 
             time.sleep(self.IDLE_WINDOW)
     
@@ -177,7 +256,6 @@ if __name__ == '__main__':
     s.init()
     s.init_encryption_service()
     s.init_s3bucket()
-    # s.upload_file('DESIGN')
 
     # s.daemon = True
     s.start()

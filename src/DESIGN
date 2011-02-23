@@ -5,7 +5,6 @@ changed. Include the operation to be performed.
  * time_conditional_upload
  * local_update_upload
 
-
 1. RSAService
 
 Start application and make sure we have a private and public key pair
@@ -24,6 +23,9 @@ Check for updates.
 Upload, delete as necessary.
 
 ----------------------------------------------------------------------
+
+Should upload a symmetric-key encrypted file with a password that the
+user sets for the application.
 
 Users don't actually need to have AWS account. Make files public and
 allow users to download the files that a friend links for them. Just

@@ -44,7 +44,6 @@ class SafeDepositBox(Thread):
             # handler = logging.handlers.RotatingFileHandler(log_filename,
             #                                                maxBytes=1048576,
             #                                                backupCount=10)
-
             # self.sdb_logger.addHandler(handler)
             
     def init_encryption_service(self):

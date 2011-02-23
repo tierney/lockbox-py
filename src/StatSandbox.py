@@ -1,95 +1,86 @@
 #!/usr/bin/env python
-
-import os, sys
+import os
 import stat
 import time
+from threading import Thread
 
-IDLE_WINDOW = 1 # sec
+class StatSandbox(Thread):
+    def __init__(self, sdb_directory):
+        Thread.__init__(self)
+        self.sdb_directory = sdb_directory
 
-known_files = dict()
-# file -> [updated?, file's mtime]
+        self.STATUS = 0
+        self.MTIME  = 1
 
-STATUS = 0
-MTIME = 1
+        self.NOT_VISITED = 0
+        self.UNCHANGED   = 1
+        self.UPDATED     = 2
 
-NOT_VISITED = 0
-UNCHANGED = 1
-UPDATED = 2
+        self.known_files = dict() # file -> [updated?, file's mtime]
+        self.IDLE_WINDOW = 1 # sec
 
-def reset_known_files():
-    for filename in known_files:
-        known_files[filename][STATUS] = NOT_VISITED
+    def reset_known_files(self):
+        for filename in self.known_files:
+            self.known_files[filename][self.STATUS] = self.NOT_VISITED
 
-def upload_updated_files():
-    pass
+    def upload_updated_files(self):
+        pass
 
-def delete_not_visited_files():
-    delete_list = []
-    for filename in known_files:
-        if (NOT_VISITED == known_files[filename][STATUS]):
-            # k = b.s3.key.Key(b, filename)
-            # k.delete()
-            print "Removing", filename
-            delete_list.append(filename)
-    for filename in delete_list:
-        del known_files[filename]
+    def delete_not_visited_files(self):
+        delete_list = []
+        for filename in self.known_files:
+            if (self.NOT_VISITED == self.known_files[filename][self.STATUS]):
+                # k = b.s3.key.Key(b, filename)
+                # k.delete()
+                print "Removing", filename
+                delete_list.append(filename)
+        for filename in delete_list:
+            del self.known_files[filename]
 
-# if file is in the dict, then check if it is up to date.
-#    if needs updating, then SIGN_AND_UPLOAD
-# if a file is new, then mark as NEW
-# if a file was in dict but NOTFOUND, then we want to REMOVE it.
+    def walktree(self, top, callback):
+        '''recursively descend the directory tree rooted at top,
+           calling the callback function for each regular file'''
+        top = os.path.abspath(top)
 
-def walktree(top, callback):
-    '''recursively descend the directory tree rooted at top,
-       calling the callback function for each regular file'''
-    top = os.path.abspath(top)
+        for filename in os.listdir(top):
+            pathname = os.path.join(top, filename)
+            mode = os.stat(pathname)[stat.ST_MODE]
+            if stat.S_ISDIR(mode):
+                # It's a directory, recurse into it
+                self.walktree(pathname, callback)
+            elif stat.S_ISREG(mode):
+                # It's a file, call the callback function
+                callback(pathname)
+            else:
+                # Unknown file type, print a message
+                print 'Skipping %s' % pathname
 
-    for f in os.listdir(top):
-        pathname = os.path.join(top, f)
-        mode = os.stat(pathname)[stat.ST_MODE]
-        if stat.S_ISDIR(mode):
-            # It's a directory, recurse into it
-            walktree(pathname, callback)
-        elif stat.S_ISREG(mode):
-            # It's a file, call the callback function
-            callback(pathname)
+    def mod_files(self, filename):
+        filename_mtime = os.stat(filename).st_mtime
+        if filename in self.known_files:
+            if (self.known_files[filename][self.MTIME] < filename_mtime):
+                self.known_files[filename][self.STATUS] = self.UPDATED
+                self.known_files[filename][self.MTIME] = filename_mtime
+                print "Should encrypt and upload", filename
+            else:
+                self.known_files[filename][self.STATUS] = self.UNCHANGED
         else:
-            # Unknown file type, print a message
-            print 'Skipping %s' % pathname
-
-def visitfile(file):
-    print 'visiting', file
-
-def walktree_test():
-    walktree(sys.argv[1], visitfile)
-
-def print_mtime(file):
-    print file, os.stat(file).st_mtime
-
-def mod_files(filename):
-    filename_mtime = os.stat(filename).st_mtime
-    if filename in known_files:
-        if (known_files[filename][MTIME] < filename_mtime):
-            known_files[filename][STATUS] = UPDATED
-            known_files[filename][MTIME] = filename_mtime
-            print "Should encrypt and upload", filename
-        else:
-            known_files[filename][STATUS] = UNCHANGED
-    else:
-        known_files[filename] = [UPDATED, filename_mtime]
+            self.known_files[filename] = [self.UPDATED, filename_mtime]
     
-def main():
-    while True:
-        # figure out who's new and who's updated
-        walktree('../test/data', mod_files)
+    def run(self):
+        while True:
+            # figure out who's new and who's updated
+            self.walktree(self.sdb_directory, self.mod_files)
 
-        # see if anyone needs removing
-        print known_files
-        # uploaded_updated_files()
-        delete_not_visited_files()
-        reset_known_files()
-        
-        time.sleep(IDLE_WINDOW)
+            # see if anyone needs removing
+            print self.known_files
+            # uploaded_updated_files()
+            self.delete_not_visited_files()
+            self.reset_known_files()
+
+            time.sleep(self.IDLE_WINDOW)
     
 if __name__ == '__main__':
-    main()
+    s = StatSandbox("../test/data")
+    # s.daemon = True
+    s.start()

@@ -3,13 +3,16 @@ import os
 import stat
 import time
 from threading import Thread
+from S3BucketPolicy import string_to_dns
 
 class SafeDepositBox(Thread):
-    def __init__(self, sdb_directory):
+    def __init__(self, sdb_directory, admin_directory,
+                 display_name, location):
         Thread.__init__(self)
-        self.storage_directory = os.path.join(os.environ['HOME'],
-                                              ".safedepositbox")
+        self.admin_directory = admin_directory
         self.sdb_directory = sdb_directory
+        self.display_name = display_name
+        self.location = location
 
         self.STATUS = 0
         self.MTIME  = 1
@@ -20,6 +23,12 @@ class SafeDepositBox(Thread):
 
         self.known_files = dict() # file -> [updated?, file's mtime]
         self.IDLE_WINDOW = 1 # sec
+
+    def initialize_encryption_service(self):
+        self.enc_service = EncryptionService(self.display_name,
+                                             self.location,
+                                             self.admin_directory)
+        
 
     def reset_known_files(self):
         for filename in self.known_files:
@@ -83,6 +92,17 @@ class SafeDepositBox(Thread):
             time.sleep(self.IDLE_WINDOW)
     
 if __name__ == '__main__':
-    s = SafeDepositBox("../test/data")
+    display_name = "John Smith"
+    display_location = "iMac"
+
+    display_name = string_to_dns(display_name)
+    display_location = string_to_dns(display_location)
+
+    sdb_directory = "../test/data"
+    admin_directory = os.path.join(os.environ['HOME'],
+                                   ".safedepositbox")
+    s = SafeDepositBox(sdb_directory, admin_directory,
+                       display_name, display_location)
+    
     # s.daemon = True
     s.start()

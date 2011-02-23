@@ -1,10 +1,14 @@
 #!/usr/bin/env python
+
+import ConfigParser
 import os
 import stat
 import time
 from threading import Thread
 from S3BucketPolicy import string_to_dns
 from EncryptionService import EncryptionService
+from S3Sandbox import S3Bucket
+from util import execute
 
 class SafeDepositBox(Thread):
     def __init__(self, sdb_directory, admin_directory,
@@ -25,10 +29,31 @@ class SafeDepositBox(Thread):
         self.known_files = dict() # file -> [updated?, file's mtime]
         self.IDLE_WINDOW = 1 # sec
 
-    def initialize_encryption_service(self):
+    def init_encryption_service(self):
         self.enc_service = EncryptionService(self.display_name,
                                              self.location,
-                                             self.admin_directory)
+                                             self.admin_directory,
+                                             use_default_location=True)
+
+    def init_s3bucket(self):
+        config = ConfigParser.ConfigParser()
+        #config.read("/home/tierney/conf/aws.cfg")
+        config.read("/Users/tierney/conf/aws.cfg")
+        aws_access_key_id = config.get('aws','access_key_id')
+        aws_secret_access_key = config.get('aws','secret_access_key')
+    
+        self.s3bucket = S3Bucket(self.display_name, self.location, 'testfiles.sdb',
+                                 aws_access_key_id, aws_secret_access_key)
+        self.s3bucket.init()
+        
+    def upload_file(self, filename):
+        bundle_filename = self.enc_service.bundle(filename)
+        self.s3bucket.send_filename(bundle_filename, bundle_filename)
+        execute("rm -f %s" % bundle_filename)
+        
+    def download_file(self, filename):
+        # get file...
+        self.enc_service.unbundle(filename)
         
     def reset_known_files(self):
         for filename in self.known_files:
@@ -73,18 +98,20 @@ class SafeDepositBox(Thread):
                 self.known_files[filename][self.STATUS] = self.UPDATED
                 self.known_files[filename][self.MTIME] = filename_mtime
                 print "Should encrypt and upload", filename
+                self.upload_file(filename)
             else:
                 self.known_files[filename][self.STATUS] = self.UNCHANGED
         else:
             self.known_files[filename] = [self.UPDATED, filename_mtime]
-    
+            print "Check if file is already uploaded as current version", filename, filename_mtime
+
     def run(self):
         while True:
             # figure out who's new and who's updated
             self.walktree(self.sdb_directory, self.mod_files)
 
             # see if anyone needs removing
-            print self.known_files
+            # print self.known_files
             # uploaded_updated_files()
             self.delete_not_visited_files()
             self.reset_known_files()
@@ -103,7 +130,9 @@ if __name__ == '__main__':
                                    ".safedepositbox")
     s = SafeDepositBox(sdb_directory, admin_directory,
                        display_name, display_location)
-    s.initialize_encryption_service()
-    
+    s.init_encryption_service()
+    s.init_s3bucket()
+    # s.upload_file('DESIGN')
+
     # s.daemon = True
     s.start()

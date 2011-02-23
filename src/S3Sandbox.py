@@ -5,16 +5,23 @@ import ConfigParser
 from S3BucketPolicy import string_to_dns_test
 
 class S3Bucket:
-    def __init__(self, display_name, location,
+    def __init__(self, display_name, location, bucket_name,
                  aws_access_key_id, aws_secret_access_key):
         self.display_name = display_name
         self.location = location
+        self.bucket_name = bucket_name
         self.aws_access_key_id = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
 
-    def connect(self):
+    def init(self):
+        self._connect()
+        # should check if the bucket exists in S3.
+        self._set_bucket(self.bucket_name)
+
+    def _connect(self):
         self.conn = boto.connect_s3(self.aws_access_key_id,
                                     self.aws_secret_access_key)
+
     def create_bucket(self, bucket_name):
         self.conn.create_bucket(bucket_name)
         self.bucket = self.conn.get_bucket(bucket_name)
@@ -27,8 +34,7 @@ class S3Bucket:
         # check if bucket exists?
         return self.bucket.get_all_keys()
 
-    def set_bucket(self, bucket_name):
-        # bucket_name = 'testfiles.sdb'
+    def _set_bucket(self, bucket_name):
         self.bucket = boto.s3.bucket.Bucket(self.conn, bucket_name)
 
     def send_filename(self, s3key, filename_src):
@@ -49,14 +55,13 @@ def main():
     config = ConfigParser.ConfigParser()
     #config.read("/home/tierney/conf/aws.cfg")
     config.read("/Users/tierney/conf/aws.cfg")
-
     aws_access_key_id = config.get('aws','access_key_id')
     aws_secret_access_key = config.get('aws','secret_access_key')
 
-    b = S3Bucket("John Smith", "Bronx iMac", aws_access_key_id, aws_secret_access_key)
-    b.connect()
+    b = S3Bucket("John Smith", "Bronx iMac", 'testfiles.sb', 
+                 aws_access_key_id, aws_secret_access_key)
+    b.init()
     print b.get_all_buckets()
-    b.set_bucket('testfiles.sdb')
     print b.get_all_keys()
 
     b.send_filename('key1', 'DESIGN')

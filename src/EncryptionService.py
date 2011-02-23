@@ -2,22 +2,23 @@
 import os
 import subprocess
 from S3BucketPolicy import string_to_dns
-
-def execute(cmd):
-    subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                     stderr=subprocess.PIPE).communicate()
+from util import execute
 
 class EncryptionService:
     def __init__(self, display_name, location, admin_directory,
-                 filename_pub_pem_key=None, filename_priv_pem_key=None):
+                 filename_pub_pem_key=None, filename_priv_pem_key=None,
+                 use_default_location=True):
         self.display_name = display_name
         self.location = location
         self.admin_directory = admin_directory
-        if (None == filename_pub_pem_key):
+        # This is the default key naming setup. If users don't provide
+        # the absolute path to an existing key AND we can't find keys
+        # in the default location, we should probably complain?
+        if (None == filename_pub_pem_key and use_default_location):
             pub_pem_key = "%s.%s.public.pem" % (self.display_name, self.location)
             filename_pub_pem_key = os.path.join(self.admin_directory, pub_pem_key)
             self.filename_priv_pem_key = filename_pub_pem_key
-        if (None == filename_priv_pem_key):
+        if (None == filename_priv_pem_key and use_default_location):
             priv_pem_key = "%s.%s.private.pem" % (self.display_name, self.location)
             filename_priv_pem_key = os.path.join(self.admin_directory, priv_pem_key)
             self.filename_pub_pem_key = filename_priv_pem_key

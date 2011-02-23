@@ -1,4 +1,11 @@
 
+0. Should have a S3Service queue. Index the queue based on files to be
+changed. Include the operation to be performed.
+  
+ * time_conditional_upload
+ * local_update_upload
+
+
 1. RSAService
 
 Start application and make sure we have a private and public key pair
@@ -15,6 +22,12 @@ Check for updates.
 3. S3Service.
 
 Upload, delete as necessary.
+
+----------------------------------------------------------------------
+
+Users don't actually need to have AWS account. Make files public and
+allow users to download the files that a friend links for them. Just
+need to pass th pub key to the friend.
 
 ----------------------------------------------------------------------
 

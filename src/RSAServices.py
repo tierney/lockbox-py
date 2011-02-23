@@ -40,7 +40,6 @@ def decrypt(file_to_decrypt, encrypted_password_file, private_key_filename):
 
     execute("rm -f %s %s %s" % (encrypted_password_file, file_to_decrypt,
                                 decrypted_password_filename))
-
 class RSAService:
     def __init__(self, display_name, display_location):
         self.display_name = display_name
@@ -108,6 +107,7 @@ def main():
     # upload bundle
 
     filename = unbundle(bundlename, filename_priv_pem_key)
-
+    print filename
+    
 if __name__=="__main__":
     main()

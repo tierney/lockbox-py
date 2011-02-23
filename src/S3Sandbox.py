@@ -13,8 +13,8 @@ class S3Bucket:
         self.aws_secret_access_key = aws_secret_access_key
 
     def connect(self):
-        self.conn = boto.s3.connection.S3Connection(self.aws_access_key_id,
-                                                    self.aws_secret_access_key)
+        self.conn = boto.connect_s3(self.aws_access_key_id,
+                                    self.aws_secret_access_key)
     def create_bucket(self, bucket_name):
         self.conn.create_bucket(bucket_name)
         self.bucket = self.conn.get_bucket(bucket_name)
@@ -27,6 +27,12 @@ class S3Bucket:
         # bucket_name = 'testfiles.sdb'
         self.bucket = boto.s3.bucket.Bucket(self.conn, bucket_name)
 
+    def send_filename(self, filename):
+        pass
+
+    def get_file(self, filename):
+        pass
+
 def main():
     # User must setup an AWS account
     config = ConfigParser.ConfigParser()
@@ -38,6 +44,9 @@ def main():
     b = S3Bucket("John Smith", "Bronx iMac", aws_access_key_id, aws_secret_access_key)
     b.connect()
     print b.get_all_buckets()
+    b.set_bucket('testfiles.sdb')
+
+
     
     # s3c = boto.s3.connection.S3Connection(aws_access_key_id, aws_secret_access_key)
 

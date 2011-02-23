@@ -85,7 +85,7 @@ def main():
 
         # see if anyone needs removing
         print known_files
-        uploaded_updated_files()
+        # uploaded_updated_files()
         delete_not_visited_files()
         reset_known_files()
         

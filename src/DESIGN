@@ -1,4 +1,23 @@
 
+1. RSAService
+
+Start application and make sure we have a private and public key pair
+(store these under hidden home directory).
+
+We should probably store our friends' pub keys here.
+
+2. StatService
+
+Find directory that we're supposed to walk (also stored in directory).
+
+Check for updates.
+
+3. S3Service.
+
+Upload, delete as necessary.
+
+----------------------------------------------------------------------
+
 Given a directory, we should be able to keep track of file changes in
 that directory.
 

@@ -4,6 +4,7 @@ import stat
 import time
 from threading import Thread
 from S3BucketPolicy import string_to_dns
+from EncryptionService import EncryptionService
 
 class SafeDepositBox(Thread):
     def __init__(self, sdb_directory, admin_directory,
@@ -29,7 +30,6 @@ class SafeDepositBox(Thread):
                                              self.location,
                                              self.admin_directory)
         
-
     def reset_known_files(self):
         for filename in self.known_files:
             self.known_files[filename][self.STATUS] = self.NOT_VISITED
@@ -103,6 +103,7 @@ if __name__ == '__main__':
                                    ".safedepositbox")
     s = SafeDepositBox(sdb_directory, admin_directory,
                        display_name, display_location)
+    s.initialize_encryption_service()
     
     # s.daemon = True
     s.start()

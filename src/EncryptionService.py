@@ -13,20 +13,20 @@ class EncryptionService:
         self.display_name = display_name
         self.location = location
         self.admin_directory = admin_directory
-        self.filename_priv_pem_key = filename_pub_pem_key
-        self.filename_pub_pem_key = filename_priv_pem_key
+        if (None == filename_pub_pem_key):
+            pub_pem_key = "%s.%s.public.pem" % (self.display_name, self.location)
+            filename_pub_pem_key = os.path.join(self.admin_directory, pub_pem_key)
+            self.filename_priv_pem_key = filename_pub_pem_key
+        if (None == filename_priv_pem_key):
+            priv_pem_key = "%s.%s.private.pem" % (self.display_name, self.location)
+            filename_priv_pem_key = os.path.join(self.admin_directory, priv_pem_key)
+            self.filename_pub_pem_key = filename_priv_pem_key
         
     def set_pki_keys(self, filename_pub_pem_key, filename_priv_pem_key):
+        # Expects absolute paths
         self.filename_pub_pem_key = filename_pub_pem_key
         self.filename_priv_pem_key = filename_priv_pem_key
 
-    def default_pki_keynames(self):
-        pub_pem_key = "%s.%s.public.pem" % (self.display_name, self.location)
-        filename_pub_pem_key = os.path.join(self.admin_directory, pub_pem_key)
-        priv_pem_key = "%s.%s.private.pem" % (self.display_name, self.location)
-        filename_priv_pem_key = os.path.join(self.admin_directory, priv_pem_key)
-        self.set_pki_keys(filename_pub_pem_key, filename_priv_pem_key)
-        
     def generate_pki_keys(self):
         if not os.path.exists(self.admin_directory):
             os.mkdir(self.admin_directory)

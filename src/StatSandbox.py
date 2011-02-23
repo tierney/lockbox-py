@@ -4,9 +4,11 @@ import stat
 import time
 from threading import Thread
 
-class StatSandbox(Thread):
+class SafeDepositBox(Thread):
     def __init__(self, sdb_directory):
         Thread.__init__(self)
+        self.storage_directory = os.path.join(os.environ['HOME'],
+                                              ".safedepositbox")
         self.sdb_directory = sdb_directory
 
         self.STATUS = 0
@@ -81,6 +83,6 @@ class StatSandbox(Thread):
             time.sleep(self.IDLE_WINDOW)
     
 if __name__ == '__main__':
-    s = StatSandbox("../test/data")
+    s = SafeDepositBox("../test/data")
     # s.daemon = True
     s.start()

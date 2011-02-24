@@ -17,54 +17,54 @@ class SafeDepositBox(Thread):
     def __init__(self, sdb_directory, admin_directory,
                  display_name, location, debug=False):
         Thread.__init__(self)
-        self.admin_directory = admin_directory
+
         self.sdb_directory = sdb_directory
+
+        # What if we fail to create the admin directory... but have
+        # logged this information nowhere?
+        self.admin_directory = admin_directory
+        if not os.path.exists(self.admin_directory):
+            os.mkdir(self.admin_directory)
+        
+        if debug:
+            log_filename = os.path.join(self.admin_directory, 'sdb.log')
+            logging.basicConfig(level = logging.DEBUG,
+                                format = "%(asctime)s - %(name)s - %(levelname)s" \
+                                "- %(module)s:%(lineno)d - %(funcName)s - %(message)s",
+                                filename = log_filename,
+                                filemode='wa')
+        
+
         self.prefix_to_ignore = os.path.abspath(self.sdb_directory)+"/"
         self.display_name = display_name
         self.location = location
-        self.debug = debug
         
         self.known_files = dict() # file -> [updated?, file's mtime]
         self.known_files_lock = Lock()
         self.known_files_locks = dict()
 
-    def init(self):
-        if not os.path.exists(self.admin_directory):
-            os.mkdir(self.admin_directory)
-
-        if self.debug:
-            log_filename = os.path.join(self.admin_directory, 'sdb.log')
-            logging.basicConfig(level = logging.DEBUG,
-                                format = "%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s",
-                                filename = log_filename,
-                                filemode='wa')
-            # handler = logging.handlers.RotatingFileHandler(log_filename,
-            #                                                maxBytes=1048576,
-            #                                                backupCount=10)
-            # self.sdb_logger.addHandler(handler)
-
-    def init_encryption_service(self):
         self.enc_service = EncryptionService(self.display_name,
                                              self.location,
                                              self.admin_directory,
+                                             self.prefix_to_ignore,
                                              use_default_location=True)
-    def init_s3bucket(self):
+        self.staging_directory = os.path.join(self.admin_directory, 'staging')
+        
         config = ConfigParser.ConfigParser()
         sysname = os.uname()[0]
-        if ('Linux' == sysname):
-            config.read("/home/tierney/conf/aws.cfg")
-        elif ('Darwin' == sysname):
-            config.read("/Users/tierney/conf/aws.cfg")
-        else:
-            sys.exit(1)
+        if ('Linux' == sysname): config.read("/home/tierney/conf/aws.cfg")
+        elif ('Darwin' == sysname): config.read("/Users/tierney/conf/aws.cfg")
+        else: sys.exit(1)
 
         aws_access_key_id = config.get('aws','access_key_id')
         aws_secret_access_key = config.get('aws','secret_access_key')
     
         self.s3bucket = S3Bucket(self.display_name, self.location, 'testfiles.sdb',
+                                 self.staging_directory,
                                  aws_access_key_id, aws_secret_access_key)
         self.s3bucket.init()
-        
+
+
     def upload_file(self, filename):
         # Should queue this operation.
         #
@@ -144,8 +144,7 @@ class SafeDepositBox(Thread):
             if (self.known_files[filename][MTIME] < filename_mtime):
                 self.known_files[filename][STATUS] = UPDATED
                 self.known_files[filename][MTIME] = filename_mtime
-                print "Should encrypt and upload", filename
-                # DO THIS ASYNC: self.upload_file(filename)
+                self.s3bucket.enqueue(filename, UPDATED)
             else:
                 self.known_files[filename][STATUS] = UNCHANGED
             self.known_files[filename][LOCK].release()
@@ -160,7 +159,7 @@ class SafeDepositBox(Thread):
         # make sure that we update our known_files table view of the
         # file time so that we don't continue to update
         for key in keys:
-            print self.prefix_to_ignore, key.name, self._lm_to_epoch(key.last_modified)
+            print "CLOUD:", self.prefix_to_ignore, key.name, self._lm_to_epoch(key.last_modified)
             
     # def delete_not_visited_files(self):
     #     delete_list = []
@@ -233,7 +232,6 @@ class SafeDepositBox(Thread):
             self.monitor_cloud_files()
             
             # uploaded_updated_files()
-
             # self.delete_not_visited_files()
             # self.reset_known_files()
 
@@ -251,9 +249,7 @@ if __name__ == '__main__':
                                    ".safedepositbox")
     s = SafeDepositBox(sdb_directory, admin_directory,
                        display_name, display_location, debug=True)
-    s.init()
-    s.init_encryption_service()
-    s.init_s3bucket()
-    Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore)).start()
+
+    Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.enc_service)).start()
     # s.daemon = True
     s.start()

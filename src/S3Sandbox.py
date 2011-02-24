@@ -10,16 +10,18 @@ import boto
 import Queue
 
 from constants import *
+from util import execute
 from S3BucketPolicy import string_to_dns
 
 BUCKET_NAME_PADDING_LEN=20
-
+METADATA_TAG_MD5 = 'orig_file_md5'
 class S3Bucket:
-    def __init__(self, display_name, location, bucket_name,
+    def __init__(self, display_name, location, bucket_name, staging_directory,
                  aws_access_key_id, aws_secret_access_key):
         self.display_name = display_name
         self.location = location
         self.bucket_name = bucket_name
+        self.staging_directory = staging_directory
         self.aws_access_key_id = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
         self.queue = Queue.Queue()
@@ -48,7 +50,7 @@ class S3Bucket:
 
         s = "".join([random.choice(string.lowercase+string.digits)
                      for x in range(1, BUCKET_NAME_PADDING_LEN)])
-        bucket_name = '.'.join([display_name, display_location,s])
+        bucket_name = '.'.join([display_name, display_location, s])
         return bucket_name
         #self._create_bucket(s)
         
@@ -59,11 +61,11 @@ class S3Bucket:
         # check if bucket exists?
         return self.bucket.get_all_keys()
 
-    def send_filename(self, s3key, filename_src):
+    def send_filename(self, s3key, filename_src, file_md5):
         key = boto.s3.key.Key(self.bucket, s3key)
+        key.set_metadata(METADATA_TAG_MD5, file_md5)
         key.set_contents_from_filename(filename_src)
-        print key.md5
-
+ 
     def get_metadata(self, s3key, metadata):
         key = self.bucket.get_key(s3key)
         print key.md5
@@ -81,14 +83,43 @@ class S3Bucket:
     def enqueue(self, filename, state):
         self.queue.put([filename, state])
 
-    def proc_queue(self):
+    def proc_queue(self, prefix_to_ignore, enc_service):
         while True:
             filename, state = self.queue.get()
+            relative_filepath = filename.replace(prefix_to_ignore,'')
+            key_filename = '.'.join([relative_filepath, self.display_name, self.location])
             if (PNEW == state):
-                if not self.bucket.get_key(filename):
-                    send_filename(filename, filename)
+                pnew_key = self.bucket.get_key(key_filename)
+                with open(filename) as fp:
+                    file_md5 = boto.s3.key.Key().compute_md5(fp)[0]
+                if not pnew_key: # New file when we started up
+                    enc_filepath = enc_service.bundle(filename)
+                    val_filename = os.path.join(self.staging_directory, enc_filepath)
+                    self.send_filename(key_filename, val_filename, file_md5)
+                else: # Existing file. Checking if stale.
+                    with open(filename) as fp:
+                        md5, md5b64 = pnew_key.compute_md5(fp)
+                    if pnew_key.get_metadata(METADATA_TAG_MD5) != md5:
+                        enc_filepath = enc_service.bundle(filename)
+                        val_filename = os.path.join(self.staging_directory, enc_filepath)
+                        self.send_filename(key_filename, val_filename, file_md5)
+                        
+            if (UPDATED == state):
+                with open(filename) as fp:
+                    md5, md5b64 = boto.s3.key.Key().compute_md5(fp)
+                enc_filepath = enc_service.bundle(filename)
+                val_filename = os.path.join(self.staging_directory, enc_filepath)
+                self.send_filename(key_filename, val_filename, md5)
+
+            if (NOT_VISITED == state):
+                # delete file(s)...
+                relative_filepath = filename.replace(prefix_to_ignore,'')
+                keys = self.bucket.get_all_keys(prefix=relative_filepath)
+                for key in keys:
+                    self.bucket.delete_key(key)
+            
             self.queue.task_done()
-            time.sleep(1)
+
 
 def main():
     # User must setup an AWS account
@@ -104,7 +135,7 @@ def main():
     aws_access_key_id = config.get('aws','access_key_id')
     aws_secret_access_key = config.get('aws','secret_access_key')
 
-    b = S3Bucket("John Smith", "Bronx iMac", 'testfiles.sdb', 
+    b = S3Bucket("John Smith", "Bronx iMac", 'testfiles.sdb', '/home/tierney/.safedepositbox/staging',
                  aws_access_key_id, aws_secret_access_key)
     b.init()
     print b.get_all_buckets()
@@ -117,7 +148,8 @@ def main():
 
     b.create_bucket()
 
-    b.send_filename('DESIGN', 'DESIGN')
+    
+    b.send_filename('DESIGN', 'DESIGN', md5)
 
     # b.get_filename('key1','key1.DESIGN')
 

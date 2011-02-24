@@ -1,3 +1,9 @@
+How do users share their pub keys?
+How to notify users of updates in other buckets?
+
+Do users understand "read-only" vs "read-write" when it comes to
+sharing?
+
 - Should probably combine the S3 and SDB classes since they share so
   much state (and, it seems, functionality) already.
 

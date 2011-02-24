@@ -11,6 +11,7 @@ from S3BucketPolicy import string_to_dns
 from EncryptionService import EncryptionService
 from S3Sandbox import S3Bucket
 from util import execute
+from constants import *
 
 class SafeDepositBox(Thread):
     def __init__(self, sdb_directory, admin_directory,
@@ -18,7 +19,7 @@ class SafeDepositBox(Thread):
         Thread.__init__(self)
         self.admin_directory = admin_directory
         self.sdb_directory = sdb_directory
-        self.prefix_to_ignore = os.path.split(os.path.abspath(self.sdb_directory))[0]+"/"
+        self.prefix_to_ignore = os.path.abspath(self.sdb_directory)+"/"
         self.display_name = display_name
         self.location = location
         self.debug = debug
@@ -26,30 +27,22 @@ class SafeDepositBox(Thread):
         self.known_files = dict() # file -> [updated?, file's mtime]
         self.known_files_lock = Lock()
         self.known_files_locks = dict()
-        # known_files dict of list index
-        self.STATUS = 0
-        self.MTIME  = 1
-        self.LOCK   = 2
-        # File states
-        self.NOT_VISITED = 0
-        self.UNCHANGED   = 1
-        self.UPDATED     = 2
-        self.PNEW        = 3
-        
-        self.IDLE_WINDOW = 2 # sec
 
     def init(self):
+        if not os.path.exists(self.admin_directory):
+            os.mkdir(self.admin_directory)
+
         if self.debug:
             log_filename = os.path.join(self.admin_directory, 'sdb.log')
             logging.basicConfig(level = logging.DEBUG,
                                 format = "%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s",
                                 filename = log_filename,
-                                filemode='a')
+                                filemode='wa')
             # handler = logging.handlers.RotatingFileHandler(log_filename,
             #                                                maxBytes=1048576,
             #                                                backupCount=10)
             # self.sdb_logger.addHandler(handler)
-            
+
     def init_encryption_service(self):
         self.enc_service = EncryptionService(self.display_name,
                                              self.location,
@@ -64,6 +57,7 @@ class SafeDepositBox(Thread):
             config.read("/Users/tierney/conf/aws.cfg")
         else:
             sys.exit(1)
+
         aws_access_key_id = config.get('aws','access_key_id')
         aws_secret_access_key = config.get('aws','secret_access_key')
     
@@ -146,23 +140,27 @@ class SafeDepositBox(Thread):
         # Check for local file changes (make some queue of these results)
         filename_mtime = os.stat(filename).st_mtime
         if filename in self.known_files:
-            self.known_files[filename][self.LOCK].acquire()
-            if (self.known_files[filename][self.MTIME] < filename_mtime):
-                self.known_files[filename][self.STATUS] = self.UPDATED
-                self.known_files[filename][self.MTIME] = filename_mtime
+            self.known_files[filename][LOCK].acquire()
+            if (self.known_files[filename][MTIME] < filename_mtime):
+                self.known_files[filename][STATUS] = UPDATED
+                self.known_files[filename][MTIME] = filename_mtime
                 print "Should encrypt and upload", filename
                 # DO THIS ASYNC: self.upload_file(filename)
             else:
-                self.known_files[filename][self.STATUS] = self.UNCHANGED
-            self.known_files[filename][self.LOCK].release()
-        else:
-            self.known_files[filename] = [self.PNEW, filename_mtime, Lock()]
-            print "Check if file is already uploaded as current version", self.known_files[filename]
+                self.known_files[filename][STATUS] = UNCHANGED
+            self.known_files[filename][LOCK].release()
+        else: # don't have this file information stored in memory
+            self.known_files[filename] = [PNEW, filename_mtime, Lock()]
+            self.s3bucket.enqueue(filename, PNEW)
+#             print "Check if file is already uploaded as current version", \
+#                 self.known_files[filename]
 
     def monitor_cloud_files(self):
         keys = self.s3bucket.get_all_keys()
+        # make sure that we update our known_files table view of the
+        # file time so that we don't continue to update
         for key in keys:
-            print key, self._lm_to_epoch(key.last_modified)
+            print self.prefix_to_ignore, key.name, self._lm_to_epoch(key.last_modified)
             
     # def delete_not_visited_files(self):
     #     delete_list = []
@@ -239,7 +237,7 @@ class SafeDepositBox(Thread):
             # self.delete_not_visited_files()
             # self.reset_known_files()
 
-            time.sleep(self.IDLE_WINDOW)
+            time.sleep(IDLE_WINDOW)
     
 if __name__ == '__main__':
     display_name = "John Smith"
@@ -256,6 +254,6 @@ if __name__ == '__main__':
     s.init()
     s.init_encryption_service()
     s.init_s3bucket()
-
+    Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore)).start()
     # s.daemon = True
     s.start()

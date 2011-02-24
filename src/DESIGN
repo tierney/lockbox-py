@@ -1,9 +1,17 @@
+- Should probably combine the S3 and SDB classes since they share so
+  much state (and, it seems, functionality) already.
+
+- Ether subclass or thread...
 
 0. Should have a S3Service queue. Index the queue based on files to be
 changed. Include the operation to be performed.
   
  * time_conditional_upload
  * local_update_upload
+
+0.1
+
+ * remote_file_change
 
 1. RSAService
 

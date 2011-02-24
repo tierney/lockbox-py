@@ -9,6 +9,7 @@ import time
 import boto
 import Queue
 
+from constants import *
 from S3BucketPolicy import string_to_dns
 
 BUCKET_NAME_PADDING_LEN=20
@@ -22,6 +23,7 @@ class S3Bucket:
         self.aws_access_key_id = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
         self.queue = Queue.Queue()
+
     def init(self):
         self._connect()
         # should check if the bucket exists in S3.
@@ -59,7 +61,6 @@ class S3Bucket:
 
     def send_filename(self, s3key, filename_src):
         key = boto.s3.key.Key(self.bucket, s3key)
-        key.set_metadata('sdb_mtime', "%s" % time.time())
         key.set_contents_from_filename(filename_src)
         print key.md5
 
@@ -77,8 +78,17 @@ class S3Bucket:
             return filename_dest
         return None
 
-    def enqueue(self, filename, action):
-        self.queue.put(["filename, action"])
+    def enqueue(self, filename, state):
+        self.queue.put([filename, state])
+
+    def proc_queue(self):
+        while True:
+            filename, state = self.queue.get()
+            if (PNEW == state):
+                if not self.bucket.get_key(filename):
+                    send_filename(filename, filename)
+            self.queue.task_done()
+            time.sleep(1)
 
 def main():
     # User must setup an AWS account
@@ -104,10 +114,10 @@ def main():
         print time.strptime(mtime.replace("Z",''), u"%Y-%m-%dT%H:%M:%S.000")
         print calendar.timegm(time.strptime(mtime.replace("Z",''), u"%Y-%m-%dT%H:%M:%S.000"))
         print "   ",k, mtime
-    print b.create_bucket()
 
-    b.send_filename('key1', 'DESIGN')
-    print b.get_metadata('key1','sdb_mtime')
+    b.create_bucket()
+
+    b.send_filename('DESIGN', 'DESIGN')
 
     # b.get_filename('key1','key1.DESIGN')
 

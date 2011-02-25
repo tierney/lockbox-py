@@ -13,10 +13,10 @@ from S3Sandbox import S3Bucket
 from util import execute
 from constants import *
 
-class SafeDepositBox(Thread):
+class SafeDepositBox:
     def __init__(self, sdb_directory, admin_directory,
                  display_name, location, debug=False):
-        Thread.__init__(self)
+        #Thread.__init__(self)
 
         self.sdb_directory = sdb_directory
 
@@ -244,12 +244,13 @@ if __name__ == '__main__':
     display_name = string_to_dns(display_name)
     display_location = string_to_dns(display_location)
 
-    sdb_directory = "../test/data"
+    sdb_directory = os.path.join(os.environ['HOME'], 
+                                 "src/safe-deposit-box/test/data")
     admin_directory = os.path.join(os.environ['HOME'],
                                    ".safedepositbox")
     s = SafeDepositBox(sdb_directory, admin_directory,
                        display_name, display_location, debug=True)
 
-    Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.enc_service)).start()
-    # s.daemon = True
-    s.start()
+    #Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.enc_service)).start()
+    #s.start()
+    s.run()

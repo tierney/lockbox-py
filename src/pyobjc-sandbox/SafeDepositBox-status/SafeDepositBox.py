@@ -3,8 +3,7 @@ from Foundation import *
 from AppKit import *
 from PyObjCTools import NibClassBuilder, AppHelper
 
-status_images = {'sdb':'/Users/tierney/src/safe-deposit-box/bin/images/safe3.png',
-                 'usb':'/Applications/iSync.app/Contents/Resources/usb.png'}
+status_images = {'sdb':'safe3.png'}
 start_time = NSDate.date()
 
 mytimer = 0

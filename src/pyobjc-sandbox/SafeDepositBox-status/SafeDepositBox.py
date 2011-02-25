@@ -14,7 +14,6 @@ class SomeThread(Thread):
     mytimer = 0
 
   def _draw_status_bar(self):
-    print self.mytimer
     statusbar = NSStatusBar.systemStatusBar()
     # Create the statusbar item
     self.statusitem = statusbar.statusItemWithLength_(NSVariableStatusItemLength)
@@ -53,6 +52,21 @@ class StatusBar(NSObject):
   statusbar = None
   state = 'sdb'
 
+  def _build_menu(self):
+    self.menu = NSMenu.alloc().init()
+    # Sync event is bound to sync_ method
+    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Sync...', 'sync:', '')
+    self.menu.addItem_(menuitem)
+    # Sync event is bound to sync_ method
+    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Network Progress (%s)' % str(notification),'','')
+    self.menu.addItem_(menuitem)
+    # Default event
+    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Quit', 'terminate:', '')
+    self.menu.addItem_(menuitem)
+    # Bind it to the status item
+    self.statusitem.setMenu_(self.menu)
+
+
   def applicationDidFinishLaunching_(self, notification):
     mytimer = -1
     statusbar = NSStatusBar.systemStatusBar()
@@ -69,18 +83,7 @@ class StatusBar(NSObject):
     self.statusitem.setToolTip_('Sync Trigger')
 
     # Build a very simple menu
-    self.menu = NSMenu.alloc().init()
-    # Sync event is bound to sync_ method
-    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Sync...', 'sync:', '')
-    self.menu.addItem_(menuitem)
-    # Sync event is bound to sync_ method
-    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Network Progress (%s)' % str(notification),'','')
-    self.menu.addItem_(menuitem)
-    # Default event
-    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Quit', 'terminate:', '')
-    self.menu.addItem_(menuitem)
-    # Bind it to the status item
-    self.statusitem.setMenu_(self.menu)
+    self._build_menu()
 
     # Get the timer going
     self.timer = NSTimer.alloc().initWithFireDate_interval_target_selector_userInfo_repeats_(start_time, 5.0, self, 'tick:', None, True)
@@ -94,9 +97,9 @@ class StatusBar(NSObject):
     print self.state
 
 if __name__ == "__main__":
-  t = SomeThread()
-  t.daemon = True
-  t.start()
+#   t = SomeThread()
+#   t.daemon = True
+#   t.start()
   app = NSApplication.sharedApplication()
   delegate = StatusBar.alloc().init()
   app.setDelegate_(delegate)

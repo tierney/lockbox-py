@@ -20,9 +20,9 @@ plist = dict(
      LSUIElement                 = '1'
 )
 
-
 app_data = dict(script=SCRIPT, plist=plist)
 
 setup(
    app = [app_data],
+   data_files = ['/Users/tierney/src/safe-deposit-box/bin/images/safe3.png']
 )

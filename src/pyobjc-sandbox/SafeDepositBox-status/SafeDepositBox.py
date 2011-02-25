@@ -7,12 +7,27 @@ status_images = {'sdb':'/Users/tierney/src/safe-deposit-box/bin/images/safe3.png
                  'usb':'/Applications/iSync.app/Contents/Resources/usb.png'}
 start_time = NSDate.date()
 
-class Timer(NSObject):
+mytimer = 0
+# from threading import Thread
+# import time
+# class SomeThread(Thread):
+#   def __init__(self):
+#     Thread.__init__(self)
+  
+#   def run(self):
+#     global mytimer
+#     while True:
+#       print "Hello, World!", mytimer
+#       mytimer += 1
+#       time.sleep(1)
+
+class StatusBar(NSObject):
   images = {}
   statusbar = None
   state = 'sdb'
 
   def applicationDidFinishLaunching_(self, notification):
+    global mytimer
     statusbar = NSStatusBar.systemStatusBar()
     # Create the statusbar item
     self.statusitem = statusbar.statusItemWithLength_(NSVariableStatusItemLength)
@@ -32,7 +47,7 @@ class Timer(NSObject):
     menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Sync...', 'sync:', '')
     self.menu.addItem_(menuitem)
     # Sync event is bound to sync_ method
-    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Network Progress...','','')
+    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Network Progress (%d)' % mytimer,'','')
     self.menu.addItem_(menuitem)
     # Default event
     menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Quit', 'terminate:', '')
@@ -52,7 +67,10 @@ class Timer(NSObject):
     print self.state
 
 if __name__ == "__main__":
+#   t = SomeThread()
+#   t.daemon = True
+#   t.start()
   app = NSApplication.sharedApplication()
-  delegate = Timer.alloc().init()
+  delegate = StatusBar.alloc().init()
   app.setDelegate_(delegate)
   AppHelper.runEventLoop()

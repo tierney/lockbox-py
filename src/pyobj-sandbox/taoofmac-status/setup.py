@@ -6,17 +6,17 @@ Minimal setup.py example, run with:
 from distutils.core import setup
 import py2app
 
-NAME = 'Uptime'
-SCRIPT = 'statusitem.py'
+NAME = 'SafeDepositBox'
+SCRIPT = 'SafeDepositBox.py'
 VERSION = '0.1'
-ID = 'uptime'
+ID = 'safedepositbox'
 
 plist = dict(
      CFBundleName                = NAME,
      CFBundleShortVersionString  = ' '.join([NAME, VERSION]),
      CFBundleGetInfoString       = NAME,
      CFBundleExecutable          = NAME,
-     CFBundleIdentifier          = 'org.livingcode.examples.%s' % ID,
+     CFBundleIdentifier          = 'com.trustycloudapps.%s' % ID,
      LSUIElement                 = '1'
 )
 

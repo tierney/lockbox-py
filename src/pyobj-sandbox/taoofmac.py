@@ -4,14 +4,14 @@ from AppKit import *
 from PyObjCTools import NibClassBuilder, AppHelper
 
 # poach one of the iSync internal images to get things rolling
-status_images = {'idle':'/Users/tierney/src/safe-deposit-box/bin/images/safe3.png',
+status_images = {'sdb':'/Users/tierney/src/safe-deposit-box/bin/images/safe3.png',
                  'usb':'/Applications/iSync.app/Contents/Resources/usb.png'}
 start_time = NSDate.date()
 
 class Timer(NSObject):
   images = {}
   statusbar = None
-  state = 'idle'
+  state = 'sdb'
 
   def applicationDidFinishLaunching_(self, notification):
     statusbar = NSStatusBar.systemStatusBar()
@@ -21,7 +21,7 @@ class Timer(NSObject):
     for i in status_images.keys():
       self.images[i] = NSImage.alloc().initByReferencingFile_(status_images[i])
     # Set initial image
-    self.statusitem.setImage_(self.images['idle'])
+    self.statusitem.setImage_(self.images['sdb'])
     # Let it highlight upon clicking
     self.statusitem.setHighlightMode_(1)
     # Set a tooltip

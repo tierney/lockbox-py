@@ -5,20 +5,41 @@ Usage:
     python setup.py py2app
 """
 
-from setuptools import setup
+from distutils.core import setup
+import py2app
+#from setuptools import setup
 
-APP = ['SafeDepositBox.py']
+NAME = 'SafeDepositBox'
+SCRIPT = 'SafeDepositBox.py'
+VERSION = '0.1'
+ID = 'safedepositbox'
+
+plist = dict(
+     CFBundleName                = NAME,
+     CFBundleShortVersionString  = ' '.join([NAME, VERSION]),
+     CFBundleGetInfoString       = NAME,
+     CFBundleExecutable          = NAME,
+     CFBundleIdentifier          = 'com.trustycloudapps.%s' % ID,
+     LSUIElement                 = '1'
+)
+
+app_data = dict(script=SCRIPT, plist=plist)
+
 DATA_FILES = ['S3Sandbox.py',
               'S3BucketPolicy.py',
               'EncryptionService.py',
               'util.py',
-              'constants.py']
-OPTIONS = {'packages':['email'], # this is a hack. boto and py2app
+              'constants.py',
+              '../../bin/images/safe3.png']
+
+OPTIONS = {'iconfile': '../../bin/images/safe.icns',
+           'packages': ['email','boto'], # this is a hack. boto and py2app
                                  # don't like each other otherwise.
-           'argv_emulation': True}
+           'argv_emulation': True,
+           }
 
 setup(
-    app=APP,
+    app = [app_data],
     data_files=DATA_FILES,
     options={'py2app': OPTIONS},
     setup_requires=['py2app'],

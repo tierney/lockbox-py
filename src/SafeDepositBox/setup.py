@@ -13,7 +13,9 @@ DATA_FILES = ['S3Sandbox.py',
               'EncryptionService.py',
               'util.py',
               'constants.py']
-OPTIONS = {'argv_emulation': True}
+OPTIONS = {'packages':['email'], # this is a hack. boto and py2app
+                                 # don't like each other otherwise.
+           'argv_emulation': True}
 
 setup(
     app=APP,

@@ -1,3 +1,5 @@
+app:
+	python setup.py py2app
 alias:
 	python setup.py py2app -A
 clean:

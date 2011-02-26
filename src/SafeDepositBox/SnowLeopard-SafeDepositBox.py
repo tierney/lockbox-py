@@ -9,109 +9,109 @@ status_images = {'sdb':'safe3.png'}
 start_time = NSDate.date()
 
 class StatusBar(NSObject):
-  images = {}
-  statusbar = None
-  state = 'sdb'
+    images = {}
+    statusbar = None
+    state = 'sdb'
 
-  def openfolder_(self, notification):
-    print "open folder"
+    def openfolder_(self, notification):
+        print "open folder"
 
-  def launchsite_(self, notification):
-    print "launch browser for our website"
+    def launchsite_(self, notification):
+        print "launch browser for our website"
 
-  def preferences_(self, notification):
-    print "preferences menu"
+    def preferences_(self, notification):
+        print "preferences menu"
 
-  def help_(self, notification):
-    print "help menu"
+    def help_(self, notification):
+        print "help menu"
 
-  def _build_menu(self, notification):
-    self.menu = NSMenu.alloc().init()
+    def _build_menu(self, notification):
+        self.menu = NSMenu.alloc().init()
 
-    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Open SafeDepositBox Folder', 'openfolder:', '')
-    self.menu.addItem_(menuitem)
+        menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Open SafeDepositBox Folder', 'openfolder:', '')
+        self.menu.addItem_(menuitem)
 
-    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Launch SafeDepositBox Website', 'launchsite:', '')
-    self.menu.addItem_(menuitem)
+        menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Launch SafeDepositBox Website', 'launchsite:', '')
+        self.menu.addItem_(menuitem)
 
-    menuitem = NSMenuItem.separatorItem()
-    self.menu.addItem_(menuitem)
+        menuitem = NSMenuItem.separatorItem()
+        self.menu.addItem_(menuitem)
 
-    if type(1) == type(notification):
-      menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('%s GB used on Amazon\'s S3' % str(3.14 + .01*float(notification)), '', '')
-    else:
-      menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Calculating usage...', '', '')
-    self.menu.addItem_(menuitem)
+        if type(1) == type(notification):
+            menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('%s GB used on Amazon\'s S3' % str(3.14 + .01*float(notification)), '', '')
+        else:
+            menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Calculating usage...', '', '')
+        self.menu.addItem_(menuitem)
 
-    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Estimated cost: $%s' % str("0.01"), '', '')
-    self.menu.addItem_(menuitem)
+        menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Estimated cost: $%s' % str("0.01"), '', '')
+        self.menu.addItem_(menuitem)
 
-    menuitem = NSMenuItem.separatorItem()
-    self.menu.addItem_(menuitem)
-    
-    # Sync event is bound to sync_ method
-    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('All files up to date','','')
-    self.menu.addItem_(menuitem)
+        menuitem = NSMenuItem.separatorItem()
+        self.menu.addItem_(menuitem)
 
-    menuitem = NSMenuItem.separatorItem()
-    self.menu.addItem_(menuitem)
+        # Sync event is bound to sync_ method
+        menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('All files up to date','','')
+        self.menu.addItem_(menuitem)
 
-    # Default event
-    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Quit', 'terminate:', '')
-    self.menu.addItem_(menuitem)
+        menuitem = NSMenuItem.separatorItem()
+        self.menu.addItem_(menuitem)
 
-    # Bind it to the status item
-    self.statusitem.setMenu_(self.menu)
+        # Default event
+        menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Quit', 'terminate:', '')
+        self.menu.addItem_(menuitem)
 
-  def applicationDidFinishLaunching_(self, notification):
-    self.counter = 0
-    statusbar = NSStatusBar.systemStatusBar()
-    # Create the statusbar item
-    self.statusitem = statusbar.statusItemWithLength_(NSVariableStatusItemLength)
-    # Load all images
-    for i in status_images.keys():
-      self.images[i] = NSImage.alloc().initByReferencingFile_(status_images[i])
-    # Set initial image
-    self.statusitem.setImage_(self.images['sdb'])
-    # Let it highlight upon clicking
-    self.statusitem.setHighlightMode_(1)
-    # Set a tooltip
-    self.statusitem.setToolTip_('Safe Deposit Box 0.1\n(Yay! Values in Technology =)')
+        # Bind it to the status item
+        self.statusitem.setMenu_(self.menu)
 
-    # Build a very simple menu
-    self._build_menu(notification)
+    def applicationDidFinishLaunching_(self, notification):
+        self.counter = 0
+        statusbar = NSStatusBar.systemStatusBar()
+        # Create the statusbar item
+        self.statusitem = statusbar.statusItemWithLength_(NSVariableStatusItemLength)
+        # Load all images
+        for i in status_images.keys():
+            self.images[i] = NSImage.alloc().initByReferencingFile_(status_images[i])
+        # Set initial image
+        self.statusitem.setImage_(self.images['sdb'])
+        # Let it highlight upon clicking
+        self.statusitem.setHighlightMode_(1)
+        # Set a tooltip
+        self.statusitem.setToolTip_('Safe Deposit Box 0.1\n(Yay! Values in Technology =)')
 
-    # Get the timer going
-    self.timer = NSTimer.alloc().initWithFireDate_interval_target_selector_userInfo_repeats_(start_time, 1.0, self, 'tick:', None, True)
-    NSRunLoop.currentRunLoop().addTimer_forMode_(self.timer, NSDefaultRunLoopMode)
-    self.timer.fire()
+        # Build a very simple menu
+        self._build_menu(notification)
 
-  def sync_(self, notification):
-    print "sync"
+        # Get the timer going
+        self.timer = NSTimer.alloc().initWithFireDate_interval_target_selector_userInfo_repeats_(start_time, 1.0, self, 'tick:', None, True)
+        NSRunLoop.currentRunLoop().addTimer_forMode_(self.timer, NSDefaultRunLoopMode)
+        self.timer.fire()
 
-  def tick_(self, notification):
-    self.counter += 1
-    self._build_menu(self.counter)
-    print self.state
+    def sync_(self, notification):
+        print "sync"
+
+    def tick_(self, notification):
+        self.counter += 1
+        self._build_menu(self.counter)
+        print self.state
 
 if __name__ == "__main__":
-  from SafeDepositBox import SafeDepositBox
-  from S3BucketPolicy import string_to_dns
-  from threading import Thread
-  display_name = string_to_dns("John Smith")
-  display_location = string_to_dns("Bronx iMac")
+    from SafeDepositBox import SafeDepositBox
+    from S3BucketPolicy import string_to_dns
+    from threading import Thread
+    display_name = string_to_dns("John Smith")
+    display_location = string_to_dns("Bronx iMac")
 
-  sdb_directory = os.path.join(os.environ['HOME'], 
-                               "src/safe-deposit-box/test/data")
+    sdb_directory = os.path.join(os.environ['HOME'],
+                                 "src/safe-deposit-box/test/data")
 
-  admin_directory = os.path.join(os.environ['HOME'],
-                                 ".safedepositbox")
-  s = SafeDepositBox(sdb_directory, admin_directory,
-                     display_name, display_location, debug=True)
-  Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.enc_service)).start()
-  s.start()
+    admin_directory = os.path.join(os.environ['HOME'],
+                                   ".safedepositbox")
+    s = SafeDepositBox(sdb_directory, admin_directory,
+                       display_name, display_location, debug=True)
+    Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.enc_service)).start()
+    s.start()
 
-  app = NSApplication.sharedApplication()
-  delegate = StatusBar.alloc().init()
-  app.setDelegate_(delegate)
-  AppHelper.runEventLoop()
+    app = NSApplication.sharedApplication()
+    delegate = StatusBar.alloc().init()
+    app.setDelegate_(delegate)
+    AppHelper.runEventLoop()

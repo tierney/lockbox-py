@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import calendar
 import ConfigParser
 import logging
@@ -53,8 +52,10 @@ class SafeDepositBox(Thread):
         
         config = ConfigParser.ConfigParser()
         sysname = os.uname()[0]
-        if ('Linux' == sysname): config.read("/home/tierney/conf/aws.cfg")
-        elif ('Darwin' == sysname): config.read("/Users/tierney/conf/aws.cfg")
+        if ('Linux' == sysname): 
+            config.read("/home/tierney/conf/aws.cfg")
+        elif ('Darwin' == sysname):
+            config.read("/Users/tierney/conf/aws.cfg")
         else: sys.exit(1)
 
         aws_access_key_id = config.get('aws','access_key_id')
@@ -161,17 +162,6 @@ class SafeDepositBox(Thread):
         for key in keys:
             print "CLOUD:", self.prefix_to_ignore, key.name, self._lm_to_epoch(key.last_modified)
             
-    # def delete_not_visited_files(self):
-    #     delete_list = []
-    #     for filename in self.known_files:
-    #         if (self.NOT_VISITED == self.known_files[filename][self.STATUS]):
-    #             # k = b.s3.key.Key(b, filename)
-    #             # k.delete()
-    #             print "Removing", filename
-    #             delete_list.append(filename)
-    #     for filename in delete_list:
-    #         del self.known_files[filename]
-
     def sync_files_thread(self):
         # Do I want to handle here pulling files from the cloud?
         #
@@ -250,7 +240,6 @@ if __name__ == '__main__':
     s = SafeDepositBox(sdb_directory, admin_directory,
                        display_name, display_location, debug=True)
 
-    #Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.enc_service)).start()
-    #s.start()
+    Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.enc_service)).start()
+    s.start()
 
-    s.run()

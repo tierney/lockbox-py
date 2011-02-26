@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import ConfigParser
 import calendar
 import os
@@ -15,6 +14,7 @@ from S3BucketPolicy import string_to_dns
 
 BUCKET_NAME_PADDING_LEN=20
 METADATA_TAG_MD5 = 'orig_file_md5'
+
 class S3Bucket:
     def __init__(self, display_name, location, bucket_name, staging_directory,
                  aws_access_key_id, aws_secret_access_key):

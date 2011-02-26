@@ -8,9 +8,7 @@ build:
 	cd dist && tar cvzf sdb.tar.bz2 SafeDepositBox.app
 	mv dist/sdb.tar.bz2 ~/Dropbox
 	cp -r dist/SafeDepositBox.app ~/Desktop
-
 open:
 	open dist/SafeDepositBox.app
 clean:
 	rm -rf *~ build dist ~/Desktop/SafeDepositBox.app
-

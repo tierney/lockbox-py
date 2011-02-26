@@ -1,7 +1,18 @@
-app:
+all: clean build
+
+test:
+	python setup.py py2app -A
+	./dist/SafeDepositBox.app/Contents/MacOS/SafeDepositBox
+
+build:
 	python setup.py py2app
+	cp -r dist/SafeDepositBox.app ~/Desktop
+
 alias:
 	python setup.py py2app -A
+
+open:
+	open dist/SafeDepositBox.app
+
 clean:
-	rm -f *dec *enc *pem *~ *.aes256 *.pyc
-	rm -rf build dist
+	rm -f *dec *enc *pem *~ *.aes256 *.pyc build dist ~/Desktop/SafeDepositBox.app

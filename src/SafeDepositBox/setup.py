@@ -10,7 +10,7 @@ import py2app
 #from setuptools import setup
 
 NAME = 'SafeDepositBox'
-SCRIPT = 'SafeDepositBox.py'
+SCRIPT = 'SnowLeopard-SafeDepositBox.py'
 VERSION = '0.1'
 ID = 'safedepositbox'
 

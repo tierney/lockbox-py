@@ -4,6 +4,8 @@ from AppKit import *
 from PyObjCTools import NibClassBuilder, AppHelper
 
 status_images = {'sdb':'safe3.png'}
+# Create syncing images...
+
 start_time = NSDate.date()
 
 class StatusBar(NSObject):
@@ -35,7 +37,11 @@ class StatusBar(NSObject):
     menuitem = NSMenuItem.separatorItem()
     self.menu.addItem_(menuitem)
 
-    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('%s GB used on Amazon\'s S3' % str("3.14"), '', '')
+    if type(1) == type(notification):
+      print type(notification)
+      menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('%s GB used on Amazon\'s S3' % str(3.14 + .01*float(notification)), '', '')
+    else:
+      menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Calculating usage...', '', '')
     self.menu.addItem_(menuitem)
 
     menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Estimated cost: $%s' % str("0.01"), '', '')
@@ -71,7 +77,7 @@ class StatusBar(NSObject):
     # Let it highlight upon clicking
     self.statusitem.setHighlightMode_(1)
     # Set a tooltip
-    self.statusitem.setToolTip_('Sync Trigger')
+    self.statusitem.setToolTip_('Safe Deposit Box 0.1\n(Yay! Values in Technology =)')
 
     # Build a very simple menu
     self._build_menu(notification)

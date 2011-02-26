@@ -38,7 +38,6 @@ class StatusBar(NSObject):
     self.menu.addItem_(menuitem)
 
     if type(1) == type(notification):
-      print type(notification)
       menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('%s GB used on Amazon\'s S3' % str(3.14 + .01*float(notification)), '', '')
     else:
       menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Calculating usage...', '', '')
@@ -96,6 +95,22 @@ class StatusBar(NSObject):
     print self.state
 
 if __name__ == "__main__":
+  from SafeDepositBox import SafeDepositBox
+  from S3BucketPolicy import string_to_dns
+  from threading import Thread
+  display_name = string_to_dns("John Smith")
+  display_location = string_to_dns("Bronx iMac")
+
+  sdb_directory = os.path.join(os.environ['HOME'], 
+                               "src/safe-deposit-box/test/data")
+
+  admin_directory = os.path.join(os.environ['HOME'],
+                                 ".safedepositbox")
+  s = SafeDepositBox(sdb_directory, admin_directory,
+                     display_name, display_location, debug=True)
+  Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.enc_service)).start()
+  s.start()
+
   app = NSApplication.sharedApplication()
   delegate = StatusBar.alloc().init()
   app.setDelegate_(delegate)

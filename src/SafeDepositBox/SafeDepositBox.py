@@ -14,10 +14,10 @@ from S3Sandbox import S3Bucket
 from util import execute
 from constants import *
 
-class SafeDepositBox:
+class SafeDepositBox(Thread):
     def __init__(self, sdb_directory, admin_directory,
                  display_name, location, debug=False):
-        #Thread.__init__(self)
+        Thread.__init__(self)
 
         self.sdb_directory = sdb_directory
 
@@ -64,7 +64,6 @@ class SafeDepositBox:
                                  self.staging_directory,
                                  aws_access_key_id, aws_secret_access_key)
         self.s3bucket.init()
-
 
     def upload_file(self, filename):
         # Should queue this operation.
@@ -239,14 +238,13 @@ class SafeDepositBox:
             time.sleep(IDLE_WINDOW)
     
 if __name__ == '__main__':
-    display_name = "John Smith"
-    display_location = "iMac"
 
-    display_name = string_to_dns(display_name)
-    display_location = string_to_dns(display_location)
+    display_name = string_to_dns("John Smith")
+    display_location = string_to_dns("Bronx iMac")
 
     sdb_directory = os.path.join(os.environ['HOME'], 
                                  "src/safe-deposit-box/test/data")
+
     admin_directory = os.path.join(os.environ['HOME'],
                                    ".safedepositbox")
     s = SafeDepositBox(sdb_directory, admin_directory,
@@ -254,4 +252,5 @@ if __name__ == '__main__':
 
     #Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.enc_service)).start()
     #s.start()
+
     s.run()

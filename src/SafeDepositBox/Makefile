@@ -15,4 +15,4 @@ open:
 	open dist/SafeDepositBox.app
 
 clean:
-	rm -f *dec *enc *pem *~ *.aes256 *.pyc build dist ~/Desktop/SafeDepositBox.app
+	rm -rf *dec *enc *pem *~ *.aes256 *.pyc build dist ~/Desktop/SafeDepositBox.app

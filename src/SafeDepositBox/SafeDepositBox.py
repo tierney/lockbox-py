@@ -10,7 +10,7 @@ import time
 from threading import Thread, Lock
 from S3BucketPolicy import string_to_dns
 from EncryptionService import EncryptionService
-from S3Sandbox import S3Bucket
+from S3Interface import S3Bucket
 from util import execute
 from constants import *
 

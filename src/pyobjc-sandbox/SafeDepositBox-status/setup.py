@@ -23,7 +23,7 @@ plist = dict(
 app_data = dict(script=SCRIPT, plist=plist)
 
 setup(
-    options = dict(py2app = dict(iconfile = '../../../bin/images/safe.icns')),
+    # options = dict(py2app = dict(iconfile = '../../bin/images/safe.icns')),
     app = [app_data],
     data_files = ['../../../bin/images/safe3.png']
 )

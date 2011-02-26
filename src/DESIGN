@@ -1,3 +1,6 @@
+Can use regular user password that is encrypted and put on S3 for
+recovering the private key. 
+
 How do users share their pub keys? PGP? Key sharing service? Email or S3?
 
  * Users can share keys using S3. The problem wit

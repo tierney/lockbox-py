@@ -98,16 +98,7 @@ if __name__ == "__main__":
     from SafeDepositBox import SafeDepositBox
     from S3BucketPolicy import string_to_dns
     from threading import Thread
-    display_name = string_to_dns("John Smith")
-    display_location = string_to_dns("Bronx iMac")
-
-    sdb_directory = os.path.join(os.environ['HOME'],
-                                 "src/safe-deposit-box/test/data")
-
-    admin_directory = os.path.join(os.environ['HOME'],
-                                   ".safedepositbox")
-    s = SafeDepositBox(sdb_directory, admin_directory,
-                       display_name, display_location, debug=True)
+    s = SafeDepositBox()
     Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.enc_service)).start()
     s.start()
 

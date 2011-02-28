@@ -12,7 +12,7 @@ from constants import *
 from util import execute
 from S3BucketPolicy import string_to_dns
 
-BUCKET_NAME_PADDING_LEN=20
+BUCKET_NAME_PADDING_LEN = 20
 METADATA_TAG_MD5 = 'orig_file_md5'
 
 class S3Bucket:

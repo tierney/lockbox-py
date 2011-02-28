@@ -14,30 +14,47 @@ from util import execute
 from constants import *
 
 class SafeDepositBox(Thread):
-    def __init__(self, sdb_directory, admin_directory,
-                 display_name, location, debug=False):
+    def __init__(self):
         Thread.__init__(self)
 
-        self.sdb_directory = sdb_directory
+        config = ConfigParser.ConfigParser()
+        self.admin_directory = os.path.join(os.environ["HOME"], '.safedepositbox')
 
-        # What if we fail to create the admin directory... but have
-        # logged this information nowhere?
-        self.admin_directory = admin_directory
-        if not os.path.exists(self.admin_directory):
-            os.mkdir(self.admin_directory)
-        
-        if debug:
-            log_filename = os.path.join(self.admin_directory, 'sdb.log')
-            logging.basicConfig(level = logging.DEBUG,
-                                format = "%(asctime)s - %(name)s - %(levelname)s" \
+        try:
+            config.read(os.path.join(self.admin_directory,'safedepositbox.conf'))
+        except Exception, e:
+            print e
+            sys.exit(1)
+
+        firstName = config.get('sdb','firstName')
+        lastName = config.get('sdb','lastName')
+        display_name = firstName + " " + lastName
+
+        userEmailAddress = config.get('sdb','userEmailAddress')
+        userPassword = config.get('sdb','userPassword')
+        awsAccessKey = config.get('sdb','awsAccessKey')
+        awsSecretKey = config.get('sdb','awsSecretKey')
+        aws_access_key_id = awsAccessKey
+        aws_secret_access_key = awsSecretKey
+
+        computerName = config.get('sdb','computerName')
+        location = computerName
+
+        self.sdb_directory = os.path.join(os.environ['HOME'], 
+                                     "src/safe-deposit-box/test/data")
+
+        log_filename = os.path.join(self.admin_directory, 'sdb.log')
+        logging.basicConfig(level = logging.DEBUG,
+                            format = "%(asctime)s - %(name)s - %(levelname)s" \
                                 "- %(module)s:%(lineno)d - %(funcName)s - %(message)s",
-                                filename = log_filename,
-                                filemode='wa')
+                            filename = log_filename,
+                            filemode='wa')
         
 
         self.prefix_to_ignore = os.path.abspath(self.sdb_directory)+"/"
-        self.display_name = display_name
-        self.location = location
+
+        self.display_name = string_to_dns(display_name)
+        self.location = string_to_dns(location)
         
         self.known_files = dict() # file -> [updated?, file's mtime]
         self.known_files_lock = Lock()
@@ -50,16 +67,6 @@ class SafeDepositBox(Thread):
                                              use_default_location=True)
         self.staging_directory = os.path.join(self.admin_directory, 'staging')
         
-        config = ConfigParser.ConfigParser()
-        sysname = os.uname()[0]
-        if ('Linux' == sysname): 
-            config.read("/home/tierney/conf/aws.cfg")
-        elif ('Darwin' == sysname):
-            config.read("/Users/tierney/conf/aws.cfg")
-        else: sys.exit(1)
-
-        aws_access_key_id = config.get('aws','access_key_id')
-        aws_secret_access_key = config.get('aws','secret_access_key')
     
         self.s3bucket = S3Bucket(self.display_name, self.location, 'testfiles.sdb',
                                  self.staging_directory,
@@ -228,18 +235,7 @@ class SafeDepositBox(Thread):
             time.sleep(IDLE_WINDOW)
     
 if __name__ == '__main__':
-
-    display_name = string_to_dns("John Smith")
-    display_location = string_to_dns("Bronx iMac")
-
-    sdb_directory = os.path.join(os.environ['HOME'], 
-                                 "src/safe-deposit-box/test/data")
-
-    admin_directory = os.path.join(os.environ['HOME'],
-                                   ".safedepositbox")
-    s = SafeDepositBox(sdb_directory, admin_directory,
-                       display_name, display_location, debug=True)
-
+    s = SafeDepositBox()
     Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.enc_service)).start()
     s.start()
 

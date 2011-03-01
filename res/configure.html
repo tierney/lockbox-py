@@ -1,0 +1,70 @@
+<html>
+<head>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="jquery.cookie.js"></script>
+<script type="text/javascript" src="jquery.hotkeys.js"></script>
+<script type="text/javascript" src="jquery.jstree.js"></script>
+<style>
+span.label {
+  display: inline-block;
+  background-color: #eeeeee;
+  clear: none;
+  width: 300px;
+}
+input {
+  clear: none;
+}
+</style>
+
+<script language="javascript">
+function setupTree() {
+  jQuery("#dirtree")
+  .bind("select_node.jstree", 
+        function(e, data) {
+          jQuery("#dirname").val(data.rslt.obj.attr("path"));
+        }
+   )
+  .jstree({
+    "core": { },
+    "plugins" : [ "themes", "json_data", "ui" ],
+    "json_data" : {
+        "ajax" : { 
+          "url" : "/tree.json", 
+          "data" : function(n) { 
+              return { path : n.attr ? n.attr("path") : "~" };
+          }
+        }        
+    }
+  });
+}
+</script>
+</head>
+<body onload="javascript:setupTree()">
+<form action="/configure" method="get">
+	<span class="label">First Name</span>
+	<input type="text" name="firstname"/>
+	<br/>
+	<span class="label">Last Name</span>
+	<input type="text" name="lastname"/>
+	<br/>
+	<span class="label">S3 Access Key</span>
+	<input type="text" name="s3access"/>
+	<br/>
+	<span class="label">S3 Secret Key</span>
+	<input type="text" name="s3secret"></input>
+	<br/>
+	<span class="label">Password</span>
+	<input type="text" name="password"></input>
+	<br/>
+	<span class="label">Repeat Password</span>
+	<input type="text" name="verify"></input>
+	<br/>
+	
+	<div>Select sync directory:</div>
+	<input id="dirname" name="dirname" value="~" type="text"></input>
+	<div id="dirtree"></div>
+	
+	<input type="submit" name="submit"/>
+</form>
+</body>
+</html>

@@ -40,6 +40,7 @@ class SafeDepositBox(Thread):
         computerName = config.get('sdb','computerName')
         location = computerName
 
+        #self.sdb_directory = config.get('sdb','sdbDirectory')
         self.sdb_directory = os.path.join(os.environ['HOME'], 
                                      "src/safe-deposit-box/test/data")
 

@@ -51,7 +51,9 @@ class SetupWindowController(NSWindowController):
                    'verifyPassword' : self.verifyPassword.stringValue(),
                    'awsAccessKey' : self.awsAccessKey.stringValue(),
                    'awsSecretKey' : self.awsSecretKey.stringValue(),
-                   'computerName' : self.computerName.stringValue() }
+                   'computerName' : self.computerName.stringValue(),
+                   #'sdbDirectory' : self.sdbDirectory.stringValue(),
+                    }
                            
         rcp = ConfigParser.RawConfigParser()
         section = "sdb"

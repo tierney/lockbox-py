@@ -1,3 +1,18 @@
+Amazon S3 Buckets
+
+For every sdb bucket (public), there should be a corresponding admin
+bucket. The admin bucket contains a symmetric key encrypted private
+key.
+
+Should also contain the public keys of our friends and the state
+associated with our sharing. We do not make this bucket public.
+
+Sharing could be done by polling the buckets of our friends, which are
+public, and scanning for suffixes that correspond to our AWS email
+address.
+
+----------------------------------------------------------------------
+
 Can use regular user password that is encrypted and put on S3 for
 recovering the private key. 
 

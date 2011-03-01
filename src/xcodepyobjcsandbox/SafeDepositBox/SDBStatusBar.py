@@ -49,7 +49,14 @@ class SDBStatusBar(NSObject):
 
         self._build_menu(sender)
 
-        self.timer = NSTimer.alloc().initWithFireDate_interval_target_selector_userInfo_repeats_(start_time, 1.0, self, 'tick:', None, True)
+        self.timer = NSTimer.alloc().initWithFireDate_interval_target_selector_userInfo_repeats_(
+            start_time, 
+            1.0, 
+            self, 
+            'tick:', 
+            None, 
+            True)
+            
         NSRunLoop.currentRunLoop().addTimer_forMode_(self.timer, NSDefaultRunLoopMode)
         self.timer.fire()
 
@@ -57,9 +64,6 @@ class SDBStatusBar(NSObject):
         self.counter += 1
         self._build_menu(self.counter)
         print "We ticked!", self.counter
-
-    def openfolder_(self, notification):
-        print "open folder"
 
     def launchsite_(self, notification):
         print "launch browser for our website"
@@ -71,8 +75,10 @@ class SDBStatusBar(NSObject):
         print "help menu"
 
     def _build_menu(self, notification):
-        self.menu = NSMenu.alloc().init()
 
+        self.menu = NSMenu.alloc()
+        self.menu.init()
+        
         menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Open SafeDepositBox Folder', 'openfolder:', '')
         self.menu.addItem_(menuitem)
 

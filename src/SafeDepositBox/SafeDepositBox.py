@@ -18,12 +18,12 @@ class SafeDepositBox(Thread):
         Thread.__init__(self)
 
         config = ConfigParser.ConfigParser()
-        self.admin_directory = os.path.join(os.environ["HOME"], '.safedepositbox')
-
+        self.admin_directory = os.path.join(os.environ["HOME"], 
+                                            '.safedepositbox')
         try:
             config.read(os.path.join(self.admin_directory,'safedepositbox.conf'))
         except Exception, e:
-            print e
+            print "PROBLEM READING CONFIG:", e
             sys.exit(1)
 
         firstName = config.get('sdb','firstName')
@@ -40,9 +40,12 @@ class SafeDepositBox(Thread):
         computerName = config.get('sdb','computerName')
         location = computerName
 
-        #self.sdb_directory = config.get('sdb','sdbDirectory')
-        self.sdb_directory = os.path.join(os.environ['HOME'], 
-                                     "src/safe-deposit-box/test/data")
+        self.sdb_directory = config.get('sdb','sdbDirectory')
+        if not os.path.exists(self.sdb_directory):
+            os.mkdir(self.sdb_directory)
+        elif not os.path.isdir(self.sdb_directory):
+            os.remove(self.sdb_directory)
+            os.mkdir(self.sdb_directory)
 
         log_filename = os.path.join(self.admin_directory, 'sdb.log')
         logging.basicConfig(level = logging.DEBUG,
@@ -66,13 +69,14 @@ class SafeDepositBox(Thread):
                                              self.admin_directory,
                                              self.prefix_to_ignore,
                                              use_default_location=True)
+                                             
         self.staging_directory = os.path.join(self.admin_directory, 'staging')
-        
-    
-        self.s3bucket = S3Bucket(self.display_name, self.location, 'testfiles.sdb',
+        self.s3bucket = S3Bucket(self.display_name, 
+                                 self.location, 
+                                 'testfiles.sdb',
                                  self.staging_directory,
-                                 aws_access_key_id, aws_secret_access_key)
-        self.s3bucket.init()
+                                 aws_access_key_id, 
+                                 aws_secret_access_key)
 
     def upload_file(self, filename):
         # Should queue this operation.

@@ -52,7 +52,8 @@ class SetupWindowController(NSWindowController):
                    'awsAccessKey' : self.awsAccessKey.stringValue(),
                    'awsSecretKey' : self.awsSecretKey.stringValue(),
                    'computerName' : self.computerName.stringValue(),
-                   #'sdbDirectory' : self.sdbDirectory.stringValue(),
+                   'sdbDirectory' : os.path.join(os.environ["HOME"],
+                                                 "SafeDepositBox"),
                     }
                            
         rcp = ConfigParser.RawConfigParser()
@@ -72,12 +73,17 @@ class SetupWindowController(NSWindowController):
             bClose = False
 
         if bClose:
+            # Create Admin Directory
             admin_directory = os.path.join(os.environ["HOME"], 
                                            ".safedepositbox")
             if not os.path.exists(admin_directory):
                 os.mkdir(admin_directory)
+            elif not os.path.isdir(admin_directory)
+                os.remove(admin_directory)
+                os.mkdir(admIn_directory)
+                
             config_filepath = os.path.join(admin_directory, 
-                                           "safedepositbox.conf")
+                                           "safedepositbox.conf")                                           
             with open(config_filepath,'w') as fh:
                 rcp.write(fh)
             NSLog("Wrote configuration file!")

@@ -26,7 +26,6 @@ class S3Bucket:
         self.aws_secret_access_key = aws_secret_access_key
         self.queue = Queue.Queue()
 
-    def init(self):
         self._connect()
         # should check if the bucket exists in S3.
         self._set_bucket(self.bucket_name)
@@ -34,6 +33,7 @@ class S3Bucket:
     def _connect(self):
         self.conn = boto.connect_s3(self.aws_access_key_id,
                                     self.aws_secret_access_key)
+                                    
     def _set_bucket(self, bucket_name):
         self.bucket = boto.s3.bucket.Bucket(self.conn, bucket_name)
 
@@ -41,9 +41,12 @@ class S3Bucket:
         self.conn.create_bucket(bucket_name)
         self.bucket = self.conn.get_bucket(bucket_name)
         self.bucket.configure_versioning(True)
+        self.bucket.make_public()
         pass
 
     def create_bucket(self):
+        # Need to make creating a public bucket and admin bucket easy.
+        # 
         # store the bucket_name in our configuration
         display_name = string_to_dns(self.display_name)
         display_location = string_to_dns(self.location)
@@ -137,7 +140,6 @@ def main():
 
     b = S3Bucket("John Smith", "Bronx iMac", 'testfiles.sdb', '/home/tierney/.safedepositbox/staging',
                  aws_access_key_id, aws_secret_access_key)
-    b.init()
     print b.get_all_buckets()
     for k in b.get_all_keys():
         mtime = k.last_modified

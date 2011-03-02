@@ -71,11 +71,12 @@
 					PBXSymbolsDataSource_ReferenceNameID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 320728108;
-			PBXWorkspaceStateSaveDate = 320728108;
+			PBXPerProjectTemplateStateSaveDate = 320728152;
+			PBXWorkspaceStateSaveDate = 320728152;
 		};
 		perUserProjectItems = {
-			54015084131DEC2F005C577D /* PBXTextBookmark */ = 54015084131DEC2F005C577D /* PBXTextBookmark */;
+			54015084131DEC2F005C577D = 54015084131DEC2F005C577D /* PBXTextBookmark */;
+			54015091131DEC66005C577D /* PBXTextBookmark */ = 54015091131DEC66005C577D /* PBXTextBookmark */;
 			54D3E433131C4D49009D2FF1 = 54D3E433131C4D49009D2FF1 /* PBXTextBookmark */;
 			54D3E440131D5140009D2FF1 = 54D3E440131D5140009D2FF1 /* PBXTextBookmark */;
 			54D3E441131D5140009D2FF1 = 54D3E441131D5140009D2FF1 /* PBXTextBookmark */;
@@ -151,6 +152,16 @@
 		rType = 0;
 		vrLen = 1767;
 		vrLoc = 278;
+	};
+	54015091131DEC66005C577D /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 54F49803131B63D8005D2FDF /* SafeDepositBox.py */;
+		name = "SafeDepositBox.py: 76";
+		rLen = 0;
+		rLoc = 2962;
+		rType = 0;
+		vrLen = 1490;
+		vrLoc = 0;
 	};
 	54D3E433131C4D49009D2FF1 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
@@ -554,9 +565,9 @@
 	};
 	54F49803131B63D8005D2FDF /* SafeDepositBox.py */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1045, 3289}}";
-			sepNavSelRange = "{3129, 0}";
-			sepNavVisRange = "{1626, 2021}";
+			sepNavIntBoundsRect = "{{0, 0}, {1045, 3211}}";
+			sepNavSelRange = "{2962, 0}";
+			sepNavVisRange = "{0, 1490}";
 		};
 	};
 	54F49804131B63D8005D2FDF /* util.py */ = {

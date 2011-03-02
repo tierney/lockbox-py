@@ -11,7 +11,7 @@ from threading import Thread, Lock
 from S3BucketPolicy import string_to_dns
 from EncryptionService import EncryptionService
 from S3Interface import S3Bucket
-from util import execute
+from util import execute, init_dir
 from constants import *
 
 class SafeDepositBox(Thread):
@@ -42,11 +42,7 @@ class SafeDepositBox(Thread):
         location = computerName
 
         self.sdb_directory = config.get('sdb','sdbDirectory')
-        if not os.path.exists(self.sdb_directory):
-            os.mkdir(self.sdb_directory)
-        elif not os.path.isdir(self.sdb_directory):
-            os.remove(self.sdb_directory)
-            os.mkdir(self.sdb_directory)
+        init_dir(self.sdb_directory)
 
         log_filename = os.path.join(self.admin_directory, 'sdb.log')
         logging.basicConfig(level = logging.DEBUG,

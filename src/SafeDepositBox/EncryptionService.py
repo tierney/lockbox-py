@@ -1,8 +1,9 @@
 #!/usr/bin/env python
+
 import os
 import hashlib
 from S3BucketPolicy import string_to_dns
-from util import execute
+from util import execute, init_dir
 
 class EncryptionService:
     def __init__(self, display_name, location, admin_directory, prefix_to_ignore,
@@ -13,47 +14,39 @@ class EncryptionService:
         self.prefix_to_ignore = prefix_to_ignore
 
         self.admin_directory = admin_directory
-        if not os.path.exists(self.admin_directory):
-            os.mkdir(self.admin_directory)
+        init_dir(self.admin_directory)
 
         self.staging_directory = os.path.join(self.admin_directory, 'staging')
-        if not os.path.exists(self.staging_directory):
-            os.mkdir(self.staging_directory)
+        init_dir(self.staging_directory)
+
+        # This dictionary should maintain state about 'for whom a file
+        # should be accessible'
+        self.file_to_writers = dict() # file -> (AWS email address)
+        
+        self.public_key_directory = os.path.join(self.admin_directory, "public_keys")
+        init_dir(self.public_key_directory)
 
         if (None == filename_pub_pem_key and use_default_location):
             pub_pem_key = "%s.%s.public.pem" % (self.display_name, self.location)
-            filename_pub_pem_key = os.path.join(self.admin_directory, pub_pem_key)
+            filename_pub_pem_key = os.path.join(self.public_key_directory, pub_pem_key)
             self.filename_priv_pem_key = filename_pub_pem_key
+
         if (None == filename_priv_pem_key and use_default_location):
             priv_pem_key = "%s.%s.private.pem" % (self.display_name, self.location)
             filename_priv_pem_key = os.path.join(self.admin_directory, priv_pem_key)
             self.filename_pub_pem_key = filename_priv_pem_key
         
-    def set_pki_keys(self, filename_pub_pem_key, filename_priv_pem_key):
-        # Expects absolute paths
-        self.filename_pub_pem_key = filename_pub_pem_key
-        self.filename_priv_pem_key = filename_priv_pem_key
-
     def generate_pki_keys(self):
-            
-        pub_pem_key = "%s.%s.public.pem" % (self.display_name, self.location)
-        filename_pub_pem_key = os.path.join(self.admin_directory, pub_pem_key)
+        if os.path.exists(self.filename_pub_pem_key): 
+            os.remove(self.filename_pub_pem_key)
+        if os.path.exists(self.filename_priv_pem_key): 
+            os.remove(self.filename_priv_pem_key)
 
-        priv_pem_key = "%s.%s.private.pem" % (self.display_name, self.location)
-        filename_priv_pem_key = os.path.join(self.admin_directory, priv_pem_key)
-
-        if os.path.exists(filename_pub_pem_key): 
-            os.remove(filename_pub_pem_key)
-        if os.path.exists(filename_priv_pem_key): 
-            os.remove(filename_priv_pem_key)
-
-        priv_key_cmd = "openssl genrsa -out '%s' 2048" % (filename_priv_pem_key)
-        pub_key_cmd = "openssl rsa -in '%s' -pubout -out '%s'" % (filename_priv_pem_key,
-                                                                  filename_pub_pem_key)
-        # Quietly generate the private and public keys
-        execute(priv_key_cmd)
-        execute(pub_key_cmd)
-        self.set_pki_keys(filename_pub_pem_key, filename_priv_pem_key)
+        gen_priv_key_cmd = "openssl genrsa -out '%s' 2048" % (filename_priv_pem_key)
+        gen_pub_key_cmd = "openssl rsa -in '%s' -pubout -out '%s'" % (filename_priv_pem_key,
+                                                                      filename_pub_pem_key)
+        execute(gen_priv_key_cmd)
+        execute(gen_pub_key_cmd)
 
     def _hash_path(self, filepath):
         return hashlib.md5(filepath).hexdigest()
@@ -68,7 +61,7 @@ class EncryptionService:
         """
         # generate random AES-256 (symmetric key) password. Put in file.
         file_to_encrypt = self._hash_flatten_filepath(filepath_to_encrypt)
-        print file_to_encrypt
+        print "FILE TO ENCRYPT:", file_to_encrypt
         password_filename = os.path.join(self.staging_directory, "%s.aes256" % file_to_encrypt)
         execute("head -c 128 /dev/urandom | openssl enc -base64 > '%s'" %
                 (password_filename))

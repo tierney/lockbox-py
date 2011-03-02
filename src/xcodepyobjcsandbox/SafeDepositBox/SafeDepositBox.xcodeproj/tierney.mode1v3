@@ -325,10 +325,6 @@
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
 										<string>SafeDepositBox.py</string>
-										<key>_historyCapacity</key>
-										<integer>0</integer>
-										<key>bookmark</key>
-										<string>54015091131DEC66005C577D</string>
 										<key>history</key>
 										<array>
 											<string>54F49721131B55A7005D2FDF</string>
@@ -358,14 +354,14 @@
 							<key>GeometryConfiguration</key>
 							<dict>
 								<key>Frame</key>
-								<string>{{0, 0}, {1106, 630}}</string>
+								<string>{{0, 0}, {1106, 626}}</string>
 								<key>RubberWindowFrame</key>
 								<string>4 55 1436 823 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
 							<key>Proportion</key>
-							<string>630pt</string>
+							<string>626pt</string>
 						</dict>
 						<dict>
 							<key>ContentConfiguration</key>
@@ -378,14 +374,14 @@
 							<key>GeometryConfiguration</key>
 							<dict>
 								<key>Frame</key>
-								<string>{{0, 635}, {1106, 147}}</string>
+								<string>{{0, 631}, {1106, 151}}</string>
 								<key>RubberWindowFrame</key>
 								<string>4 55 1436 823 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>XCDetailModule</string>
 							<key>Proportion</key>
-							<string>147pt</string>
+							<string>151pt</string>
 						</dict>
 					</array>
 					<key>Proportion</key>
@@ -404,9 +400,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>54015092131DEC66005C577D</string>
+				<string>540150A7131DEDF3005C577D</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>54015093131DEC66005C577D</string>
+				<string>540150A8131DEDF3005C577D</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -544,11 +540,6 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>5401509C131DEC66005C577D</string>
-		<string>5401509D131DEC66005C577D</string>
-		<string>5401509E131DEC66005C577D</string>
-		<string>1C78EAAD065D492600B07095</string>
-		<string>1CD10A99069EF8BA00B06720</string>
 		<string>54F496B8131B3F9A005D2FDF</string>
 		<string>/Users/tierney/src/safe-deposit-box/src/xcodepyobjcsandbox/SafeDepositBox/SafeDepositBox.xcodeproj</string>
 	</array>
@@ -630,7 +621,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>54F496B8131B3F9A005D2FDF</string>
-				<string>54015094131DEC66005C577D</string>
+				<string>540150A9131DEDF3005C577D</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>

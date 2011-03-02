@@ -70,7 +70,7 @@ class SafeDepositBox(Thread):
                                              self.admin_directory,
                                              self.prefix_to_ignore,
                                              use_default_location=True)
-                                             
+        self.enc_service.generate_pki_keys()
         self.staging_directory = os.path.join(self.admin_directory, 'staging')
         self.s3bucket = S3Bucket(self.display_name, 
                                  self.location, 

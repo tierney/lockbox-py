@@ -20,9 +20,6 @@ class EncryptionService:
         if not os.path.exists(self.staging_directory):
             os.mkdir(self.staging_directory)
 
-        # This is the default key naming setup. If users don't provide
-        # the absolute path to an existing key AND we can't find keys
-        # in the default location, we should probably complain?
         if (None == filename_pub_pem_key and use_default_location):
             pub_pem_key = "%s.%s.public.pem" % (self.display_name, self.location)
             filename_pub_pem_key = os.path.join(self.admin_directory, pub_pem_key)

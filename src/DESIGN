@@ -1,3 +1,12 @@
+Public keys
+
+Store public keys in a local public key directory (or in a local
+database...)
+
+Store the key --> public key permissions in a local database.
+
+----------------------------------------------------------------------
+
 Amazon S3 Buckets
 
 For every sdb bucket (public), there should be a corresponding admin

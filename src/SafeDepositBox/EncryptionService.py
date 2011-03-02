@@ -10,8 +10,12 @@ class EncryptionService:
                  use_default_location=True):
         self.display_name = display_name
         self.location = location
-        self.admin_directory = admin_directory
         self.prefix_to_ignore = prefix_to_ignore
+
+        self.admin_directory = admin_directory
+        if not os.path.exists(self.admin_directory):
+            os.mkdir(self.admin_directory)
+
         self.staging_directory = os.path.join(self.admin_directory, 'staging')
         if not os.path.exists(self.staging_directory):
             os.mkdir(self.staging_directory)
@@ -34,16 +38,17 @@ class EncryptionService:
         self.filename_priv_pem_key = filename_priv_pem_key
 
     def generate_pki_keys(self):
-        if not os.path.exists(self.admin_directory):
-            os.mkdir(self.admin_directory)
             
         pub_pem_key = "%s.%s.public.pem" % (self.display_name, self.location)
         filename_pub_pem_key = os.path.join(self.admin_directory, pub_pem_key)
+
         priv_pem_key = "%s.%s.private.pem" % (self.display_name, self.location)
         filename_priv_pem_key = os.path.join(self.admin_directory, priv_pem_key)
 
-        if os.path.exists(filename_pub_pem_key): os.remove(filename_pub_pem_key)
-        if os.path.exists(filename_priv_pem_key): os.remove(filename_priv_pem_key)
+        if os.path.exists(filename_pub_pem_key): 
+            os.remove(filename_pub_pem_key)
+        if os.path.exists(filename_priv_pem_key): 
+            os.remove(filename_priv_pem_key)
 
         priv_key_cmd = "openssl genrsa -out '%s' 2048" % (filename_priv_pem_key)
         pub_key_cmd = "openssl rsa -in '%s' -pubout -out '%s'" % (filename_priv_pem_key,

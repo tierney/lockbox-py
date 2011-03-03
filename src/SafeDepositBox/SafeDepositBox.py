@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import calendar
 import ConfigParser
 import logging
@@ -11,8 +10,8 @@ from threading import Thread, Lock
 from S3BucketPolicy import string_to_dns
 from EncryptionService import EncryptionService
 from S3Interface import S3Bucket
-from util import execute, init_dir
-from constants import *
+from util import execute
+import constants as C
 
 class SafeDepositBox(Thread):
     def __init__(self):
@@ -42,7 +41,11 @@ class SafeDepositBox(Thread):
         location = computerName
 
         self.sdb_directory = config.get('sdb','sdbDirectory')
-        init_dir(self.sdb_directory)
+        if not os.path.exists(self.sdb_directory):
+            os.mkdir(self.sdb_directory)
+        elif not os.path.isdir(self.sdb_directory):
+            os.remove(self.sdb_directory)
+            os.mkdir(self.sdb_directory)
 
         log_filename = os.path.join(self.admin_directory, 'sdb.log')
         logging.basicConfig(level = logging.DEBUG,
@@ -66,7 +69,7 @@ class SafeDepositBox(Thread):
                                              self.admin_directory,
                                              self.prefix_to_ignore,
                                              use_default_location=True)
-        self.enc_service.generate_pki_keys()
+                                             
         self.staging_directory = os.path.join(self.admin_directory, 'staging')
         self.s3bucket = S3Bucket(self.display_name, 
                                  self.location, 
@@ -92,7 +95,7 @@ class SafeDepositBox(Thread):
         
     def reset_known_files(self):
         for filename in self.known_files:
-            self.known_files[filename][self.STATUS] = self.NOT_VISITED
+            self.known_files[filename][C.STATUS] = C.NOT_VISITED
 
     def upload_updated_files(self):
         pass
@@ -100,7 +103,7 @@ class SafeDepositBox(Thread):
     # def delete_not_visited_files(self):
     #     delete_list = []
     #     for filename in self.known_files:
-    #         if (self.NOT_VISITED == self.known_files[filename][self.STATUS]):
+    #         if (C.NOT_VISITED == self.known_files[filename][C.STATUS]):
     #             # k = b.s3.key.Key(b, filename)
     #             # k.delete()
     #             print "Removing", filename
@@ -150,17 +153,17 @@ class SafeDepositBox(Thread):
         # Check for local file changes (make some queue of these results)
         filename_mtime = os.stat(filename).st_mtime
         if filename in self.known_files:
-            self.known_files[filename][LOCK].acquire()
-            if (self.known_files[filename][MTIME] < filename_mtime):
-                self.known_files[filename][STATUS] = UPDATED
-                self.known_files[filename][MTIME] = filename_mtime
-                self.s3bucket.enqueue(filename, UPDATED)
+            self.known_files[filename][C.LOCK].acquire()
+            if (self.known_files[filename][C.MTIME] < filename_mtime):
+                self.known_files[filename][C.STATUS] = C.UPDATED
+                self.known_files[filename][C.MTIME] = filename_mtime
+                self.s3bucket.enqueue(filename, C.UPDATED)
             else:
-                self.known_files[filename][STATUS] = UNCHANGED
-            self.known_files[filename][LOCK].release()
+                self.known_files[filename][C.STATUS] = C.UNCHANGED
+            self.known_files[filename][C.LOCK].release()
         else: # don't have this file information stored in memory
-            self.known_files[filename] = [PNEW, filename_mtime, Lock()]
-            self.s3bucket.enqueue(filename, PNEW)
+            self.known_files[filename] = [C.PNEW, filename_mtime, Lock()]
+            self.s3bucket.enqueue(filename, C.PNEW)
 #             print "Check if file is already uploaded as current version", \
 #                 self.known_files[filename]
 
@@ -179,18 +182,18 @@ class SafeDepositBox(Thread):
             keys = self.s3bucket.get_all_keys()
             print keys
             for filename in self.known_files:
-                self.known_files[filename][self.LOCK].acquire()                
+                self.known_files[filename][C.LOCK].acquire()                
                 fpath = os.path.join(self.sdb_directory, filename)
                 if not os.path.exists(fpath):
                     delete_list.append(filename)
 
                 filename_mtime = time.gmtime(os.stat(filename).st_mtime)
-                if (self.PNEW == self.known_files[filename][self.STATUS]):
+                if (C.PNEW == self.known_files[filename][C.STATUS]):
                     if (filename not in keys):
                         # upload
                         self.upload_file(filename)
-                        self.known_files[filename][self.STATUS] = self.UPDATED
-                        self.known_files[filename][self.MTIME] = filename_mtime
+                        self.known_files[filename][C.STATUS] = C.UPDATED
+                        self.known_files[filename][C.MTIME] = filename_mtime
                     else:
                         key = keys.get(filename)
                         mtime = key.last_modified
@@ -210,7 +213,7 @@ class SafeDepositBox(Thread):
                 elif ():
                     pass
                 
-                self.known_files[filename][self.LOCK].release()
+                self.known_files[filename][C.LOCK].release()
 
         # maybe we want to store that the file's state is deleted
         # locally but keep the key in the cloud?
@@ -234,7 +237,7 @@ class SafeDepositBox(Thread):
             # self.delete_not_visited_files()
             # self.reset_known_files()
 
-            time.sleep(IDLE_WINDOW)
+            time.sleep(C.IDLE_WINDOW)
     
 if __name__ == '__main__':
     s = SafeDepositBox()

@@ -1,84 +1,109 @@
 <html>
 <head>
 <title>Safe Deposit Box Configuration</title>
-
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="jquery.validate.js"></script>
 <script type="text/javascript" src="jquery.cookie.js"></script>
 <script type="text/javascript" src="jquery.hotkeys.js"></script>
 <script type="text/javascript" src="jquery.jstree.js"></script>
-
 <style>
-span.label {
-  display: inline-block;
-  background-color: #eeeeee;
-  clear: none;
-  width: 300px;
+body {
+	font-family: "Lucida Grande", "Lucida Sans Unicode", verdana, sans-serif;
 }
+
+span.label {
+	display: inline-block;
+	background-color: #eeeeee;
+	clear: none;
+	width: 300px;
+}
+
 input {
-  clear: none;
+	clear: none;
 }
 </style>
-
 <script>
- $(document).ready(function(){
-   $("#dirtree").bind(
-     "select_node.jstree", 
-     function(e, data) {
-       jQuery("#sdbDirectory").val(data.rslt.obj.attr("path"));
-     }
-  ).jstree({
-    "core": { },
-    "plugins" : [ "themes", "json_data", "ui" ],
-    "json_data" : {
-        "ajax" : { 
-          "url" : "/tree_json", 
-          "data" : function(n) { 
-              return { path : n.attr ? n.attr("path") : "~" };
+  $(document).ready(function() {
+    $("#dirtree").bind("select_node.jstree", function(e, data) {
+      jQuery("#sdbDirectory").val(data.rslt.obj.attr("path"));
+    }).jstree({
+      "core" : {},
+      "plugins" : [ "themes", "json_data", "ui" ],
+      "json_data" : {
+        "ajax" : {
+          "url" : "/tree_json",
+          "data" : function(n) {
+            return {
+              path : n.attr ? n.attr("path") : "~"
+            };
           }
-        }        
-    }
+        }
+      }
+    });
+    $("#configurationForm").validate({
+      rules : {
+        verifyPassword : {
+          equalTo : "#userPassword"
+        }
+      }
+    });
   });
-  $("#configurationForm").validate(
-  {
-    rules: { verifyPassword: { equalTo: "#userPassword"  } }
-  });
-}
-);
 </script>
 </head>
 <body>
-<form id="configurationForm" action="/configure" method="get">
-	<span class="label">First Name</span>
-	<input class="required" type="text" name="firstName"/>
-	<br/>
-	<span class="label">Last Name</span>
-	<input class="required" type="text" name="lastName"/>
-	<br/>
-	<span class="label">Email</span>
-        <input class="required email" type="text" name="userEmailAddress"/>
-        <br/>
-        <span class="label">Computer Name</span>
-        <input class="required" type="text" name="computerName"/>
-        <br/>
-	<span class="label">S3 Access Key</span>
-	<input class="required" type="text" name="awsAccessKey"/>
-	<br/>
-	<span class="label">S3 Secret Key</span>
-	<input class="required" type="text" name="awsSecretKey"></input>
-	<br/>
-	<span class="label">Password</span>
-	<input id="userPassword" class="required" type="password" name="userPassword"></input>
-	<br/>
-	<span class="label">Repeat Password</span>
-	<input id="verifyPassword" class="required" type="password" name="verifyPassword"></input>
-	<br/>
-	
-	<div>Select sync directory:</div>
-	<input class="required" id="sdbDirectory" name="sdbDirectory" value="" type="text"></input>
-	<div id="dirtree"></div>
-	
-	<input type="submit" name="submit"/>
-</form>
+  <h2>Setup your SafeDepositBox:</h2>
+  <form id="configurationForm" action="/configure" method="get">
+    <table>
+      <tr>
+        <td>Name</td>
+        <td><input class="required" type="text" name="name" />
+        </td>
+      </tr>
+      <tr>
+        <td>Email</td>
+        <td><input class="required email" type="text"
+          name="userEmailAddress" value="%{USER_EMAIL}"></input>
+        </td>
+      </tr>
+      <tr>
+        <td>Computer Name</td>
+        <td><input class="required" type="text" name="computerName"
+          value="%{COMPUTER_NAME}"></input>
+        </td>
+      </tr>
+      <tr>
+        <td>Amazon Access Key</td>
+        <td><input class="required" type="text" name="awsAccessKey" />
+        </td>
+      </tr>
+      <tr>
+        <td>Amazon Secret Key</td>
+        <td><input class="required" type="text" name="awsSecretKey" />
+        </td>
+      </tr>
+      <tr>
+        <td>Password</td>
+        <td><input class="required" type="password" id="userPassword" name="userPassword" />
+        </td>
+      </tr>
+      <tr>
+        <td>Password</td>
+        <td><input class="required" type="password" id="verifyPassword"
+          name="verifyPassword" />
+        </td>
+      </tr>
+      <tr>
+        <td>Sync Directory</td>
+        <td><input class="required" id="sdbDirectory" name="sdbDirectory"
+          value="" type="text"></input>
+        </td>
+      <tr>
+        <td colspan="2">
+          <div id="dirtree"></div>
+        </td>
+      </tr>
+    </table>
+    <input type="submit" name="submit"></input>
+  </form>
 </body>
 </html>

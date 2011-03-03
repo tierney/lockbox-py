@@ -1,9 +1,13 @@
 <html>
 <head>
+<title>Safe Deposit Box Configuration</title>
+
 <script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="jquery.validate.js"></script>
 <script type="text/javascript" src="jquery.cookie.js"></script>
 <script type="text/javascript" src="jquery.hotkeys.js"></script>
 <script type="text/javascript" src="jquery.jstree.js"></script>
+
 <style>
 span.label {
   display: inline-block;
@@ -16,52 +20,62 @@ input {
 }
 </style>
 
-<script language="javascript">
-function setupTree() {
-  jQuery("#dirtree")
-  .bind("select_node.jstree", 
-        function(e, data) {
-          jQuery("#dirname").val(data.rslt.obj.attr("path"));
-        }
-   )
-  .jstree({
+<script>
+ $(document).ready(function(){
+   $("#dirtree").bind(
+     "select_node.jstree", 
+     function(e, data) {
+       jQuery("#sdbDirectory").val(data.rslt.obj.attr("path"));
+     }
+  ).jstree({
     "core": { },
     "plugins" : [ "themes", "json_data", "ui" ],
     "json_data" : {
         "ajax" : { 
-          "url" : "/tree.json", 
+          "url" : "/tree_json", 
           "data" : function(n) { 
               return { path : n.attr ? n.attr("path") : "~" };
           }
         }        
     }
   });
+  $("#configurationForm").validate(
+  {
+    rules: { verifyPassword: { equalTo: "#userPassword"  } }
+  });
 }
+);
 </script>
 </head>
-<body onload="javascript:setupTree()">
-<form action="/configure" method="get">
+<body>
+<form id="configurationForm" action="/configure" method="get">
 	<span class="label">First Name</span>
-	<input type="text" name="firstname"/>
+	<input class="required" type="text" name="firstName"/>
 	<br/>
 	<span class="label">Last Name</span>
-	<input type="text" name="lastname"/>
+	<input class="required" type="text" name="lastName"/>
 	<br/>
+	<span class="label">Email</span>
+        <input class="required email" type="text" name="userEmailAddress"/>
+        <br/>
+        <span class="label">Computer Name</span>
+        <input class="required" type="text" name="computerName"/>
+        <br/>
 	<span class="label">S3 Access Key</span>
-	<input type="text" name="s3access"/>
+	<input class="required" type="text" name="awsAccessKey"/>
 	<br/>
 	<span class="label">S3 Secret Key</span>
-	<input type="text" name="s3secret"></input>
+	<input class="required" type="text" name="awsSecretKey"></input>
 	<br/>
 	<span class="label">Password</span>
-	<input type="text" name="password"></input>
+	<input id="userPassword" class="required" type="password" name="userPassword"></input>
 	<br/>
 	<span class="label">Repeat Password</span>
-	<input type="text" name="verify"></input>
+	<input id="verifyPassword" class="required" type="password" name="verifyPassword"></input>
 	<br/>
 	
 	<div>Select sync directory:</div>
-	<input id="dirname" name="dirname" value="~" type="text"></input>
+	<input class="required" id="sdbDirectory" name="sdbDirectory" value="" type="text"></input>
 	<div id="dirtree"></div>
 	
 	<input type="submit" name="submit"/>

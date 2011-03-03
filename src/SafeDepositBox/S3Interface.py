@@ -8,9 +8,10 @@ import time
 import boto
 import Queue
 
-from constants import *
+import constants as C
 from util import execute
 from S3BucketPolicy import string_to_dns
+import md5
 
 BUCKET_NAME_PADDING_LEN = 20
 METADATA_TAG_MD5 = 'orig_file_md5'
@@ -91,30 +92,30 @@ class S3Bucket:
             filename, state = self.queue.get()
             relative_filepath = filename.replace(prefix_to_ignore,'')
             key_filename = '.'.join([relative_filepath, self.display_name, self.location])
-            if (PNEW == state):
-                pnew_key = self.bucket.get_key(key_filename)
+            if C.PNEW == state:
+                C.PNEW_key = self.bucket.get_key(key_filename)
                 with open(filename) as fp:
                     file_md5 = boto.s3.key.Key().compute_md5(fp)[0]
-                if not pnew_key: # New file when we started up
+                if not C.PNEW_key: # New file when we started up
                     enc_filepath = enc_service.bundle(filename)
                     val_filename = os.path.join(self.staging_directory, enc_filepath)
                     self.send_filename(key_filename, val_filename, file_md5)
                 else: # Existing file. Checking if stale.
                     with open(filename) as fp:
-                        md5, md5b64 = pnew_key.compute_md5(fp)
-                    if pnew_key.get_metadata(METADATA_TAG_MD5) != md5:
+                        md5, md5b64 = C.PNEW_key.compute_md5(fp)
+                    if C.PNEW_key.get_metadata(METADATA_TAG_MD5) != md5:
                         enc_filepath = enc_service.bundle(filename)
                         val_filename = os.path.join(self.staging_directory, enc_filepath)
                         self.send_filename(key_filename, val_filename, file_md5)
                         
-            if (UPDATED == state):
+            if C.UPDATED == state:
                 with open(filename) as fp:
                     md5, md5b64 = boto.s3.key.Key().compute_md5(fp)
                 enc_filepath = enc_service.bundle(filename)
                 val_filename = os.path.join(self.staging_directory, enc_filepath)
                 self.send_filename(key_filename, val_filename, md5)
 
-            if (NOT_VISITED == state):
+            if C.NOT_VISITED == state:
                 # delete file(s)...
                 relative_filepath = filename.replace(prefix_to_ignore,'')
                 keys = self.bucket.get_all_keys(prefix=relative_filepath)

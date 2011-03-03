@@ -12,6 +12,11 @@ from string import Template
 from os.path import basename, join, isfile, isdir, expanduser, split
 shutdown_time = -1
 
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+RESOURCE_DIR = './res/web/'
+
 class HTMLTemplate(Template):
   delimiter = '%'  
 
@@ -22,10 +27,14 @@ class ConfigHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     self.end_headers()
     self.wfile.write(data)
   
-  def send_content(self, path):
+  def try_send_content(self, path):
+    path = './' + path[1:]
+    if not isfile(join(RESOURCE_DIR, path)):
+      return False
+    
     mtype = mimetypes.guess_type('file://' + path)
-    self.write(mtype[0], open('res' + path).read())
-  
+    self.write(mtype[0], open(join(RESOURCE_DIR, path)).read())
+    return True  
 
   def tree_json(self, path, q):
     d = expanduser(q['path'][0])
@@ -43,8 +52,9 @@ class ConfigHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
   def tmpl(self, path, q):
     path = q['template'][0]
+    path = './' + path[1:]
     mtype = mimetypes.guess_type('file://' + path)
-    ctmpl = HTMLTemplate(open('res' + path).read())
+    ctmpl = HTMLTemplate(open(join(RESOURCE_DIR, path)).read())
     
     content = ctmpl.substitute(dict(USER_EMAIL = '%s@%s' % (getpass.getuser(), socket.gethostname()),
                                     COMPUTER_NAME = '%s' % platform.node()))
@@ -86,8 +96,8 @@ class ConfigHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     path = url.path
     q = urlparse.parse_qs(url.query)
 
-    if isfile('res' + path):
-      self.send_content(path)
+    
+    if self.try_send_content(path):
       return
           
     f = getattr(self, path[1:], None)

@@ -103,15 +103,9 @@ class S3Bucket:
                     self.send_filename(key_filename, val_filename, file_md5)
                 else: # Existing file. Checking if stale.
                     with open(filename) as fp:
-<<<<<<< local
-                        md5, md5b64 = pnew_key.compute_md5(fp)
-                    if pnew_key.get_metadata(METADATA_TAG_MD5) != md5:
-                        enc_filepath = enc_service.bundle(filename)                        
-=======
                         md5, md5b64 = C.PNEW_key.compute_md5(fp)
                     if C.PNEW_key.get_metadata(METADATA_TAG_MD5) != md5:
                         enc_filepath = enc_service.bundle(filename)
->>>>>>> other
                         val_filename = os.path.join(self.staging_directory, enc_filepath)
                         self.send_filename(key_filename, val_filename, file_md5)
                         

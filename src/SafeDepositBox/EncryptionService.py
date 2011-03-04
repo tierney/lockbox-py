@@ -42,9 +42,9 @@ class EncryptionService:
         if os.path.exists(self.filename_priv_pem_key): 
             os.remove(self.filename_priv_pem_key)
 
-        gen_priv_key_cmd = "openssl genrsa -out '%s' 2048" % (filename_priv_pem_key)
-        gen_pub_key_cmd = "openssl rsa -in '%s' -pubout -out '%s'" % (filename_priv_pem_key,
-                                                                      filename_pub_pem_key)
+        gen_priv_key_cmd = "openssl genrsa -out '%s' 2048" % (self.filename_priv_pem_key)
+        gen_pub_key_cmd = "openssl rsa -in '%s' -pubout -out '%s'" % (self.filename_priv_pem_key,
+                                                                      self.filename_pub_pem_key)
         execute(gen_priv_key_cmd)
         execute(gen_pub_key_cmd)
 
@@ -99,12 +99,11 @@ class EncryptionService:
         filename = self._hash_flatten_filepath(filepath)
         zipped_file = "%s.%s_%s" % (filename, self.display_name, self.location)
         zipped_filepath = os.path.join(self.staging_directory, zipped_file)
-        execute("rm -f %s" % zipped_filepath)
-        execute("tar cjf %s %s %s" % (zipped_filepath, encrypted_filename, encrypted_password_file))
-        # print encrypted_filename, encrypted_password_file
+        execute("rm -f '%s'" % zipped_filepath)
+        execute("tar cjf '%s' '%s' '%s'" % (zipped_filepath, encrypted_filename, encrypted_password_file))
+        print encrypted_filename, encrypted_password_file
         # Clean-up (upload to the cloud and then clean-up)
-        execute("rm -f %s %s" % (encrypted_filename, 
-                                 encrypted_password_file))
+        execute("rm -f '%s' '%s'" % (encrypted_filename, encrypted_password_file))
         # execute("rm -f %s.%s_%s" % (filename, self.display_name, self.location))
         return "%s.%s_%s" % (filename, self.display_name, self.location)
 

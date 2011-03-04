@@ -1,3 +1,27 @@
+Photo sharing without revealing plaintext to the cloud.
+
+ * encrypt the photos content using our system.
+ * Upload to facebook.
+ * have a plugin that makes it easy to decode the photo.
+
+----------------------------------------------------------------------
+
+Directories
+
+BUCKET/public_keys
+  * <email_address>
+    <location0> = <pub0>
+    <location1> = <pub1>
+
+BUCKET/files/<filepath>.<email_address>.<location>
+BUCKET/files/<filepath>.permissions
+  * email_address = [read|write]
+
+Groups implemented on the client itself. Modify permissions file to
+enforce policy.
+
+----------------------------------------------------------------------
+
 Public keys
 
 Store public keys in a local public key directory (or in a local

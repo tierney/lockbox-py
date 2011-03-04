@@ -73,7 +73,7 @@ class SafeDepositBox(Thread):
         self.staging_directory = os.path.join(self.admin_directory, 'staging')
         self.s3bucket = S3Bucket(self.display_name, 
                                  self.location, 
-                                 'testfiles.sdb',
+                                 'testfiles.sdb', # must be read from config
                                  self.staging_directory,
                                  aws_access_key_id, 
                                  aws_secret_access_key)

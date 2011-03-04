@@ -78,7 +78,7 @@ class SetupWindowController(NSWindowController):
                                            ".safedepositbox")
             if not os.path.exists(admin_directory):
                 os.mkdir(admin_directory)
-            elif not os.path.isdir(admin_directory)
+            elif not os.path.isdir(admin_directory):
                 os.remove(admin_directory)
                 os.mkdir(admIn_directory)
                 

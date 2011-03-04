@@ -98,13 +98,20 @@ class S3Bucket:
                     file_md5 = boto.s3.key.Key().compute_md5(fp)[0]
                 if not C.PNEW_key: # New file when we started up
                     enc_filepath = enc_service.bundle(filename)
+                    print "This is the file we expect to be sent", enc_filepath, filename
                     val_filename = os.path.join(self.staging_directory, enc_filepath)
                     self.send_filename(key_filename, val_filename, file_md5)
                 else: # Existing file. Checking if stale.
                     with open(filename) as fp:
+<<<<<<< local
+                        md5, md5b64 = pnew_key.compute_md5(fp)
+                    if pnew_key.get_metadata(METADATA_TAG_MD5) != md5:
+                        enc_filepath = enc_service.bundle(filename)                        
+=======
                         md5, md5b64 = C.PNEW_key.compute_md5(fp)
                     if C.PNEW_key.get_metadata(METADATA_TAG_MD5) != md5:
                         enc_filepath = enc_service.bundle(filename)
+>>>>>>> other
                         val_filename = os.path.join(self.staging_directory, enc_filepath)
                         self.send_filename(key_filename, val_filename, file_md5)
                         
@@ -120,8 +127,7 @@ class S3Bucket:
                 relative_filepath = filename.replace(prefix_to_ignore,'')
                 keys = self.bucket.get_all_keys(prefix=relative_filepath)
                 for key in keys:
-                    self.bucket.delete_key(key)
-            
+                    self.bucket.delete_key(key)            
             self.queue.task_done()
 
 

@@ -11,3 +11,5 @@ UPDATED     = 'updated'
 PNEW        = 'poss. new'
 
 IDLE_WINDOW = 2 # sec
+
+SDB_DB_NAME = "safedepositbox.db"

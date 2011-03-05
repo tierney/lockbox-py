@@ -7,9 +7,8 @@ import stat
 import sys
 import time
 from threading import Thread, Lock
-from S3BucketPolicy import string_to_dns
-from EncryptionService import EncryptionService
-from S3Interface import S3Bucket
+from crypto import CryptoHelper
+from S3Interface import S3Bucket, S3Policy
 from util import execute
 import constants as C
 
@@ -57,8 +56,8 @@ class SafeDepositBox(Thread):
 
         self.prefix_to_ignore = os.path.abspath(self.sdb_directory)+"/"
 
-        self.display_name = string_to_dns(display_name)
-        self.location = string_to_dns(location)
+        self.display_name = S3Policy.string_to_dns(display_name)
+        self.location = S3Policy.string_to_dns(location)
         
         self.known_files = dict() # file -> [updated?, file's mtime]
         self.known_files_lock = Lock()

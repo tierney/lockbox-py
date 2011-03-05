@@ -1,20 +1,42 @@
+import os, random, re, string, sys, time
+
 import ConfigParser
-import calendar
-import os
-import random
-import string
-import sys
-import time
-import boto
 import Queue
+
+import calendar
+import boto
 
 import constants as C
 from util import execute
-from S3BucketPolicy import string_to_dns
 import md5
 
 BUCKET_NAME_PADDING_LEN = 20
 METADATA_TAG_MD5 = 'orig_file_md5'
+
+import socket
+
+def S3Policy(object):
+  @staticmethod
+  def string_to_dns(string):
+    # Reasonable replacements (don't know if users will hate us for this)
+    string = re.sub(r'[^\w.-]', '-', ).strip()
+
+    # Check length of the string
+    string = string.lower()
+    string = string[:63]
+    if len(string) < 3:
+        return None
+
+    # Make sure we do not have an IP address
+    try:
+        socket.inet_aton(string)
+        # we have a legal ip address (so bad!)
+        return None
+    except socket.error:
+        # we have an invalid ip addr, so we might be okay
+        pass
+
+    return string
 
 class S3Bucket:
     def __init__(self, display_name, location, bucket_name, staging_directory,
@@ -172,6 +194,22 @@ def main():
 
     # k = boto.s3.key.Key(b, 'dir0/dir1/dir2/key1')
     # k.set_contents_from_filename("DESIGN.enc")
+
+
+def string_to_dns_test():
+    print S3Policy.string_to_dns("he")
+    print S3Policy.string_to_dns("he               ")    
+    print S3Policy.string_to_dns("hello worlds")
+    print S3Policy.string_to_dns("hello worlds!")
+    print S3Policy.string_to_dns("hello worlds-")
+    print S3Policy.string_to_dns("hello's worlds-")
+    print S3Policy.string_to_dns("hello's worlds---")
+    print S3Policy.string_to_dns("hello\"s worlds---")
+    print S3Policy.string_to_dns("Matt Tierney's Bronx iMac "*10)
+    print S3Policy.string_to_dns("140.247.61.26")
+    print S3Policy.string_to_dns("277.247.61.26")
+    print S3Policy.string_to_dns("I-.-.-like--.three.dots")
+    print S3Policy.string_to_dns("I.like.three.dots")
 
 if __name__=="__main__":
     main()

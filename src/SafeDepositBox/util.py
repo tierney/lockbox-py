@@ -7,7 +7,14 @@ import atexit
 from logging import DEBUG, INFO, WARN, ERROR, FATAL
 from time import time
 from collections import defaultdict
+import tempfile
 
+logging.basicConfig(stream=sys.stderr, level=logging.INFO, 
+                    format="%(levelname).1s %(filename)s:%(lineno)s -- %(message)s ")
+
+def tempfile(conf):
+  return tempfile.TemporaryFile(dir=conf.staging_dir())
+ 
 def execute(cmd):
     subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                      stderr=subprocess.PIPE).communicate()
@@ -20,10 +27,6 @@ def remove_file(f):
   if os.path.exists(f):
     os.remove(f)
 
-
-
-logging.basicConfig(stream=sys.stderr, level=logging.INFO, 
-                    format="%(levelname).1s %(filename)s:%(lineno)s -- %(message)s ")
 
 def currentFrame():
   return sys._getframe(6)

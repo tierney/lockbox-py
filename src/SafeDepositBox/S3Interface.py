@@ -1,19 +1,18 @@
 import os, random, re, string, sys, time
-
 import ConfigParser
 import Queue
-
 import calendar
 import boto
-
 import constants as C
-from util import execute
 import md5
+import socket
+
+from util import execute
+
+class FileNotFound(Exception): pass
 
 BUCKET_NAME_PADDING_LEN = 20
 METADATA_TAG_MD5 = 'orig_file_md5'
-
-import socket
 
 def S3Policy(object):
   @staticmethod

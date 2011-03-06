@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
-import hashlib, os
-from util import log, flags, execute, init_dir, remove_file
-import unittest
+import os
+from util import log, init_dir
 
 import M2Crypto
 
@@ -22,9 +21,9 @@ def _filter_cipher(input, output, cipher):
 class CryptoHelper(object):
   def __init__(self, key_dir, use_default_location=True):
     self.key_dir = key_dir
-    self.initialize_keys()
+    self._initialize_keys()
 
-  def initialize_keys(self):
+  def _initialize_keys(self):
     init_dir(self.key_dir)
     priv = os.path.join(self.key_dir, 'sdb.private')
     pub = os.path.join(self.key_dir, 'sdb.public')
@@ -34,30 +33,40 @@ class CryptoHelper(object):
       M2Crypto.RSA.load_pub_key(pub)
     except:
       log.warn('Failed to load keys.  Regenerating...')
-      self.key = self.generate_pki_keys(priv, pub)
+      self.key = self._generate_pki_keys(priv, pub)
     
-  def generate_pki_keys(self, privfile, pubfile):
+  def _generate_pki_keys(self, privfile, pubfile):
     k = M2Crypto.RSA.gen_key(2048, 11)
     k.save_key(privfile, cipher=None) 
     k.save_pub_key(pubfile)
     
     return k
 
-  def generate_key_msg(self, aeskey, publickeys):
-    pass
+  def generate_aes_key(self):
+    '''Generate and return new random AES key.'''
+    return M2Crypto.Rand.rand_bytes(32)
   
-  def encrypt(self, fpin, fpout):
+  def encrypt_aes_key(self, aes):
+    return self.key.public_encrypt(aes)
+  
+  def decrypt_aes_key(self, aes_enc):
+    return self.key.public_decrypt(aes_enc)
+      
+  def encrypt(self, fpin, fpout, aes_key=None):
     '''
-    Encrypt a file object using a randomly generate aes key.
+    Encrypt a file object using a aes key.
     
     fpin - file object containing the data to encrypt
     fpout - file object to write encrypted data to
     
-    returns: aeskey, salt used for encryption.
+    If no key is specified, a random key will be generated.
+    
+    returns: aes_key, salt used for encryption.
 '''
     log.info("Encrypting...")
     
-    aes_key = M2Crypto.Rand.rand_bytes(32)
+    if not aes_key:
+      aes_key = M2Crypto.Rand.rand_bytes(32)
     salt = M2Crypto.Rand.rand_bytes(8)
     iv = '\0' * 32
     
@@ -73,7 +82,6 @@ class CryptoHelper(object):
     Decrypt a fileobject using the given AES key and salt.
     
 '''
-
     iv = '\0' * 32
     cipher = M2Crypto.EVP.Cipher(alg='aes_256_cbc', key=aes_key, iv=iv, op=DECODE, salt=salt)    
     _filter_cipher(fpin, fpout, cipher)

@@ -21,10 +21,7 @@ Files are encrypted and versioned; delta compression is applied based on
 previous versions to reduce the amount of data stored.
 '''
   def __init__(self, conf, file_name, crypto_helper):
-    self.bucket = S3Bucket(bucket_name=conf.bucket(),
-                           staging_dir=conf.staging_dir(),
-                           access_key=conf.access_key(),
-                           secret_key=conf.secret_key())
+    self.bucket = S3Bucket(conf)
                                 
     self.crypto = crypto_helper    
     self.dir = self.bucket.create_dir(_hash_path(file_name))

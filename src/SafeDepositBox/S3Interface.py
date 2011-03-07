@@ -1,13 +1,12 @@
-import os, random, re, string, sys, time
+import md5, os, random, re, string, time
+
+from config import Config
 import ConfigParser
 import Queue
+import boto.s3
 import calendar
-import boto
 import constants as C
-import md5
 import socket
-
-from util import execute
 
 class FileNotFound(Exception): pass
 
@@ -37,20 +36,29 @@ def S3Policy(object):
 
     return string
 
-class S3Bucket:
-    def __init__(self, display_name, location, bucket_name, staging_directory,
-                 aws_access_key_id, aws_secret_access_key):
-        self.display_name = display_name
-        self.location = location
-        self.bucket_name = bucket_name
-        self.staging_directory = staging_directory
-        self.aws_access_key_id = aws_access_key_id
-        self.aws_secret_access_key = aws_secret_access_key
+class S3Connection(object):
+    def __init__(self, conf, prefix):
+        self.prefix = prefix
+        self.bucket_name = conf.bucket()
+        self.staging_directory = conf.staging_dir()
+        self.aws_access_key_id = conf.access_key()
+        self.aws_secret_access_key = conf.secret_key()
         self.queue = Queue.Queue()
 
         self._connect()
         # should check if the bucket exists in S3.
         self._set_bucket(self.bucket_name)
+        
+    class Directory(object):
+      def __init__(self, connection, bucket, dir):
+        self.conn = connection
+        self.bucket = bucket
+        self.dir = dir
+      
+      def list(self): pass
+      def read(self, file): pass
+      def write(self, file, contentfp): pass
+                  
 
     def _connect(self):
         self.conn = boto.connect_s3(self.aws_access_key_id,
@@ -70,12 +78,11 @@ class S3Bucket:
         # Need to make creating a public bucket and admin bucket easy.
         # 
         # store the bucket_name in our configuration
-        display_name = string_to_dns(self.display_name)
-        display_location = string_to_dns(self.location)
+        prefix = S3Policy.string_to_dns(self.prefix)
 
         s = "".join([random.choice(string.lowercase+string.digits)
                      for x in range(1, BUCKET_NAME_PADDING_LEN)])
-        bucket_name = '.'.join([display_name, display_location, s])
+        bucket_name = prefix + '.' +  s
         return bucket_name
         #self._create_bucket(s)
         
@@ -114,18 +121,18 @@ class S3Bucket:
             relative_filepath = filename.replace(prefix_to_ignore,'')
             key_filename = '.'.join([relative_filepath, self.display_name, self.location])
             if C.PNEW == state:
-                C.PNEW_key = self.bucket.get_key(key_filename)
+                self.pnew_key = self.bucket.get_key(key_filename)
                 with open(filename) as fp:
                     file_md5 = boto.s3.key.Key().compute_md5(fp)[0]
-                if not C.PNEW_key: # New file when we started up
+                if not self.pnew_key: # New file when we started up
                     enc_filepath = enc_service.bundle(filename)
                     print "This is the file we expect to be sent", enc_filepath, filename
                     val_filename = os.path.join(self.staging_directory, enc_filepath)
                     self.send_filename(key_filename, val_filename, file_md5)
                 else: # Existing file. Checking if stale.
                     with open(filename) as fp:
-                        md5, md5b64 = C.PNEW_key.compute_md5(fp)
-                    if C.PNEW_key.get_metadata(METADATA_TAG_MD5) != md5:
+                        md5, md5b64 = self.pnew_key.compute_md5(fp)
+                    if self.pnew_key.get_metadata(METADATA_TAG_MD5) != md5:
                         enc_filepath = enc_service.bundle(filename)
                         val_filename = os.path.join(self.staging_directory, enc_filepath)
                         self.send_filename(key_filename, val_filename, file_md5)
@@ -148,20 +155,18 @@ class S3Bucket:
 
 def main():
     # User must setup an AWS account
-    config = ConfigParser.ConfigParser()
-    sysname = os.uname()[0]
-    if ('Linux' == sysname):
-        config.read("/home/tierney/conf/aws.cfg")
-    elif ('Darwin' == sysname):
-        config.read("/Users/tierney/conf/aws.cfg")
-    else:
-        sys.exit(1)
+    cp = ConfigParser.ConfigParser()
+    cp.read(os.path.expanduser('~/.safe-deposit-box/test.cfg'))
+    
+    conf = Config(user_id='test@test.com',
+                  access_key = cp.get('aws','access_key_id'),
+                  secret_key = cp.get('aws','secret_access_key'),
+                  staging_dir = '/tmp',
+                  bucket = 'safe-deposit-box')
 
-    aws_access_key_id = config.get('aws','access_key_id')
-    aws_secret_access_key = config.get('aws','secret_access_key')
-
-    b = S3Bucket("John Smith", "Bronx iMac", 'testfiles.sdb', '/home/tierney/.safedepositbox/staging',
-                 aws_access_key_id, aws_secret_access_key)
+                       
+    b = S3Connection(conf, prefix='/data')
+    
     print b.get_all_buckets()
     for k in b.get_all_keys():
         mtime = k.last_modified
@@ -195,7 +200,7 @@ def main():
     # k.set_contents_from_filename("DESIGN.enc")
 
 
-def string_to_dns_test():
+def test_string_to_dns():
     print S3Policy.string_to_dns("he")
     print S3Policy.string_to_dns("he               ")    
     print S3Policy.string_to_dns("hello worlds")

@@ -17,6 +17,14 @@ BUCKET/files/<filepath>.<email_address>.<location>
 BUCKET/files/<filepath>.permissions
   * email_address = [read|write]
 
+BUCKET/<filepath>/<email>.<location>
+
+----
+
+Database
+
+<filepath> : users 
+
 Groups implemented on the client itself. Modify permissions file to
 enforce policy.
 

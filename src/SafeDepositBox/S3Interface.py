@@ -1,6 +1,5 @@
 import md5, os, random, re, string, time
 
-from config import Config
 import ConfigParser
 import Queue
 import boto.s3
@@ -120,6 +119,7 @@ class S3Connection(object):
             filename, state = self.queue.get()
             relative_filepath = filename.replace(prefix_to_ignore,'')
             key_filename = '.'.join([relative_filepath, self.display_name, self.location])
+
             if C.PNEW == state:
                 self.pnew_key = self.bucket.get_key(key_filename)
                 with open(filename) as fp:
@@ -157,7 +157,8 @@ def main():
     # User must setup an AWS account
     cp = ConfigParser.ConfigParser()
     cp.read(os.path.expanduser('~/.safe-deposit-box/test.cfg'))
-    
+
+    from config import Config
     conf = Config(user_id='test@test.com',
                   access_key = cp.get('aws','access_key_id'),
                   secret_key = cp.get('aws','secret_access_key'),

@@ -20,6 +20,6 @@ CREATE TABLE config (
 """)
 
         self.c.execute("""
-CREATE TABLE 
+CREATE TABLE file
 """)
     

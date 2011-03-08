@@ -8,7 +8,7 @@ import sys
 import time
 from threading import Thread, Lock
 from crypto import CryptoHelper
-from S3Interface import S3Bucket, S3Policy
+from S3Interface import S3Connection, S3Policy
 from util import execute
 import constants as C
 
@@ -70,12 +70,13 @@ class SafeDepositBox(Thread):
                                              use_default_location=True)
                                              
         self.staging_directory = os.path.join(self.admin_directory, 'staging')
-        self.s3bucket = S3Bucket(self.display_name, 
-                                 self.location, 
-                                 'testfiles.sdb', # must be read from config
-                                 self.staging_directory,
-                                 aws_access_key_id, 
-                                 aws_secret_access_key)
+        conf = Config(user_id = userEmailAddress,
+                      access_key = awsAccessKey,
+                      secret_key = awsSecretKey,
+                      staging_dir = self.staging_directory,
+                      bucket = 'testfiles.sdb')
+        
+        self.s3bucket = S3Connection(conf, prefix='/data')
 
     def upload_file(self, filename):
         # Should queue this operation.

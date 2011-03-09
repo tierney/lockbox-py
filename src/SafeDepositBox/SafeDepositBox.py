@@ -9,26 +9,22 @@ import time
 from threading import Thread, Lock
 from crypto import CryptoHelper
 from S3Interface import S3Connection, S3Policy
+from SDBSQLiteHelper import SDBSQLiteHelper as sql
 from util import execute
 import constants as C
 
 class SafeDepositBox(Thread):
+    def _get_config(self):
+        sql.blah
     def __init__(self):
         Thread.__init__(self)
 
-        config = ConfigParser.ConfigParser()
         self.admin_directory = os.path.join(os.environ["HOME"], 
                                             '.safedepositbox')
-        try:
-            config.read(os.path.join(self.admin_directory,'safedepositbox.conf'))
-        except Exception, e:
-            print "PROBLEM READING CONFIG:", e
-            sys.exit(1)
-
-        firstName = config.get('sdb','firstName')
-        lastName = config.get('sdb','lastName')
-        display_name = firstName + " " + lastName
-
+        
+        # firstName = config.get('sdb','firstName')
+        # lastName = config.get('sdb','lastName')
+        
         userEmailAddress = config.get('sdb','userEmailAddress')
         userPassword = config.get('sdb','userPassword')
         awsAccessKey = config.get('sdb','awsAccessKey')
@@ -56,7 +52,7 @@ class SafeDepositBox(Thread):
 
         self.prefix_to_ignore = os.path.abspath(self.sdb_directory)+"/"
 
-        self.display_name = S3Policy.string_to_dns(display_name)
+        # self.display_name = S3Policy.string_to_dns(display_name)
         self.location = S3Policy.string_to_dns(location)
         
         self.known_files = dict() # file -> [updated?, file's mtime]

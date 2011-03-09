@@ -39,7 +39,8 @@ class CryptoHelper(object):
     k = M2Crypto.RSA.gen_key(2048, 11)
     k.save_key(privfile, cipher=None) 
     k.save_pub_key(pubfile)
-    
+    # Store these in the config table of the database
+    # INSERT INTO config (key, value) VALUES (public_key, 
     return k
 
   def generate_aes_key(self):

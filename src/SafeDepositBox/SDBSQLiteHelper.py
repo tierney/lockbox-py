@@ -33,6 +33,7 @@ init_statements = ["""
                    """
                    CREATE TABLE file_journal (
                        id INTEGER PRIMARY KEY,
+                       filename TEXT,
                        server_path TEXT NOT NULL UNIQUE,
                        active_server_path TEXT,
                        active_mtime INT,
@@ -70,20 +71,30 @@ class SDBSQLiteHelper:
         for statement in init_statements:
             self.c.execute(statement)
 
-    def create_file(self):
+    def create_file(self, filename):
         pass
 
     def _create_user(self, email):
         pass
     def _create_public_key(self, location, public_key):
         pass
-
     def create_user(self, email, location, public_key):
         pass
 
-    def delete_file_permission(self, email, filename):
+    def _delete_file_permission(self, email, filename):
         pass
-    def create_file_permission(self, email, filename, permission):
+    def _create_file_permission(self, email, filename, permission):
+        pass
+
+    def share_file(self, filename, email):
+        # r = (SELECT id FROM user WHERE email_address = ?", email)
+        # user_id = r[0]
+        # r = (SELECT id FROM file_journal WHERE filename = ?", filename)
+        # file_id = r[0]
+        # ("INSERT INTO file_permission (user_id, file_id, permission) VALUES (?,?,3)",
+        #       user_id, file_id
+        pass
+    def unshare_File(self, filename, email):
         pass
     
 s = SDBSQLiteHelper(os.path.expanduser("~/.safedepositbox"))

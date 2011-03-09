@@ -1,4 +1,4 @@
-from S3Interface import S3Bucket, S3Policy, FileNotFound
+from S3Interface import S3Connection, S3Policy, FileNotFound
 import crypto, hashlib, json, os
 from util import log, tempfile
 
@@ -17,11 +17,11 @@ def _hash_flatten_filepath(filepath):
 class AWSFileBundle(object):
   '''Stores the state for a single file.
   
-Files are encrypted and versioned; delta compression is applied based on 
-previous versions to reduce the amount of data stored.
-'''
+  Files are encrypted and versioned; delta compression is applied based on 
+  previous versions to reduce the amount of data stored.
+  '''
   def __init__(self, conf, file_name, crypto_helper):
-    self.bucket = S3Bucket(conf)
+    self.bucket = S3Connection(conf)
                                 
     self.crypto = crypto_helper    
     self.dir = self.bucket.create_dir(_hash_path(file_name))

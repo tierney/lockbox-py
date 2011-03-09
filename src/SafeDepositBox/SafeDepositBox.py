@@ -191,6 +191,5 @@ class SafeDepositBox(Thread):
     
 if __name__ == '__main__':
     sdb = SafeDepositBox()
-    Thread(target=sdb.S3Conn.proc_queue, args=(sdb.prefix_to_ignore, sdb.crypto_helper)).start()
+    Thread(target=sdb.S3Conn.proc_queue, args=(sdb.sdb_directory, sdb.crypto_helper)).start()
     sdb.start()
-

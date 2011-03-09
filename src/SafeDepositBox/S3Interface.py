@@ -118,7 +118,7 @@ class S3Connection(object):
     def enqueue(self, filename, state):
         self.queue.put([filename, state])
 
-    def proc_queue(self, prefix_to_ignore, enc_service):
+    def proc_queue(self, prefix_to_ignore, crypto_helper):
         while True:
             filename, state = self.queue.get()
             relative_filepath = filename.replace(prefix_to_ignore,'')
@@ -129,7 +129,7 @@ class S3Connection(object):
                 with open(filename) as fp:
                     file_md5 = boto.s3.key.Key().compute_md5(fp)[0]
                 if not self.pnew_key: # New file when we started up
-                    enc_filepath = enc_service.bundle(filename)
+                    enc_filepath = crypto_helper.bundle(filename)
                     print "This is the file we expect to be sent", enc_filepath, filename
                     val_filename = os.path.join(self.staging_directory, enc_filepath)
                     self.send_filename(key_filename, val_filename, file_md5)
@@ -137,14 +137,14 @@ class S3Connection(object):
                     with open(filename) as fp:
                         md5, md5b64 = self.pnew_key.compute_md5(fp)
                     if self.pnew_key.get_metadata(METADATA_TAG_MD5) != md5:
-                        enc_filepath = enc_service.bundle(filename)
+                        enc_filepath = crypto_helper.bundle(filename)
                         val_filename = os.path.join(self.staging_directory, enc_filepath)
                         self.send_filename(key_filename, val_filename, file_md5)
                         
             if C.UPDATED == state:
                 with open(filename) as fp:
                     md5, md5b64 = boto.s3.key.Key().compute_md5(fp)
-                enc_filepath = enc_service.bundle(filename)
+                enc_filepath = crypto_helper.bundle(filename)
                 val_filename = os.path.join(self.staging_directory, enc_filepath)
                 self.send_filename(key_filename, val_filename, md5)
 

@@ -1,74 +1,43 @@
 #!/usr/bin/env python
 import calendar
-import ConfigParser
 import logging
 import os
 import stat
-import sys
 import time
 from threading import Thread, Lock
 from crypto import CryptoHelper
-from S3Interface import S3Connection, S3Policy
-from SDBSQLiteHelper import SDBSQLiteHelper as sql
+from S3Interface import S3Connection
+from SDBSQLiteHelper import SDBSQLiteHelper as SQL
 from util import execute
 import constants as C
 
 class SafeDepositBox(Thread):
-    def _get_config(self):
-        sql.blah
     def __init__(self):
         Thread.__init__(self)
-
-        self.admin_directory = os.path.join(os.environ["HOME"], 
-                                            '.safedepositbox')
+        self.admin_directory = os.path.expanduser("~/.safedepositbox")
         
-        # firstName = config.get('sdb','firstName')
-        # lastName = config.get('sdb','lastName')
-        
-        userEmailAddress = config.get('sdb','userEmailAddress')
-        userPassword = config.get('sdb','userPassword')
-        awsAccessKey = config.get('sdb','awsAccessKey')
-        awsSecretKey = config.get('sdb','awsSecretKey')
-        aws_access_key_id = awsAccessKey
-        aws_secret_access_key = awsSecretKey
+        self.db = SQL(os.path.expanduser("~/.safedepositbox"))
+        config = self.db.get_config()
 
-        computerName = config.get('sdb','computerName')
-        location = computerName
-
-        self.sdb_directory = config.get('sdb','sdbDirectory')
+        # Should be apart of init process..
+        self.sdb_directory = os.path.expanduser(config.get('sdb_directory'))
         if not os.path.exists(self.sdb_directory):
             os.mkdir(self.sdb_directory)
         elif not os.path.isdir(self.sdb_directory):
             os.remove(self.sdb_directory)
             os.mkdir(self.sdb_directory)
 
-        log_filename = os.path.join(self.admin_directory, 'sdb.log')
-        logging.basicConfig(level = logging.DEBUG,
-                            format = "%(asctime)s - %(name)s - %(levelname)s" \
-                                "- %(module)s:%(lineno)d - %(funcName)s - %(message)s",
-                            filename = log_filename,
-                            filemode='wa')
-        
-
-        self.prefix_to_ignore = os.path.abspath(self.sdb_directory)+"/"
-
-        # self.display_name = S3Policy.string_to_dns(display_name)
-        self.location = S3Policy.string_to_dns(location)
-        
-        self.known_files = dict() # file -> [updated?, file's mtime]
+        # file -> [updated?, file's mtime]
+        self.known_files = dict() 
         self.known_files_lock = Lock()
         self.known_files_locks = dict()
 
         self.crypto_helper = CryptoHelper(os.path.expanduser('~/.safedepositbox/keys'))        
 
-        self.staging_directory = os.path.join(self.admin_directory, 'staging')
-        conf = Config(user_id = userEmailAddress,
-                      access_key = awsAccessKey,
-                      secret_key = awsSecretKey,
-                      staging_dir = self.staging_directory,
-                      bucket = 'testfiles.sdb')
+        config['staging_directory'] = os.path.join(self.admin_directory, 'staging')
+        config['bucket_name'] = 'safe-deposit-box'
         
-        self.s3bucket = S3Connection(conf, prefix='/data')
+        self.S3Conn = S3Connection(config, prefix='/data')
 
     def upload_file(self, filename):
         # Should queue this operation.
@@ -77,7 +46,7 @@ class SafeDepositBox(Thread):
         bundle_filename = self.crypto_helper.bundle(filename)
         # send the file
         file_key = bundle_filename.replace(self.prefix_to_ignore,'',1)
-        self.s3bucket.send_filename(file_key, bundle_filename)
+        self.S3Conn.send_filename(file_key, bundle_filename)
         # Cleanup
         execute("rm -f %s" % bundle_filename)
         
@@ -92,18 +61,7 @@ class SafeDepositBox(Thread):
     def upload_updated_files(self):
         pass
 
-    # def delete_not_visited_files(self):
-    #     delete_list = []
-    #     for filename in self.known_files:
-    #         if (C.NOT_VISITED == self.known_files[filename][C.STATUS]):
-    #             # k = b.s3.key.Key(b, filename)
-    #             # k.delete()
-    #             print "Removing", filename
-    #             delete_list.append(filename)
-    #     for filename in delete_list:
-    #         del self.known_files[filename]
-
-    def bad_file(self, filename):
+    def _bad_file(self, filename):
         extension = filename.split('.')[-1]
         if ('swp' == extension):
             return True
@@ -116,7 +74,7 @@ class SafeDepositBox(Thread):
            calling the callback function for each regular file'''
         top = os.path.abspath(top)
         for filename in os.listdir(top):
-            if self.bad_file(filename):
+            if self._bad_file(filename):
                 #self.sdb_logger.debug("Badfile: %s" % filename)
                 logging.debug("Badfile: %s" % filename)
                 continue
@@ -149,18 +107,18 @@ class SafeDepositBox(Thread):
             if (self.known_files[filename][C.MTIME] < filename_mtime):
                 self.known_files[filename][C.STATUS] = C.UPDATED
                 self.known_files[filename][C.MTIME] = filename_mtime
-                self.s3bucket.enqueue(filename, C.UPDATED)
+                self.S3Conn.enqueue(filename, C.UPDATED)
             else:
                 self.known_files[filename][C.STATUS] = C.UNCHANGED
             self.known_files[filename][C.LOCK].release()
         else: # don't have this file information stored in memory
             self.known_files[filename] = [C.PNEW, filename_mtime, Lock()]
-            self.s3bucket.enqueue(filename, C.PNEW)
+            self.S3Conn.enqueue(filename, C.PNEW)
 #             print "Check if file is already uploaded as current version", \
 #                 self.known_files[filename]
 
     def monitor_cloud_files(self):
-        keys = self.s3bucket.get_all_keys()
+        keys = self.S3Conn.get_all_keys()
         # make sure that we update our known_files table view of the
         # file time so that we don't continue to update
         for key in keys:
@@ -171,7 +129,7 @@ class SafeDepositBox(Thread):
         #
         # delete not visited files
         while True:
-            keys = self.s3bucket.get_all_keys()
+            keys = self.S3Conn.get_all_keys()
             print keys
             for filename in self.known_files:
                 self.known_files[filename][C.LOCK].acquire()                
@@ -195,7 +153,7 @@ class SafeDepositBox(Thread):
                         assert(key.md5sum != None)
                         
                         with open(filename) as fp:
-                            local_md5 = self.s3bucket.compute_md5(fp)[0]
+                            local_md5 = self.S3Conn.compute_md5(fp)[0]
                             
                         if (key.md5) != (local_md5):
                             if (key_mtime > filename_mtime):
@@ -232,7 +190,7 @@ class SafeDepositBox(Thread):
             time.sleep(C.IDLE_WINDOW)
     
 if __name__ == '__main__':
-    s = SafeDepositBox()
-    Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.crypto_helper)).start()
-    s.start()
+    sdb = SafeDepositBox()
+    Thread(target=sdb.S3Conn.proc_queue, args=(sdb.prefix_to_ignore, sdb.crypto_helper)).start()
+    sdb.start()
 

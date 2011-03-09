@@ -24,23 +24,32 @@ class CryptoHelper(object):
     self._initialize_keys()
 
   def _remove_priv_pem_headers(self, priv):
-    pub.replace("-----BEGIN PUBLIC KEY-----\n","")
-    pub.replace("-----END PUBLIC KEY-----\n","")
+    priv = priv.replace("-----BEGIN RSA PRIVATE KEY-----\n","")
+    priv = priv.replace("-----END RSA PRIVATE KEY-----\n","")
     return priv
 
+  def _add_priv_pem_headers(self, priv):
+    priv = "-----BEGIN RSA PRIVATE KEY-----\n" + priv
+    priv = priv + "-----END RSA PRIVATE KEY-----\n"
+    return priv
+  
   def _remove_pub_pem_headers(self, pub):
     pub = pub.replace("-----BEGIN PUBLIC KEY-----\n","")
     pub = pub.replace("-----END PUBLIC KEY-----\n","")
+    return pub
+
+  def _add_pub_pem_headers(self, pub):
+    pub = "-----BEGIN PUBLIC KEY-----\n" + pub
+    pub = pub + "-----END PUBLIC KEY-----\n"
     return pub
 
   def _initialize_keys(self):
     init_dir(self.key_dir)
     priv = os.path.join(self.key_dir, 'sdb.private')
     pub = os.path.join(self.key_dir, 'sdb.public')
-    
     try:
       self.priv_key = M2Crypto.RSA.load_key(priv)
-      M2Crypto.RSA.load_pub_key(pub)
+      self.pub_key = M2Crypto.RSA.load_pub_key(pub)
     except:
       log.warn('Failed to load keys.  Regenerating...')
       self.priv_key, self.pub_key = self._generate_pki_keys(priv, pub)
@@ -125,5 +134,8 @@ def test_crypto():
   
   assert TEST_STR == decrypt.getvalue()
 
-if __name__=="__main__":
-  test_crypto()
+def test_headers():
+  assert 0 == 0
+
+# if __name__=="__main__":
+#   test_crypto()

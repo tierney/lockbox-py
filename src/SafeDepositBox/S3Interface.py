@@ -38,10 +38,10 @@ def S3Policy(object):
 class S3Connection(object):
     def __init__(self, conf, prefix):
         self.prefix = prefix
-        self.bucket_name = conf.bucket()
-        self.staging_directory = conf.staging_dir()
-        self.aws_access_key_id = conf.access_key()
-        self.aws_secret_access_key = conf.secret_key()
+        self.bucket_name = conf.get("bucket_name")
+        self.staging_directory = conf.get("staging_directory")
+        self.aws_access_key_id = conf.get("aws_access_key")
+        self.aws_secret_access_key = conf.get("aws_secret_key")
         self.queue = Queue.Queue()
 
         self._connect()

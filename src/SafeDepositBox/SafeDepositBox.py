@@ -59,12 +59,8 @@ class SafeDepositBox(Thread):
         self.known_files_lock = Lock()
         self.known_files_locks = dict()
 
-        self.enc_service = EncryptionService(self.display_name,
-                                             self.location,
-                                             self.admin_directory,
-                                             self.prefix_to_ignore,
-                                             use_default_location=True)
-                                             
+        self.crypto_helper = CryptoHelper(os.path.expanduser('~/.safedepositbox/keys'))        
+
         self.staging_directory = os.path.join(self.admin_directory, 'staging')
         conf = Config(user_id = userEmailAddress,
                       access_key = awsAccessKey,
@@ -78,7 +74,7 @@ class SafeDepositBox(Thread):
         # Should queue this operation.
         #
         # bundle(encrypt) the file
-        bundle_filename = self.enc_service.bundle(filename)
+        bundle_filename = self.crypto_helper.bundle(filename)
         # send the file
         file_key = bundle_filename.replace(self.prefix_to_ignore,'',1)
         self.s3bucket.send_filename(file_key, bundle_filename)
@@ -87,7 +83,7 @@ class SafeDepositBox(Thread):
         
     def download_file(self, filename):
         # get file...
-        self.enc_service.unbundle(filename)
+        self.crypto_helper.unbundle(filename)
         
     def reset_known_files(self):
         for filename in self.known_files:
@@ -237,6 +233,6 @@ class SafeDepositBox(Thread):
     
 if __name__ == '__main__':
     s = SafeDepositBox()
-    Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.enc_service)).start()
+    Thread(target=s.s3bucket.proc_queue, args=(s.prefix_to_ignore, s.crypto_helper)).start()
     s.start()
 

@@ -1,41 +1,7 @@
-Photo sharing without revealing plaintext to the cloud.
-
- * encrypt the photos content using our system.
- * Upload to facebook.
- * have a plugin that makes it easy to decode the photo.
-
-----------------------------------------------------------------------
-
-Directories
-
-BUCKET/public_keys
-  * <email_address>
-    <location0> = <pub0>
-    <location1> = <pub1>
-
-BUCKET/files/<filepath>.<email_address>.<location>
-BUCKET/files/<filepath>.permissions
-  * email_address = [read|write]
-
-BUCKET/<filepath>/<email>.<location>
-
-----
-
-Database
-
-<filepath> : users 
+Block caching.
 
 Groups implemented on the client itself. Modify permissions file to
 enforce policy.
-
-----------------------------------------------------------------------
-
-Public keys
-
-Store public keys in a local public key directory (or in a local
-database...)
-
-Store the key --> public key permissions in a local database.
 
 ----------------------------------------------------------------------
 
@@ -57,46 +23,10 @@ address.
 Can use regular user password that is encrypted and put on S3 for
 recovering the private key. 
 
-How do users share their pub keys? PGP? Key sharing service? Email or S3?
-
- * Users can share keys using S3. The problem wit
-
 How to notify users of updates in other buckets?
 
 Do users understand "read-only" vs "read-write" when it comes to
 sharing?
-
-- Should probably combine the S3 and SDB classes since they share so
-  much state (and, it seems, functionality) already.
-
-- Ether subclass or thread...
-
-0. Should have a S3Service queue. Index the queue based on files to be
-changed. Include the operation to be performed.
-  
- * time_conditional_upload
- * local_update_upload
-
-0.1
-
- * remote_file_change
-
-1. RSAService
-
-Start application and make sure we have a private and public key pair
-(store these under hidden home directory).
-
-We should probably store our friends' pub keys here.
-
-2. StatService
-
-Find directory that we're supposed to walk (also stored in directory).
-
-Check for updates.
-
-3. S3Service.
-
-Upload, delete as necessary.
 
 ----------------------------------------------------------------------
 
@@ -108,7 +38,7 @@ security question answer.
 
 Users don't actually need to have AWS account. Make files public and
 allow users to download the files that a friend links for them. Just
-need to pass th pub key to the friend.
+need to pass the pub key to the friend.
 
 ----------------------------------------------------------------------
 
@@ -122,16 +52,11 @@ Must encrypt files using a strong symmetric key. The symmetric key
 must be encrypted with the public key and somehow linked with the
 symmetric key-encrypted file.
 
-# Generate symmetric key password with following:
-head -c 32 /dev/urandom | openssl enc -base64 > file.password.txt
+----------------------------------------------------------------------
+Photo sharing without revealing plaintext to the cloud.
 
-# AES encrypt file
-openssl enc -aes-256-cbc -a -salt -in file.txt -out file.enc -pass file:file.password.txt
-openssl enc -d -aes-256-cbc -a -in file.enc -pass file:file.password.txt
+ * encrypt the photos content using our system.
+ * Upload to facebook.
+ * have a plugin that makes it easy to decode the photo.
+----------------------------------------------------------------------
 
-How to bundle the PKI encypted password and SymK encrypted file? Call
-it by the filename and timestamp?
-
-WARNING. We use the RSA algorithm in order to encrypt and decrypt your
-messages. This is a commonly used algorithm and is well-respected for
-its general strength. There are shortcomings to the protocol.

@@ -2,9 +2,6 @@ import os
 import sqlite3
 import constants as C
 
-KEY = 1
-VALUE = 2
-
 init_script = """
               CREATE TABLE config (
                   id INTEGER PRIMARY KEY,
@@ -65,17 +62,31 @@ class SDBSQLiteHelper:
         conn.commit()
         conn.close()
 
-    def get_config(self):
+    def config_get(self, key):
         conn = sqlite3.connect(self.db_path)
-        conf_dict = dict()
+        ret = None
         with conn:
-            rows = conn.execute("SELECT * FROM config")
-            for row in rows:
-                conf_dict[row[KEY]] = row[VALUE]
+            rows = conn.execute("SELECT value FROM config WHERE key = ?", (key,))
+            if list(rows):
+                ret = list(rows)[0]
         conn.close()
-        return conf_dict
+        return ret
 
-    def create_file(self):
+    def config_set(self, key, value):
+        conn = sqlite3.connect(self.db_path)
+        with conn:
+            conn.execute("REPLACE INTO config (key, value) VALUES (?,?)", 
+                         (key, value)))
+            conn.commit()
+        conn.close()
+
+    def insert_priv_key_pem(self, priv):
+        self.config_set('private_key', priv)
+
+    def create_file(self, **kwargs):
+        pass
+
+    def update_file(self, **kwargs):
         pass
 
     def insert_user_loc_key(self, email, location, public_key):
@@ -83,34 +94,27 @@ class SDBSQLiteHelper:
         with conn:
             conn.execute("INSERT OR IGNORE INTO user (email_address) VALUES (?)", (email,))
             conn.execute("""INSERT INTO public_keys (user_id, location, public_key) VALUES
-                              ((SELECT id FROM user WHERE email_address = ?), ?, ?)""",
-                         (email, location, public_key))
+                              ((SELECT id FROM user WHERE email_address = ?), ?, ?)""", (email, location, public_key))
+            conn.commit()
         conn.close()
-    def insert_local_keys(self, priv, pub):
-        conn = sqlite3.connect(self.db_path)
-        try:
-            with conn:
-                conn.execute("INSERT INTO config (key, value) VALUES ('private_key',?)", (priv,))
-                conn.execute("INSERT INTO config (key, value) VALUES ('public_key',?)", (pub,))
-        except sqlite3.IntegrityError:
-            print "keys already exist"
-        conn.close()
+
     def share_file(self, filename, email):
         conn = sqlite3.connect(self.db_path)
         with conn:
             conn.execute("""INSERT INTO file_permission (user_id, file_id, permission) VALUES
                                ((SELECT id FROM user WHERE email_address = ?),
                                 (SELECT id FROM file_journal WHERE filename = ?),
-                                3)""",
-                         (email, filename))
+                                3)""", (email, filename))
+            conn.commit()
         conn.close()
+
     def unshare_file(self, filename, email):
         conn = sqlite3.connect(self.db_path)
         with conn:
             conn.execute("""DELETE FROM file_permission WHERE
                                 user_id = (SELECT id FROM user WHERE email_address = ?) AND
-                                file_id = (SELECT id FROM file_journal WHERE filename = ?)""",
-                         (email, filename))
+                                file_id = (SELECT id FROM file_journal WHERE filename = ?)""", (email, filename))
+            conn.commit()
         conn.close()
 
         

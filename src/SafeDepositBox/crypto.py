@@ -33,16 +33,6 @@ class CryptoHelper(object):
     priv = priv + "-----END RSA PRIVATE KEY-----\n"
     return priv
   
-  def _remove_pub_pem_headers(self, pub):
-    pub = pub.replace("-----BEGIN PUBLIC KEY-----\n","")
-    pub = pub.replace("-----END PUBLIC KEY-----\n","")
-    return pub
-
-  def _add_pub_pem_headers(self, pub):
-    pub = "-----BEGIN PUBLIC KEY-----\n" + pub
-    pub = pub + "-----END PUBLIC KEY-----\n"
-    return pub
-
   def _initialize_keys(self):
     init_dir(self.key_dir)
     priv = os.path.join(self.key_dir, 'sdb.private')
@@ -56,17 +46,10 @@ class CryptoHelper(object):
     
   def _generate_pki_keys(self, privfile, pubfile):
     k = M2Crypto.RSA.gen_key(2048, 11)
-    k.save_key(privfile, cipher=None) 
-    k.save_pub_key(pubfile)
+    priv = k.as_pem(cipher=None)
 
-    priv = M2Crypto.RSA.load_key(privfile)
-    pub = M2Crypto.RSA.load_pub_key(pubfile)
-
-    print """INSERT INTO config (key, value) VALUES ("private_key",%s)""" % priv.as_pem(cipher=None)
-    print """INSERT INTO config (key, value) VALUES ("public_key",%s)""" % self._remove_pub_pem_headers(pub.as_pem())
-    # Store these in the config table of the database
-    # INSERT INTO config (key, value) VALUES (public_key, 
-    return priv, pub
+    print """INSERT INTO config (key, value) VALUES ("private_key",%s)""" % priv
+    return priv
 
   def generate_aes_key(self):
     '''Generate and return new random AES key.'''

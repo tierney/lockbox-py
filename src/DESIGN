@@ -1,4 +1,5 @@
 Block caching.
+4 MB block size. 
 
 Groups implemented on the client itself. Modify permissions file to
 enforce policy.

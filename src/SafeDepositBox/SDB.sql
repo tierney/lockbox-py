@@ -21,28 +21,28 @@ CREATE INDEX user_email_address_idx ON user(email_address);
 CREATE TABLE block_cache (
     id INTEGER PRIMARY KEY,
     hash VARCHAR(43) NOT NULL UNIQUE,
-    sig TEXT,
-    size INT,
-    delete_after INT,
-    needed_for INT
+    vcdiff TEXT,
+    orig_size INT,
 );
 
 CREATE TABLE file_journal (
     id INTEGER PRIMARY KEY,
     server_path TEXT NOT NULL UNIQUE,
-    active_server_path TEXT,
-    active_blocklist TEXT,
-    active_mtime INT,
-    active_size INT,
-    active_dir INT,
-    active_attrs TEXT,
+    known_server_path TEXT,
+    known_blocklist TEXT, -- comma-delimited block_cache hashes.
+    known_mtime INT,
+    known_size INT,
+    known_dir INT,
+    known_root INT,
+    known_attrs TEXT,
     updated_server_path TEXT,
     updated_blocklist TEXT,
     updated_mtime INT,
     updated_size INT,
     updated_dir INT,
     updated_attrs TEXT,
-    on_disk TINYINT
+    plocal TINYINT,
+    FOREIGN KEY(known_root) REFERENCES roots(id)
 );
 CREATE TABLE file_permission (
     user_id INTEGER NOT NULL,
@@ -50,4 +50,9 @@ CREATE TABLE file_permission (
     permission INTEGER NOT NULL,
     FOREIGN KEY(user_id) REFERENCES user(id),
     FOREIGN KEY(file_id) REFERENCES file_journal(id)
+);
+
+CREATE TABLE roots (
+    id INTEGER PRIMARY KEY,
+    filepath TEXT NOT NULL UNIQUE,
 );

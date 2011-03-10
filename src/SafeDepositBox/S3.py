@@ -16,11 +16,11 @@ class FileNotFound(Exception): pass
 BUCKET_NAME_PADDING_LEN = 20
 METADATA_TAG_MD5 = 'orig_file_md5'
 
-def S3Policy(object):
+def Policy(object):
   @staticmethod
   def string_to_dns(string):
     # Reasonable replacements (don't know if users will hate us for this)
-    string = re.sub(r'[^\w.-]', '-', ).strip()
+    string = re.sub(r'[^\w.-]', '-',).strip()
 
     # Check length of the string
     string = string.lower()
@@ -39,7 +39,7 @@ def S3Policy(object):
 
     return string
 
-class S3Connection(object):
+class Connection(object):
     def __init__(self, conf, prefix):
         self.prefix = prefix
         self.bucket_name = conf.get("bucket_name")
@@ -51,22 +51,22 @@ class S3Connection(object):
         self._connect()
         # should check if the bucket exists in S3.
         self._set_bucket(self.bucket_name)
-        
+
     class Directory(object):
       def __init__(self, connection, bucket, dir):
         self.conn = connection
         self.bucket = bucket
         self.dir = dir
-      
+
       def list(self): pass
       def read(self, file): pass
       def write(self, file, contentfp): pass
-                  
+
 
     def _connect(self):
         self.conn = boto.connect_s3(self.aws_access_key_id,
                                     self.aws_secret_access_key)
-                                    
+
     def _set_bucket(self, bucket_name):
         self.bucket = boto.s3.bucket.Bucket(self.conn, bucket_name)
 
@@ -81,14 +81,14 @@ class S3Connection(object):
         # Need to make creating a public bucket and admin bucket easy.
         # 
         # store the bucket_name in our configuration
-        prefix = S3Policy.string_to_dns(self.prefix)
+        prefix = Policy.string_to_dns(self.prefix)
 
-        s = "".join([random.choice(string.lowercase+string.digits)
+        s = "".join([random.choice(string.lowercase + string.digits)
                      for x in range(1, BUCKET_NAME_PADDING_LEN)])
-        bucket_name = prefix + '.' +  s
+        bucket_name = prefix + '.' + s
         return bucket_name
         #self._create_bucket(s)
-        
+
     def get_all_buckets(self):
         return self.conn.get_all_buckets()
 
@@ -100,7 +100,7 @@ class S3Connection(object):
         key = boto.s3.key.Key(self.bucket, s3key)
         key.set_metadata(METADATA_TAG_MD5, file_md5)
         key.set_contents_from_filename(filename_src)
- 
+
     def get_metadata(self, s3key, metadata):
         key = self.bucket.get_key(s3key)
         print key.md5
@@ -121,7 +121,7 @@ class S3Connection(object):
     def proc_queue(self, prefix_to_ignore, crypto_helper):
         while True:
             filename, state = self.queue.get()
-            relative_filepath = filename.replace(prefix_to_ignore,'')
+            relative_filepath = filename.replace(prefix_to_ignore, '')
             key_filename = '.'.join([relative_filepath, self.display_name, self.location])
 
             if C.PNEW == state:
@@ -140,7 +140,7 @@ class S3Connection(object):
                         enc_filepath = crypto_helper.bundle(filename)
                         val_filename = os.path.join(self.staging_directory, enc_filepath)
                         self.send_filename(key_filename, val_filename, file_md5)
-                        
+
             if C.UPDATED == state:
                 with open(filename) as fp:
                     md5, md5b64 = boto.s3.key.Key().compute_md5(fp)
@@ -150,10 +150,10 @@ class S3Connection(object):
 
             if C.NOT_VISITED == state:
                 # delete file(s)...
-                relative_filepath = filename.replace(prefix_to_ignore,'')
+                relative_filepath = filename.replace(prefix_to_ignore, '')
                 keys = self.bucket.get_all_keys(prefix=relative_filepath)
                 for key in keys:
-                    self.bucket.delete_key(key)            
+                    self.bucket.delete_key(key)
             self.queue.task_done()
 
 
@@ -164,25 +164,25 @@ def main():
 
     from config import Config
     conf = Config(user_id='test@test.com',
-                  access_key = cp.get('aws','access_key_id'),
-                  secret_key = cp.get('aws','secret_access_key'),
-                  staging_dir = '/tmp',
-                  bucket = 'safe-deposit-box')
+                  access_key=cp.get('aws', 'access_key_id'),
+                  secret_key=cp.get('aws', 'secret_access_key'),
+                  staging_dir='/tmp',
+                  bucket='safe-deposit-box')
 
-                       
-    b = S3Connection(conf, prefix='/data')
-    
+
+    b = Connection(conf, prefix='/data')
+
     print b.get_all_buckets()
     for k in b.get_all_keys():
         mtime = k.last_modified
         print mtime
-        print time.strptime(mtime.replace("Z",''), u"%Y-%m-%dT%H:%M:%S.000")
-        print calendar.timegm(time.strptime(mtime.replace("Z",''), u"%Y-%m-%dT%H:%M:%S.000"))
-        print "   ",k, mtime
+        print time.strptime(mtime.replace("Z", ''), u"%Y-%m-%dT%H:%M:%S.000")
+        print calendar.timegm(time.strptime(mtime.replace("Z", ''), u"%Y-%m-%dT%H:%M:%S.000"))
+        print "   ", k, mtime
 
     b.create_bucket()
 
-    
+
     b.send_filename('DESIGN', 'DESIGN', md5)
 
     # b.get_filename('key1','key1.DESIGN')
@@ -206,19 +206,20 @@ def main():
 
 
 def test_string_to_dns():
-    print S3Policy.string_to_dns("he")
-    print S3Policy.string_to_dns("he               ")    
-    print S3Policy.string_to_dns("hello worlds")
-    print S3Policy.string_to_dns("hello worlds!")
-    print S3Policy.string_to_dns("hello worlds-")
-    print S3Policy.string_to_dns("hello's worlds-")
-    print S3Policy.string_to_dns("hello's worlds---")
-    print S3Policy.string_to_dns("hello\"s worlds---")
-    print S3Policy.string_to_dns("Matt Tierney's Bronx iMac "*10)
-    print S3Policy.string_to_dns("140.247.61.26")
-    print S3Policy.string_to_dns("277.247.61.26")
-    print S3Policy.string_to_dns("I-.-.-like--.three.dots")
-    print S3Policy.string_to_dns("I.like.three.dots")
+    print Policy.string_to_dns("he")
+    print Policy.string_to_dns("he               ")
+    print Policy.string_to_dns("hello worlds")
+    print Policy.string_to_dns("hello worlds!")
+    print Policy.string_to_dns("hello worlds-")
+    print Policy.string_to_dns("hello's worlds-")
+    print Policy.string_to_dns("hello's worlds---")
+    print Policy.string_to_dns("hello\"s worlds---")
+    print Policy.string_to_dns("Matt Tierney's Bronx iMac " * 10)
+    print Policy.string_to_dns("140.247.61.26")
+    print Policy.string_to_dns("277.247.61.26")
+    print Policy.string_to_dns("I-.-.-like--.three.dots")
+    print Policy.string_to_dns("I.like.three.dots")
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()

@@ -1,0 +1,7 @@
+# building with cython:::
+
+cython -2 rsync.pyx 
+gcc -O3 -I/home/power/share/python-opt/include/python2.7 -c rsync.c -o rsync.o
+gcc -fPIC -shared -O3 -I/home/power/share/python-opt/include/python2.7 rsync.c -o rsync.so
+python -c 'import rsync'
+cython --line-directives -2  rsync.pyx 

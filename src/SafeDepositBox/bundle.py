@@ -1,4 +1,4 @@
-from S3Interface import S3Connection, S3Policy, FileNotFound
+from S3 import S3Connection, S3Policy, FileNotFound
 import crypto, hashlib, json, os
 from util import log, tempfile
 

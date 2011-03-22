@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-
-import cython
+# -*- coding: utf-8 -*-
 """
 This is a pure Python implementation of the [rsync algorithm](TM96).
 
@@ -27,8 +26,17 @@ http://samba.anu.edu.au/rsync/.
 import collections
 import hashlib
 
+if not(hasattr(__builtins__, "bytes")) or str is bytes:
+    # Python 2.x compatibility
+    def bytes(var, *args):
+        try:
+            return ''.join(map(chr, var))
+        except TypeError:
+            return map(ord, var)
+
 __all__ = ["rollingchecksum", "weakchecksum", "patchstream", "rsyncdelta",
     "blockchecksums"]
+
 
 def rsyncdelta(datastream, remotesignatures, blocksize=4096):
     """
@@ -149,13 +157,8 @@ def rollingchecksum(removed, new, a, b, blocksize=4096):
     of the checksum calculation for the previous window, the removed
     byte, and the added byte.
     """
-    # print removed, new, a, b, blocksize
-    if (type(removed) == type(0)): # int
-        rfunc = int
-    else:
-        rfunc = ord
-    a -= rfunc(removed) - new
-    b -= rfunc(removed) * blocksize - a
+    a -= removed - new
+    b -= removed * blocksize - a
     return (b << 16) | a, a, b
 
 
@@ -166,32 +169,27 @@ def weakchecksum(data):
     a = b = 0
     l = len(data)
     for i in range(l):
-        d = ord(data[i])
-        a += d
-        b += (l - i)*d
+        a += data[i]
+        b += (l - i)*data[i]
 
     return (b << 16) | a, a, b
 
 def test_blockchecksums0():
-    unpatched = open("../../SafeDepositBox/50MB.txt","rb")
+    unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/50MB.txt","rb")
     hashes = blockchecksums(unpatched, blocksize=4194304)
     return hashes
 
 def test_blockchecksums1():
-    unpatched = open("../../SafeDepositBox/4MB.txt","rb")
+    unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MB.txt","rb")
     hashes = blockchecksums(unpatched, blocksize=4 * (2 ** 20))
     return hashes
 
 def test_patchedfile():
-    unpatched = open("../../SafeDepositBox/4MB.txt","rb")
+    unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MB.txt","rb")
     hashes = blockchecksums(unpatched, blocksize=4194304)
-    patchedfile = open("../../SafeDepositBox/4MBpatched.txt","rb")
+    patchedfile = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MBpatched.txt","rb")
     delta = rsyncdelta(patchedfile, hashes)
     return delta
-
-print test_blockchecksums1()
-print len(test_patchedfile())
-sys.exit(0)
 
 if __name__ == "__main__":
     import random

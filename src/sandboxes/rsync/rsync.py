@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import cython
+# import cython
 """
 This is a pure Python implementation of the [rsync algorithm](TM96).
 
@@ -73,7 +73,7 @@ def rsyncdelta(datastream, remotesignatures, blocksize=4096):
             try:
                 if datastream:
                     # Get the next byte and affix to the window
-                    newbyte = ord(datastream.read(1))
+                    newbyte = ord(datastream.read(1)) # tierney ord
                     window.append(newbyte)
             except TypeError:
                 # No more data from the file; the window will slowly shrink.
@@ -91,6 +91,8 @@ def rsyncdelta(datastream, remotesignatures, blocksize=4096):
 
             # Yank off the extra byte and calculate the new window checksum
             oldbyte = window.popleft()
+#             print 'oldbyte:', oldbyte
+#             print 'newbyte:', newbyte
             checksum, a, b = rollingchecksum(oldbyte, newbyte, a, b, blocksize)
 
             # Add the old byte the file delta. This is data that was not found
@@ -149,13 +151,14 @@ def rollingchecksum(removed, new, a, b, blocksize=4096):
     of the checksum calculation for the previous window, the removed
     byte, and the added byte.
     """
-    # print removed, new, a, b, blocksize
-    if (type(removed) == type(0)): # int
-        rfunc = int
-    else:
-        rfunc = ord
-    a -= rfunc(removed) - new
-    b -= rfunc(removed) * blocksize - a
+    rfuncrm = rfuncnew = int
+    if (type(removed) != type(0)): rfuncrm = ord
+    if (type(new) != type(0)): rfuncnew = ord
+
+    a -= rfuncrm(removed) - rfuncnew(new)
+    b -= rfuncrm(removed) * blocksize - a
+#     print removed, new, a, b, blocksize
+#     print
     return (b << 16) | a, a, b
 
 
@@ -183,15 +186,23 @@ def test_blockchecksums1():
     return hashes
 
 def test_patchedfile():
-    unpatched = open("../../SafeDepositBox/4MB.txt","rb")
-    hashes = blockchecksums(unpatched, blocksize=4194304)
-    patchedfile = open("../../SafeDepositBox/4MBpatched.txt","rb")
+    unpatched = open("../../SafeDepositBox/1MB.txt","rb")
+    hashes = blockchecksums(unpatched, blocksize=8 * (2 ** 10))
+    print len(hashes)
+    print type(hashes)
+    patchedfile = open("../../SafeDepositBox/1MBpatched.txt","rb")
     delta = rsyncdelta(patchedfile, hashes)
+    
+    unpatched.seek(0)
+    save_to = open("locally-patched.file", "wb")
+    patchstream(unpatched, save_to, delta)
+
     return delta
 
-print test_blockchecksums1()
-print len(test_patchedfile())
-sys.exit(0)
+# print test_blockchecksums1()
+# test_patchedfile()
+# import sys
+# sys.exit(0)
 
 if __name__ == "__main__":
     import random
@@ -204,7 +215,9 @@ if __name__ == "__main__":
         from io import BytesIO as StringIO
 
     # Generates random data for the test
-    targetdata = ''.join([chr(random.randint(0, 127)) for n in range(1<<16)])
+    targetsize = 1<<16
+    targetsize = 10
+    targetdata = ''.join([chr(random.randint(0, 127)) for n in range(targetsize)])
     chunks = [targetdata[i:i+2048] for i in xrange(0, 1<<17, 2048)]
     for i in xrange(8):
         a, b = (
@@ -226,10 +239,20 @@ if __name__ == "__main__":
         targetstream = StringIO(bytes(targetdata, "ascii"))
         hoststream = StringIO(bytes(hostdata, "ascii"))
 
-
     targetchecksums = blockchecksums(targetstream)
+
+    targetstream.seek(0)
+    print targetstream.readlines()
+    hoststream.seek(0)
+    print hoststream.readlines()
+
+    print targetchecksums
     binarypatch = rsyncdelta(hoststream, targetchecksums)
+
+    print binarypatch
     patchstream(targetstream, mergedstream, binarypatch)
+    mergedstream.seek(0)
+    print mergedstream.readlines()
 
     mergedstream.seek(0)
     patcheddata = mergedstream.read()

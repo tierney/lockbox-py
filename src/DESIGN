@@ -6,6 +6,12 @@ enforce policy.
 
 ----------------------------------------------------------------------
 
+MIME Type
+
+Handle user configuration with the web browser. 
+
+----------------------------------------------------------------------
+
 Amazon S3 Buckets
 
 For every sdb bucket (public), there should be a corresponding admin

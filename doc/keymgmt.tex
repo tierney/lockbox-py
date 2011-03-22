@@ -1,0 +1,18 @@
+\section{How to Share a File}
+
+In our hybrid cryptosystem, the challenge for sharing files rests in
+managing keys correctly and efficiently. We consider three designs in
+our discussion.
+
+Recall that our hybrid cryptosystem takes advantage of the ability of
+block ciphers (i.e., AES-256) to cipher efficiently any file with a
+password while public key cryptography (i.e., RSA) enables us to
+control access to the file password.
+
+\subsection{Everytime, A New Password}
+
+When a user updates a file we can generate a new block cipher
+password, encrypt this password with all of the file friends' public
+keys, and upload the generated files to the cloud.
+
+

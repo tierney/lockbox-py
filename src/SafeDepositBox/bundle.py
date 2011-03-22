@@ -4,7 +4,7 @@ from util import log, tempfile
 
 class PermissionDenied(Exception): pass
 
-AESKEY_FILE = './aes.key'
+AESKEY_FILE = 'aes.key'
 CONTENT_FILE = './content'
 
 def _hash_path(filepath):
@@ -38,6 +38,7 @@ class AWSFileBundle(object):
   
   def load_key_file(self):
     '''Attempt to load the encrypted AES key for the given folder.'''
+    # expects that AESKEY_FILE is a dictionary
     self.enc_aes_keys = json.loads(self.dir.read(AESKEY_FILE))
     
     if not self.conf.user_id() in self.enc_aes_keys:

@@ -6,8 +6,8 @@ import stat
 import time
 from threading import Thread, Lock
 from crypto import CryptoHelper
-from S3Interface import S3Connection
-from SDBSQLiteHelper import SDBSQLiteHelper as SQL
+from S3 import Connection
+from SQLiteHelper import SQLiteHelper as SQL
 from util import execute
 import constants as C
 
@@ -17,6 +17,8 @@ class SafeDepositBox(Thread):
         self.admin_directory = os.path.expanduser("~/.safedepositbox")
         
         self.db = SQL(os.path.expanduser("~/.safedepositbox"))
+
+        # config: dict.
         config = self.db.get_config()
 
         # Should be apart of init process..
@@ -37,23 +39,8 @@ class SafeDepositBox(Thread):
         config['staging_directory'] = os.path.join(self.admin_directory, 'staging')
         config['bucket_name'] = 'safe-deposit-box'
         
-        self.S3Conn = S3Connection(config, prefix='/data')
+        self.S3Conn = Connection(config, prefix='/data')
 
-    def upload_file(self, filename):
-        # Should queue this operation.
-        #
-        # bundle(encrypt) the file
-        bundle_filename = self.crypto_helper.bundle(filename)
-        # send the file
-        file_key = bundle_filename.replace(self.prefix_to_ignore,'',1)
-        self.S3Conn.send_filename(file_key, bundle_filename)
-        # Cleanup
-        execute("rm -f %s" % bundle_filename)
-        
-    def download_file(self, filename):
-        # get file...
-        self.crypto_helper.unbundle(filename)
-        
     def reset_known_files(self):
         for filename in self.known_files:
             self.known_files[filename][C.STATUS] = C.NOT_VISITED
@@ -123,53 +110,6 @@ class SafeDepositBox(Thread):
         # file time so that we don't continue to update
         for key in keys:
             print "CLOUD:", self.prefix_to_ignore, key.name, self._lm_to_epoch(key.last_modified)
-            
-    def sync_files_thread(self):
-        # Do I want to handle here pulling files from the cloud?
-        #
-        # delete not visited files
-        while True:
-            keys = self.S3Conn.get_all_keys()
-            print keys
-            for filename in self.known_files:
-                self.known_files[filename][C.LOCK].acquire()                
-                fpath = os.path.join(self.sdb_directory, filename)
-                if not os.path.exists(fpath):
-                    delete_list.append(filename)
-
-                filename_mtime = time.gmtime(os.stat(filename).st_mtime)
-                if (C.PNEW == self.known_files[filename][C.STATUS]):
-                    if (filename not in keys):
-                        # upload
-                        self.upload_file(filename)
-                        self.known_files[filename][C.STATUS] = C.UPDATED
-                        self.known_files[filename][C.MTIME] = filename_mtime
-                    else:
-                        key = keys.get(filename)
-                        mtime = key.last_modified
-                        key_mtime = time.strptime(mtime.replace("Z",''),
-                                                  u"%Y-%m-%dT%H:%M:%S.000")
-                        print key.md5sum
-                        assert(key.md5sum != None)
-                        
-                        with open(filename) as fp:
-                            local_md5 = self.S3Conn.compute_md5(fp)[0]
-                            
-                        if (key.md5) != (local_md5):
-                            if (key_mtime > filename_mtime):
-                                self.download_file(filename)
-                            elif (key_mtime < filename_mtime):
-                                self.upload_file(filename)
-                elif ():
-                    pass
-                
-                self.known_files[filename][C.LOCK].release()
-
-        # maybe we want to store that the file's state is deleted
-        # locally but keep the key in the cloud?
-
-        # reset file when update
-        pass
 
     def run(self):
         while True:

@@ -2,9 +2,9 @@ import os
 import sqlite3
 import constants as C
 
-SQL_SCHEMA = 'sdb.sql'
+SQL_SCHEMA = 'SDB.sql'
 
-class SDBSQLiteHelper:
+class SQLiteHelper:
     def __init__(self, admin_directory, reset=False):
         self.db_path = os.path.join(admin_directory, C.SDB_DB_NAME)
         if reset:
@@ -26,6 +26,19 @@ class SDBSQLiteHelper:
         conn.commit()
         conn.close()
 
+    def get_config(self):
+        ret_dict = dict()
+        for conf_item in ['staging_directory',
+                          'aws_access_key',
+                          'aws_secret_key',
+                          'sdb_directory',
+                          'email_address',
+                          'computer_name',
+                          'public_key',
+                          'private_key']:
+            ret_dict[conf_item] = self.config_get(conf_item)        
+        return ret_dict
+    
     def config_get(self, key):
         conn = sqlite3.connect(self.db_path)
         ret = None

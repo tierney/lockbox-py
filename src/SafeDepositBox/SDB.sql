@@ -29,7 +29,7 @@ CREATE TABLE file_journal (
     id INTEGER PRIMARY KEY,
     server_path TEXT NOT NULL UNIQUE,
     known_server_path TEXT,
-    known_blocklist TEXT, -- comma-delimited block_cache hashes.
+    known_blocklist TEXT,
     known_mtime INT,
     known_size INT,
     known_dir INT,

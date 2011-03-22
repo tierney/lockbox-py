@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # import cython
 """
@@ -27,8 +28,17 @@ http://samba.anu.edu.au/rsync/.
 import collections
 import hashlib
 
+if not(hasattr(__builtins__, "bytes")) or str is bytes:
+    # Python 2.x compatibility
+    def bytes(var, *args):
+        try:
+            return ''.join(map(chr, var))
+        except TypeError:
+            return map(ord, var)
+
 __all__ = ["rollingchecksum", "weakchecksum", "patchstream", "rsyncdelta",
     "blockchecksums"]
+
 
 def rsyncdelta(datastream, remotesignatures, blocksize=4096):
     """
@@ -133,8 +143,14 @@ def blockchecksums(instream, blocksize=4096):
 
 def patchstream(instream, outstream, delta):
     """
-    Patches instream using the supplied delta and write the resultantant
+    Patches instream using the supplied delta and write the resultant
     data to outstream.
+
+    tierney: `delta` contents. delta[0] represents block size. For i != 0,
+    delta[i] could mean one of two things. If delta[i] is an int, then
+    it means that corresponding block is not different. Otherwise (if
+    delta[i] is not an int), then the contents are the data that
+    should be replaced for that patch.
     """
     blocksize = delta[0]
 
@@ -151,14 +167,8 @@ def rollingchecksum(removed, new, a, b, blocksize=4096):
     of the checksum calculation for the previous window, the removed
     byte, and the added byte.
     """
-    rfuncrm = rfuncnew = int
-    if (type(removed) != type(0)): rfuncrm = ord
-    if (type(new) != type(0)): rfuncnew = ord
-
-    a -= rfuncrm(removed) - rfuncnew(new)
-    b -= rfuncrm(removed) * blocksize - a
-#     print removed, new, a, b, blocksize
-#     print
+    a -= removed - new
+    b -= removed * blocksize - a
     return (b << 16) | a, a, b
 
 
@@ -169,42 +179,94 @@ def weakchecksum(data):
     a = b = 0
     l = len(data)
     for i in range(l):
-        d = ord(data[i])
-        a += d
-        b += (l - i)*d
+        a += data[i]
+        b += (l - i)*data[i]
 
     return (b << 16) | a, a, b
 
-def test_blockchecksums0():
-    unpatched = open("../../SafeDepositBox/50MB.txt","rb")
-    hashes = blockchecksums(unpatched, blocksize=4194304)
-    return hashes
+# def test_blockchecksums0():
+#     unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/50MB.txt","rb")
+#     hashes = blockchecksums(unpatched, blocksize=4194304)
+#     return hashes
 
-def test_blockchecksums1():
-    unpatched = open("../../SafeDepositBox/4MB.txt","rb")
-    hashes = blockchecksums(unpatched, blocksize=4 * (2 ** 20))
-    return hashes
+# def test_blockchecksums1():
+#     unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MB.txt","rb")
+#     hashes = blockchecksums(unpatched, blocksize=4 * (2 ** 20))
+#     return hashes
 
-def test_patchedfile():
-    unpatched = open("../../SafeDepositBox/1MB.txt","rb")
-    hashes = blockchecksums(unpatched, blocksize=8 * (2 ** 10))
-    print len(hashes)
-    print type(hashes)
-    patchedfile = open("../../SafeDepositBox/1MBpatched.txt","rb")
-    delta = rsyncdelta(patchedfile, hashes)
+# def test_patchedfile():
+#     unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MB.txt","rb")
+#     hashes = blockchecksums(unpatched, blocksize=4194304)
+#     patchedfile = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MBpatched.txt","rb")
+#     delta = rsyncdelta(patchedfile, hashes)
+#     print delta
+
+# def test_patchedfile0():
+#     unpatched = open("export0.pdf","rb")
+
+#     blocksize=8 * (2 ** 10)    
+#     hashes = blockchecksums(unpatched, blocksize=blocksize)
+#     import pprint
+#     pprint.pprint(hashes)
+#     patchedfile = open("export1.pdf","rb")
+#     delta = rsyncdelta(patchedfile, hashes, blocksize)
+#     with open("export1-new.pdf","w") as fh:
+#         patchstream(unpatched, fh, delta)
+
+#     print
+#     print len(delta)
+#     print
+#     print delta.__sizeof__()
+#     for delt in delta:
+#         if type(delt) == type(0):
+#             pass #print "INT:", delt
+#         else:
+#             print "list?:", len(delt), delt.__sizeof__()
+
+# def test_patchedfile1():
+#     unpFile = "/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MB.txt"
+#     pFile = "/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MBpatched.txt"
+#     out = "4MBpatched-new.txt"
+
+#     # unpFile = "export0.pdf"
+#     # pFile = "export1.pdf"
+#     # out = "export-new.pdf"
     
-    unpatched.seek(0)
-    save_to = open("locally-patched.file", "wb")
-    patchstream(unpatched, save_to, delta)
+#     blocksize= 8 * (2 ** 10)        
+#     unpatched = open(unpFile,"rb")
+    
+#     hashes = blockchecksums(unpatched, blocksize=blocksize)
+#     import pprint
+    
+#     # pprint.pprint(hashes[0])
+#     # print len(hashes[0]), hashes[0].__sizeof__() #len(hashes[1]), hashes[1].__sizeof__()
 
-    return delta
+#     # pprint.pprint(hashes[1])
+#     # print len(hashes[1]), hashes[1].__sizeof__() #len(hashes[1]), hashes[1].__sizeof__()
+#     print len(hashes[0]), len(hashes[1])
 
-# print test_blockchecksums1()
-# test_patchedfile()
-# import sys
-# sys.exit(0)
+#     patchedfile = open(pFile,"rb")
+#     delta = rsyncdelta(patchedfile, hashes, blocksize)
+#     print delta
+#     print len(delta)
+#     with open(out,"w") as fh:
+#         patchstream(unpatched, fh, delta)
+
+#     print
+#     print delta.__sizeof__()
+#     for delt in delta:
+#         if not isinstance(delt, int):
+#             print "list?:", len(delt), delt.__sizeof__()
+
+def iosprint(fin):
+    print fin.readlines()
+    fin.seek(0)
 
 if __name__ == "__main__":
+    # test_patchedfile1()
+    # import sys
+    # sys.exit(0)
+
     import random
     import time
 
@@ -215,9 +277,10 @@ if __name__ == "__main__":
         from io import BytesIO as StringIO
 
     # Generates random data for the test
-    targetsize = 1<<16
-    targetsize = 10
-    targetdata = ''.join([chr(random.randint(0, 127)) for n in range(targetsize)])
+    datasize = 1<<16
+    datasize = 1 * (2 ** 10)
+    
+    targetdata = ''.join([chr(random.randint(0, 127)) for n in range(datasize)])
     chunks = [targetdata[i:i+2048] for i in xrange(0, 1<<17, 2048)]
     for i in xrange(8):
         a, b = (
@@ -240,25 +303,17 @@ if __name__ == "__main__":
         hoststream = StringIO(bytes(hostdata, "ascii"))
 
     targetchecksums = blockchecksums(targetstream)
-
-    targetstream.seek(0)
-    print targetstream.readlines()
-    hoststream.seek(0)
-    print hoststream.readlines()
-
-    print targetchecksums
     binarypatch = rsyncdelta(hoststream, targetchecksums)
 
     print binarypatch
     patchstream(targetstream, mergedstream, binarypatch)
     mergedstream.seek(0)
-    print mergedstream.readlines()
-
-    mergedstream.seek(0)
     patcheddata = mergedstream.read()
     if __builtins__.bytes == str:
+        # print "assume bytes means str"
         assert patcheddata == hostdata
     else:
+        # print "not assuming bytes means str"
         assert str(patcheddata, 'ascii') == hostdata
 
     print("Test passed.")

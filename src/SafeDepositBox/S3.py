@@ -10,42 +10,47 @@ import boto.s3
 import calendar
 import constants as C
 import socket
-
-class FileNotFound(Exception): pass
+from bundle import AWSFileBundle as bundler
+from util import log
 
 BUCKET_NAME_PADDING_LEN = 20
 METADATA_TAG_MD5 = 'orig_file_md5'
 
 def Policy(object):
-  @staticmethod
-  def string_to_dns(string):
-    # Reasonable replacements (don't know if users will hate us for this)
-    string = re.sub(r'[^\w.-]', '-',).strip()
+    @staticmethod
+    def string_to_dns(string):
+        # Reasonable replacements (don't know if users will hate us for this)
+        string = re.sub(r'[^\w.-]', '-',).strip()
 
-    # Check length of the string
-    string = string.lower()
-    string = string[:63]
-    if len(string) < 3:
-        return None
+        # Check length of the string
+        string = string.lower()
+        string = string[:63]
+        if len(string) < 3:
+            return None
 
-    # Make sure we do not have an IP address
-    try:
-        socket.inet_aton(string)
-        # we have a legal ip address (so bad!)
-        return None
-    except socket.error:
-        # we have an invalid ip addr, so we might be okay
-        pass
+        # Make sure we do not have an IP address
+        try:
+            socket.inet_aton(string)
+            # we have a legal ip address (so bad!)
+            return None
+        except socket.error:
+            # we have an invalid ip addr, so we might be okay
+            pass
 
-    return string
+        return string
 
 class Connection(object):
     def __init__(self, conf, prefix):
+        self.conf = conf
+        
         self.prefix = prefix
         self.bucket_name = conf.get("bucket_name")
         self.staging_directory = conf.get("staging_directory")
         self.aws_access_key_id = conf.get("aws_access_key")
         self.aws_secret_access_key = conf.get("aws_secret_key")
+        self.email_address = conf.get("email_address")
+        self.computer_name = conf.get("computer_name")        
+
         self.queue = Queue.Queue()
 
         self._connect()
@@ -53,16 +58,31 @@ class Connection(object):
         self._set_bucket(self.bucket_name)
 
     class Directory(object):
-      def __init__(self, connection, bucket, dir):
-        self.conn = connection
-        self.bucket = bucket
-        self.dir = dir
+        def __init__(self, connection, bucket, dirpath):
+            self.conn = connection
+            self.bucket = bucket
+            self.dir = dirpath
 
-      def list(self): pass
-      def read(self, file): pass
-      def write(self, file, contentfp): pass
+        def list(self):
+            return self.bucket.get_all_keys(prefix=self.dir)
 
+        def read(self, file):
+            keypath = os.path.join(self.dir, file)
+            key = self.bucket.get_key(keypath)
+            if key:
+                return key.get_contents_as_string()
+            return None
 
+        def write(self, file, contentfp, md5=None):
+            keyname = os.path.join(self.dir, file)
+            log.info("keyname: %s" % keyname)
+            key = boto.s3.key.Key(self.bucket, keyname)
+            if md5: key.set_metadata(METADATA_TAG_MD5, md5)
+            key.set_contents_from_string(contentfp)
+
+    def create_dir(self, hashed_path_to_filename):
+        return self.Directory(self.conn, self.bucket, hashed_path_to_filename)
+        
     def _connect(self):
         self.conn = boto.connect_s3(self.aws_access_key_id,
                                     self.aws_secret_access_key)
@@ -122,17 +142,21 @@ class Connection(object):
         while True:
             filename, state = self.queue.get()
             relative_filepath = filename.replace(prefix_to_ignore, '')
-            key_filename = '.'.join([relative_filepath, self.display_name, self.location])
-
+            print 'relative_filepath:', relative_filepath
+            key_filename = '.'.join([relative_filepath,
+                                     self.email_address,
+                                     self.computer_name])
             if C.PNEW == state:
                 self.pnew_key = self.bucket.get_key(key_filename)
                 with open(filename) as fp:
                     file_md5 = boto.s3.key.Key().compute_md5(fp)[0]
                 if not self.pnew_key: # New file when we started up
-                    enc_filepath = crypto_helper.bundle(filename)
-                    print "This is the file we expect to be sent", enc_filepath, filename
-                    val_filename = os.path.join(self.staging_directory, enc_filepath)
-                    self.send_filename(key_filename, val_filename, file_md5)
+                    bundle_helper = bundler(self.conf, self, filename, crypto_helper)
+                    with open(filename) as fp:
+                        bundle_helper.add_content(fp, file_md5)
+                    print "Exact file we expect to send:", filename
+                    # val_filename = os.path.join(self.staging_directory, enc_filepath)
+                    # self.send_filename(bundle_helper, filename, file_md5)
                 else: # Existing file. Checking if stale.
                     with open(filename) as fp:
                         md5, md5b64 = self.pnew_key.compute_md5(fp)

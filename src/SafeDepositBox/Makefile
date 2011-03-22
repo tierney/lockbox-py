@@ -1,4 +1,9 @@
-all: clean build
+all:
+	rm ~/.safedepositbox/safedepositbox.db
+	sqlite3 ~/.safedepositbox/safedepositbox.db < ~/Dropbox/sdb.sql
+	./SafeDepositBox.py
+
+#all: clean build
 
 test:
 	python setup.py py2app -A

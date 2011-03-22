@@ -7,13 +7,13 @@ import atexit
 from logging import DEBUG, INFO, WARN, ERROR, FATAL
 from time import time
 from collections import defaultdict
-import tempfile
+import tempfile as tf
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO, 
                     format="%(levelname).1s %(filename)s:%(lineno)s -- %(message)s ")
 
 def tempfile(conf):
-  return tempfile.TemporaryFile(dir=conf.staging_dir())
+  return tf.TemporaryFile(dir=conf['staging_directory'])
  
 def execute(cmd):
     subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,

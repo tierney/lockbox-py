@@ -8,7 +8,7 @@ class FileNotFound(Exception): pass
 class PermissionDenied(Exception): pass
 
 AESKEY_FILE = 'aes.key'
-CONTENT_FILE = './content'
+CONTENT_FILE = 'contents'
 
 def _hash_path(filepath):
   return hashlib.md5(filepath).hexdigest()
@@ -39,7 +39,7 @@ class AWSFileBundle(object):
       self.aes_key = self.crypto.generate_aes_key()
       log.info("New AES key (base64): %s" % base64.encodestring(self.aes_key))
       self.enc_aes_keys[self.conf['email_address']] = base64.encodestring(self.crypto.encrypt_aes_key(self.aes_key))
-      self.flush_keny_file() 
+      self.flush_key_file() 
   
   def load_key_file(self):
     '''Attempt to load the encrypted AES key for the given folder.'''
@@ -49,11 +49,14 @@ class AWSFileBundle(object):
     if not key_file_str:
       raise FileNotFound
     self.enc_aes_keys = json.loads(key_file_str)
+
+    for key in self.enc_aes_keys:
+      self.enc_aes_keys[key] = base64.decodestring(self.enc_aes_keys[key])
     
-    if not self.conf.user_id() in self.enc_aes_keys:
+    if not self.conf['email_address'] in self.enc_aes_keys:
       raise PermissionDenied, 'Current user cannot decrypt file %s' % self.file_name
     
-    self.aes_key = self.crypto.decrypt_aes_key(self.enc_aes_keys[self.conf.user_id()])
+    self.aes_key = self.crypto.decrypt_aes_key(self.enc_aes_keys[self.conf['email_address']])
   
   def flush_key_file(self):
     '''Write a new keyfile containing encrypted aes keys.'''
@@ -63,12 +66,12 @@ class AWSFileBundle(object):
     self.enc_aes_keys[userid] = pubkey.public_encrypt(self.aes_key)
     self.flush_key_file()
   
-  def add_content(self, input):
+  def add_content(self, input, md5=None):
     '''Write a new content entry, encrypted using the current AES key.'''
     tf = tempfile(self.conf)
     self.crypto.encrypt(input, tf)
     tf.seek(0)
-    self.dir.write(CONTENT_FILE, tf.read())
+    self.dir.write(CONTENT_FILE, tf.read(), md5)
     del tf
   
   def get_content(self, fp):

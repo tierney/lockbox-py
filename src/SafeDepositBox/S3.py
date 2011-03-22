@@ -73,12 +73,12 @@ class Connection(object):
                 return key.get_contents_as_string()
             return None
 
-        def write(self, file, contentfp):
+        def write(self, file, contentfp, md5=None):
             keyname = os.path.join(self.dir, file)
             log.info("keyname: %s" % keyname)
-            if not self.bucket.get_key(keyname):
-                key = self.bucket.new_key(keyname)
-                key.set_contents_from_string(contentfp)
+            key = boto.s3.key.Key(self.bucket, keyname)
+            if md5: key.set_metadata(METADATA_TAG_MD5, md5)
+            key.set_contents_from_string(contentfp)
 
     def create_dir(self, hashed_path_to_filename):
         return self.Directory(self.conn, self.bucket, hashed_path_to_filename)
@@ -152,10 +152,11 @@ class Connection(object):
                     file_md5 = boto.s3.key.Key().compute_md5(fp)[0]
                 if not self.pnew_key: # New file when we started up
                     bundle_helper = bundler(self.conf, self, filename, crypto_helper)
-                    bundle_helper.add_content(filename)
-                    print "The file we expect to send:", filename
+                    with open(filename) as fp:
+                        bundle_helper.add_content(fp, file_md5)
+                    print "Exact file we expect to send:", filename
                     # val_filename = os.path.join(self.staging_directory, enc_filepath)
-                    # self.send_filename(key_filename, val_filename, file_md5)
+                    # self.send_filename(bundle_helper, filename, file_md5)
                 else: # Existing file. Checking if stale.
                     with open(filename) as fp:
                         md5, md5b64 = self.pnew_key.compute_md5(fp)

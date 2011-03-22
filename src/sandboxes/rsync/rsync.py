@@ -174,24 +174,52 @@ def weakchecksum(data):
 
     return (b << 16) | a, a, b
 
-def test_blockchecksums0():
-    unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/50MB.txt","rb")
-    hashes = blockchecksums(unpatched, blocksize=4194304)
-    return hashes
+# def test_blockchecksums0():
+#     unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/50MB.txt","rb")
+#     hashes = blockchecksums(unpatched, blocksize=4194304)
+#     return hashes
 
-def test_blockchecksums1():
-    unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MB.txt","rb")
-    hashes = blockchecksums(unpatched, blocksize=4 * (2 ** 20))
-    return hashes
+# def test_blockchecksums1():
+#     unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MB.txt","rb")
+#     hashes = blockchecksums(unpatched, blocksize=4 * (2 ** 20))
+#     return hashes
 
 def test_patchedfile():
     unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MB.txt","rb")
     hashes = blockchecksums(unpatched, blocksize=4194304)
     patchedfile = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MBpatched.txt","rb")
     delta = rsyncdelta(patchedfile, hashes)
-    return delta
+    print delta
+
+def test_patchedfile0():
+    unpatched = open("export0.pdf","rb")
+    hashes = blockchecksums(unpatched, blocksize=4 * (2 ** 10))
+    import pprint
+    pprint.pprint(hashes)
+    patchedfile = open("export1.pdf","rb")
+    delta = rsyncdelta(patchedfile, hashes)
+    with open("export1-new.pdf","w") as fh:
+        patchstream(unpatched, fh, delta)
+
+    print
+    print len(delta)
+    print
+    print delta.__sizeof__()
+    for delt in delta:
+        if type(delt) == type(0):
+            print "INT:", delt
+        else:
+            print "list?:", len(delt), delt.__sizeof__()
+
+def iosprint(fin):
+    print fin.readlines()
+    fin.seek(0)
 
 if __name__ == "__main__":
+    test_patchedfile0()
+    import sys
+    sys.exit(0)
+
     import random
     import time
 
@@ -202,7 +230,10 @@ if __name__ == "__main__":
         from io import BytesIO as StringIO
 
     # Generates random data for the test
-    targetdata = ''.join([chr(random.randint(0, 127)) for n in range(1<<16)])
+    datasize = 1<<16
+    datasize = 4 * (2 ** 10)
+    
+    targetdata = ''.join([chr(random.randint(0, 127)) for n in range(datasize)])
     chunks = [targetdata[i:i+2048] for i in xrange(0, 1<<17, 2048)]
     for i in xrange(8):
         a, b = (
@@ -224,16 +255,31 @@ if __name__ == "__main__":
         targetstream = StringIO(bytes(targetdata, "ascii"))
         hoststream = StringIO(bytes(hostdata, "ascii"))
 
-
+    iosprint(targetstream)
     targetchecksums = blockchecksums(targetstream)
+    print
+    print targetchecksums
+    print
+
     binarypatch = rsyncdelta(hoststream, targetchecksums)
+    print
+    print binarypatch
+    print
+
+    
     patchstream(targetstream, mergedstream, binarypatch)
+
+    
+    print binarypatch
+    iosprint(mergedstream)
 
     mergedstream.seek(0)
     patcheddata = mergedstream.read()
     if __builtins__.bytes == str:
+        print "assume bytes means str"
         assert patcheddata == hostdata
     else:
+        print "not assuming bytes means str"
         assert str(patcheddata, 'ascii') == hostdata
 
     print("Test passed.")

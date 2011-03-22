@@ -139,8 +139,14 @@ def blockchecksums(instream, blocksize=4096):
 
 def patchstream(instream, outstream, delta):
     """
-    Patches instream using the supplied delta and write the resultantant
+    Patches instream using the supplied delta and write the resultant
     data to outstream.
+
+    tierney: `delta` contents. delta[0] represents block size. For i != 0,
+    delta[i] could mean one of two things. If delta[i] is an int, then
+    it means that corresponding block is not different. Otherwise (if
+    delta[i] is not an int), then the contents are the data that
+    should be replaced for that patch.
     """
     blocksize = delta[0]
 
@@ -184,41 +190,78 @@ def weakchecksum(data):
 #     hashes = blockchecksums(unpatched, blocksize=4 * (2 ** 20))
 #     return hashes
 
-def test_patchedfile():
-    unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MB.txt","rb")
-    hashes = blockchecksums(unpatched, blocksize=4194304)
-    patchedfile = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MBpatched.txt","rb")
-    delta = rsyncdelta(patchedfile, hashes)
-    print delta
+# def test_patchedfile():
+#     unpatched = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MB.txt","rb")
+#     hashes = blockchecksums(unpatched, blocksize=4194304)
+#     patchedfile = open("/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MBpatched.txt","rb")
+#     delta = rsyncdelta(patchedfile, hashes)
+#     print delta
 
-def test_patchedfile0():
-    unpatched = open("export0.pdf","rb")
-    hashes = blockchecksums(unpatched, blocksize=4 * (2 ** 10))
-    import pprint
-    pprint.pprint(hashes)
-    patchedfile = open("export1.pdf","rb")
-    delta = rsyncdelta(patchedfile, hashes)
-    with open("export1-new.pdf","w") as fh:
-        patchstream(unpatched, fh, delta)
+# def test_patchedfile0():
+#     unpatched = open("export0.pdf","rb")
 
-    print
-    print len(delta)
-    print
-    print delta.__sizeof__()
-    for delt in delta:
-        if type(delt) == type(0):
-            print "INT:", delt
-        else:
-            print "list?:", len(delt), delt.__sizeof__()
+#     blocksize=8 * (2 ** 10)    
+#     hashes = blockchecksums(unpatched, blocksize=blocksize)
+#     import pprint
+#     pprint.pprint(hashes)
+#     patchedfile = open("export1.pdf","rb")
+#     delta = rsyncdelta(patchedfile, hashes, blocksize)
+#     with open("export1-new.pdf","w") as fh:
+#         patchstream(unpatched, fh, delta)
+
+#     print
+#     print len(delta)
+#     print
+#     print delta.__sizeof__()
+#     for delt in delta:
+#         if type(delt) == type(0):
+#             pass #print "INT:", delt
+#         else:
+#             print "list?:", len(delt), delt.__sizeof__()
+
+# def test_patchedfile1():
+#     unpFile = "/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MB.txt"
+#     pFile = "/home/tierney/src/safe-deposit-box/src/SafeDepositBox/4MBpatched.txt"
+#     out = "4MBpatched-new.txt"
+
+#     # unpFile = "export0.pdf"
+#     # pFile = "export1.pdf"
+#     # out = "export-new.pdf"
+    
+#     blocksize= 8 * (2 ** 10)        
+#     unpatched = open(unpFile,"rb")
+    
+#     hashes = blockchecksums(unpatched, blocksize=blocksize)
+#     import pprint
+    
+#     # pprint.pprint(hashes[0])
+#     # print len(hashes[0]), hashes[0].__sizeof__() #len(hashes[1]), hashes[1].__sizeof__()
+
+#     # pprint.pprint(hashes[1])
+#     # print len(hashes[1]), hashes[1].__sizeof__() #len(hashes[1]), hashes[1].__sizeof__()
+#     print len(hashes[0]), len(hashes[1])
+
+#     patchedfile = open(pFile,"rb")
+#     delta = rsyncdelta(patchedfile, hashes, blocksize)
+#     print delta
+#     print len(delta)
+#     with open(out,"w") as fh:
+#         patchstream(unpatched, fh, delta)
+
+#     print
+#     print delta.__sizeof__()
+#     for delt in delta:
+#         if not isinstance(delt, int):
+#             print "list?:", len(delt), delt.__sizeof__()
 
 def iosprint(fin):
     print fin.readlines()
     fin.seek(0)
 
 if __name__ == "__main__":
-    test_patchedfile0()
-    import sys
-    sys.exit(0)
+    # test_patchedfile1()
+    # import sys
+    # sys.exit(0)
 
     import random
     import time
@@ -231,7 +274,7 @@ if __name__ == "__main__":
 
     # Generates random data for the test
     datasize = 1<<16
-    datasize = 4 * (2 ** 10)
+    datasize = 4 * (2 ** 20)
     
     targetdata = ''.join([chr(random.randint(0, 127)) for n in range(datasize)])
     chunks = [targetdata[i:i+2048] for i in xrange(0, 1<<17, 2048)]
@@ -255,24 +298,10 @@ if __name__ == "__main__":
         targetstream = StringIO(bytes(targetdata, "ascii"))
         hoststream = StringIO(bytes(hostdata, "ascii"))
 
-    iosprint(targetstream)
     targetchecksums = blockchecksums(targetstream)
-    print
-    print targetchecksums
-    print
-
     binarypatch = rsyncdelta(hoststream, targetchecksums)
-    print
-    print binarypatch
-    print
-
-    
     patchstream(targetstream, mergedstream, binarypatch)
-
     
-    print binarypatch
-    iosprint(mergedstream)
-
     mergedstream.seek(0)
     patcheddata = mergedstream.read()
     if __builtins__.bytes == str:

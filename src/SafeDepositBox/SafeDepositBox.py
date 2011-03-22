@@ -22,7 +22,7 @@ class SafeDepositBox(Thread):
         config = self.db.get_config()
 
         # Should be apart of init process..
-        self.sdb_directory = os.path.expanduser(config.get('sdb_directory'))
+        self.sdb_directory = os.path.expanduser(config['sdb_directory'])
         if not os.path.exists(self.sdb_directory):
             os.mkdir(self.sdb_directory)
         elif not os.path.isdir(self.sdb_directory):
@@ -109,7 +109,7 @@ class SafeDepositBox(Thread):
         # make sure that we update our known_files table view of the
         # file time so that we don't continue to update
         for key in keys:
-            print "CLOUD:", self.prefix_to_ignore, key.name, self._lm_to_epoch(key.last_modified)
+            print "CLOUD:", self.sdb_directory, key.name, self._lm_to_epoch(key.last_modified)
 
     def run(self):
         while True:

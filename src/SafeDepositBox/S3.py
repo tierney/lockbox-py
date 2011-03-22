@@ -11,8 +11,7 @@ import calendar
 import constants as C
 import socket
 from bundle import AWSFileBundle as bundler
-
-class FileNotFound(Exception): pass
+from util import log
 
 BUCKET_NAME_PADDING_LEN = 20
 METADATA_TAG_MD5 = 'orig_file_md5'
@@ -42,6 +41,8 @@ def Policy(object):
 
 class Connection(object):
     def __init__(self, conf, prefix):
+        self.conf = conf
+        
         self.prefix = prefix
         self.bucket_name = conf.get("bucket_name")
         self.staging_directory = conf.get("staging_directory")
@@ -68,18 +69,20 @@ class Connection(object):
         def read(self, file):
             keypath = os.path.join(self.dir, file)
             key = self.bucket.get_key(keypath)
-            return key.get_contents_as_string()
+            if key:
+                return key.get_contents_as_string()
+            return None
 
         def write(self, file, contentfp):
             keyname = os.path.join(self.dir, file)
+            log.info("keyname: %s" % keyname)
             if not self.bucket.get_key(keyname):
                 key = self.bucket.new_key(keyname)
-                key.set_contents_from_file(contentfp)
+                key.set_contents_from_string(contentfp)
 
-    def create_dir(self, hashed_path_to_file_name):
+    def create_dir(self, hashed_path_to_filename):
         return self.Directory(self.conn, self.bucket, hashed_path_to_filename)
         
-
     def _connect(self):
         self.conn = boto.connect_s3(self.aws_access_key_id,
                                     self.aws_secret_access_key)
@@ -148,11 +151,11 @@ class Connection(object):
                 with open(filename) as fp:
                     file_md5 = boto.s3.key.Key().compute_md5(fp)[0]
                 if not self.pnew_key: # New file when we started up
-                    bundle_helper = bundler(conf, filename, crypto_helper)
-                    enc_filepath = crypto_helper.bundle(filename)
-                    print "The file we expect to send:", enc_filepath, filename
-                    val_filename = os.path.join(self.staging_directory, enc_filepath)
-                    self.send_filename(key_filename, val_filename, file_md5)
+                    bundle_helper = bundler(self.conf, self, filename, crypto_helper)
+                    bundle_helper.add_content(filename)
+                    print "The file we expect to send:", filename
+                    # val_filename = os.path.join(self.staging_directory, enc_filepath)
+                    # self.send_filename(key_filename, val_filename, file_md5)
                 else: # Existing file. Checking if stale.
                     with open(filename) as fp:
                         md5, md5b64 = self.pnew_key.compute_md5(fp)

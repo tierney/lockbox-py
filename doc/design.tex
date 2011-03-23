@@ -1,12 +1,72 @@
 \section{Design}
 
+\subsection{Components}
+
 Monitor directories with SDB.
 
-Hybrid cryptosystem. Encrypt files with block cipher
-(AES-256). Encrypt the password as a file with public keys (RSA).
-Upload the AES-encrypted and the public key-encrypted password (one
-public-key encrypted password per user, of course).
+\subsubsection*{Hybrid cryptosystem}
+Encrypt files with block cipher (AES-256). Encrypt the password as a
+file with public keys (RSA).  Upload the AES-encrypted and the public
+key-encrypted password (one public-key encrypted password per user, of
+course).
 
+SDB provides a high degree of privacy, understood here as freedom from
+external inteference. In existing systems, one of these most common
+and practical methods for securely storing data is using a symmetric
+key encryption method called AES-256. Symmetric key cryptography is
+very similar to one's everyday use of passwords to log into computers,
+email services, etc.; to access a password-encrypted document, one
+just needs to know the correct password. The important point is that
+the ``key'' must be shared between all parties who will want to have
+access to the data. Secret sharing techniques are applicable but we
+think there might be a more efficient approach leveraging the
+cloud. However, services like Dropbox raise a concern over middleman
+companies that use symmetric key encryption since the middleman stores
+the password that is used to encrypt the stored data. The middleman
+can see the data and can release the data when needed or desired.
+
+Public key cryptographic techniques in practice are used to sign and
+encrypt data for two purposes: 
+\begin{enumerate}
+\item Signing data (with the private key) guarantees that the
+  recipient knows that sender of the data is who the sender claims to
+  be.
+\item Encrypting data (with the public key) guarantees that only the
+  corresponding private key owner can decrypt the data. Notably, the
+  public key cannot be used to decrypt the public key encrypted data.
+\end{enumerate}
+
+SDB works using a well-known combination of symmetric key and private
+key cryptography to ensure true privacy and security for user’s
+files. A randomly generated 32 byte password is generated per
+file. This password is used to AES-256 encrypt a file. The password is
+then encrypted with the public key of whomever the file owner wants to
+share the file with. The public key encrypted password files (plural
+since we have multiple users we want to share the file with) and the
+symmetric key encrypted file are uploaded to the cloud service. The
+symmetric key encrypted file and the corresponding public key
+encrypted password file are made accessible to the user the file owner
+wants to share the original data with.
+
+\subsection{Definitions}
+
+\begin{itemize}
+\item deltas
+\item hashes
+\item checkpoint files
+\item SimpleDB
+\item SQLite
+\item S3
+\end{itemize}
+
+\subsection{Order of Operations}
+
+Mixing our hybrid cryptosystem with delta encoding requires careful
+ordering of algorithms to ensure sufficient entropy in our system.
+
+We always perform delta encoding operations on cleartext, encrypting
+hashes, deltas, and checkpoint files after they contain the proper
+information.
 
 
 

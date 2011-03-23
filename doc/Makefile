@@ -1,4 +1,4 @@
-all : subdirs paper.ps 
+all : subdirs paper.ps paper.pdf 
 
 DIA_FIGS = $(wildcard *.dia)
 DIA_EPS = $(DIA_FIGS:.dia=.eps)

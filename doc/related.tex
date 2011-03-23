@@ -1,9 +1,9 @@
 \section{Related Work}
 
-\subsection{W5 Realized?}
+\subsection{Realizing W5}
 W5~\cite{w5} summarized the idea of enabling users to store their data
-on the cloud without having to reveal information about themselves to
-the cloud itself.
+on the cloud without having to reveal their cleartext data to the
+cloud.
 
 Ellis, et al.~\cite{groupware} introduced the notion of collaborative
 groupware and the challenges groupware poses to concurrency.
@@ -20,6 +20,12 @@ complicates the matter of making it easy for users to adopt our
 utility. While algorithmically sufficient, users finding adoption
 (i.e., configuring a new file system) too difficult.
 
+Several projects have examined how to reduce web traffic bandwidth
+consumption by eliminating redundant transmissions~\cite{wetherall,
+  webexpress}; however, delta encoding and ``differencing'' techniques
+that were applied make sense on unencrypted network data and are
+therefore orthogonal to our application assumptions. 
+
 \subsection{Versioning Provenance}
 
 Braun, et al.~\cite{securingprovenance} acknowledge the difference in
@@ -34,6 +40,13 @@ Shamir explained how to share a secret~\cite{shamir}.\note{beyond the
 Attribute-based encryption shows how we can use identity-based
 encryption techniques to provide access control over encrypted
 data~\cite{abe}. \note{How in particular?}
+
+Diffie and Hellman presented a practical and widely used key exchange
+protocol~\cite{dh}. The blend of binary key trees with Diffie-Hellman
+key exchange makes key distribution fault-tolerant~\cite{treekeydist,
+  treekeydist2}. However, in our system we do not assume the need to
+provide tree-like fault tolerance characteristics. If the cloud is
+down, then we cannot make many guarantees.
 
 \subsection{(Dis)Trusting the Cloud}
 Oceanstore~\cite{oceanstore} showed the design for a secure,

@@ -1,26 +1,18 @@
 \begin{abstract}
 
-  To scale to millions of page requests per day, many popular web services such
-  as Facebook, eBay, and Amazon partition application data, storing each
-  partition on a separate database instance running on its own machine.  Since
-  these user-facing web services have strict latency and availability
-  requirements, it costs too much to run distributed commit protocols to support
-  ACID transactions across data partitions stored on different machines.
-  Programmers can decompose an application operation into several smaller
-  transactions each modifying a single data partition; however, programmers lack
-  tools to help automatically cope with failures that occur between multiple
-  transactions.  This paper introduces the abstraction of an Atomic Transaction
-  Chain (\atc), which allows programmers to group a series of related
-  transactions that modify different data partitions under all-or-nothing atomic
-  execution.  We also present the design and implementation of \name, which provides a SQL
-  extension to simplify operations on a partitioned database. In particular,
-  \name allows programmers to perform primary key-based lookups/updates across
-  partitioned tables, specify custom {\atc}s, and create
-  secondary indices that are automatically maintained by the underlying storage
-  system through its use of \atc.
-
-	We have ported a third-party application RuBIS~\cite{rubis} (an online auction website) to
-	run on top of \name. Evaluations on a local cluster testbed show that \name
-	achieves good scaling performance across many machines.
+Users want to share data over the Internet but do so without shifting
+their mental models for how data should be. Safe Deposit Box (SDB) is
+a built-from-scratch, privacy/security-aware alternative to popular
+file sync, sharing, and versioning systems like Dropbox. SDB operates
+as a user program in the background, synchronizing contents from
+user-specified directories to a cloud service. Data is encrypted in
+transit to and in storage on the cloud storage service provider’s
+(SSP) servers. SDB also enables users to share encrypted data with
+friends who use the SDB program. We show how sharing can be efficient,
+correct, and, most importantly, intuitive for everyday users. We
+present the full design and implementation of SDB using Amazon Web
+Services Simple Storage Service~\cite{s3} and
+SimpleDB~\cite{simpledb}. SDB makes secure file sharing private and
+always available.
 
 \end{abstract} 

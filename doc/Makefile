@@ -60,5 +60,5 @@ abstract : abstract-paper.ps
 	mv abstract-paper.ps abstract.ps
 
 clean : 
-	rm -rf *.dvi *.ps *.aux *.log *.bbl *.blg *~ 
+	rm -rf *.dvi *.ps *.aux *.log *.bbl *.blg *~ *.pdf
 	for d in $(DIRS); do (cd $$d; $(MAKE) clean ); done

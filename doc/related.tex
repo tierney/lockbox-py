@@ -1,0 +1,75 @@
+\section{Related Work}
+
+\subsection{W5 Realized?}
+W5~\cite{w5} summarized the idea of enabling users to store their data
+on the cloud without having to reveal information about themselves to
+the cloud itself.
+
+Ellis, et al.~\cite{groupware} introduced the notion of collaborative
+groupware and the challenges groupware poses to concurrency.
+
+\subsection{Delta Encoding}
+The idea of applying rolling checksums for the purposes of delta
+encoding has been widely deployed in the utility {\tt
+  rsync}~\cite{rsync}. Algorithmically, these ideas relate to Rabin
+fingerprinting~\cite{rabinfp}.
+
+The Low-Bandwidth File System~\cite{lbfs} has demonstrated the utility
+of rolling checksums and caching on a file system level. This
+complicates the matter of making it easy for users to adopt our
+utility. While algorithmically sufficient, users finding adoption
+(i.e., configuring a new file system) too difficult.
+
+\subsection{Versioning Provenance}
+
+Braun, et al.~\cite{securingprovenance} acknowledge the difference in
+access control management strategies for provenace being the
+relationships between data: How do you secure provenance correctly and
+coherently for the end-user?
+
+\subsection{Sharing and Key Management}
+Shamir explained how to share a secret~\cite{shamir}.\note{beyond the
+  gratuitous ack...}
+
+Attribute-based encryption shows how we can use identity-based
+encryption techniques to provide access control over encrypted
+data~\cite{abe}. \note{How in particular?}
+
+\subsection{(Dis)Trusting the Cloud}
+Oceanstore~\cite{oceanstore} showed the design for a secure,
+distributed file system. Pond~\cite{pond} demonstrated an early
+prototype of the system. Use of the cloud simplifies many of our
+design considerations. We believe that these techniques are still
+valid and perhaps influenced the internal design of cloud service
+providers on which we tested our system.
+
+Bayou~\cite{bayou} presents an evaluation of conflict resolution that
+occurs at the mobile device user level. In our system, we actually
+leverage the consistency models of existing web service providers (S3
+has atomic writes but eventually consistent reads of raw data while
+SimpleDB has the option to enable consistent reads of metadata.)
+
+Distrusting the cloud has been a common thread of research for several
+years. Cachin, et al.~\cite{trusting} review the methods by which one
+could come to trust the cloud. Mazieres, et al.~\cite{sfsbyzantine,
+  donttrust} discuss the design considerations behind the realization
+of a file system that does not have to trust the storage
+service. SiRiUS~\cite{sirius} also wants to distrust the cloud
+greatly, especially teh networking. Depot~\cite{depot} summarizes and
+introduces the various consistency models. SPORC~\cite{sporc}
+introduced the question: What if we don't trust the cloud to order our
+messages correctly? Starting with this question, overhead enters the
+picture. A point of comparison in our system is whether such a design
+consideration presents an unnecesary overhead in designing a
+cloud-based user application. SUNDR~\cite{sundr}.
+
+When considering the trust worthiness of our history
+mechanisms~\cite{fakepicasso}.
+
+\note{gratuitous additional thoughts:} Hippocratic
+Databases~\cite{hippocratic} and searchable encrypted databases that
+reveal only answers to queries~\cite{dawn}.
+
+Arguably, the trustworthiness of the cloud is not as bad as these
+papers make the situation out to be.
+

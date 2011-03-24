@@ -9,6 +9,36 @@ block ciphers (i.e., AES-256) to cipher efficiently any file with a
 password while public key cryptography (i.e., RSA) enables us to
 control access to the file password.
 
+\subsection{User Experience}
+
+Since our system is motivated by the convenience affordance of systems like Dropbox, we want to make it easy for everyday users to bootstrap their usage of \name. In this subsection, we outline how we make it possible for users to have a simplified  user experience.
+
+\subsubsection*{New \name User}
+
+We have two classes of users at whom \name is directed.
+
+\paragraph{Receive Invitation} The more challenging of the two scenarios is where a non-\name user receives an invitation to view a file through \name. 
+
+The user receives a URL as in Figure~\ref{fig:url} in a fun but professional email inviting the user to accept their friend's invitation to download \name and receive a file.
+
+\begin{figure*}
+{\tt http://sdb.news.cs.nyu.edu/?q=http://s3.amazonaws.com/<bucketname>/<filenamehash>}
+\caption{What the URL looks like.}
+\label{fig:url}
+\end{figure*}
+
+\paragraph{Self-motivated}
+
+\subsubsection*{Existing \name User}
+
+\subsection{How to Share a Key}
+
+Sharing a key has been a question asked and addressed by researchers since Shamir~\cite{shamir}. 
+
+Our system assumes that users can trust the cloud. In fact, the users can trust the cloud with their files and, in particular, with key exchanges. 
+
+
+
 \subsection{Everytime, A New Password}
 
 When a user updates a file we can generate a new block cipher

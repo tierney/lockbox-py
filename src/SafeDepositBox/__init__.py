@@ -3,9 +3,11 @@
 __all__ = ['bundle', 
            'constants',
            'crypto', 
-           'S3Interface', 
-           'util', 
-           'setup',            
+           'S3', 
+           'util',
+           'SQLiteHelper',
+           'rsync',
+           'setup',
            ]
 # enable access to external libaries.
 import extern

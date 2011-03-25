@@ -24,16 +24,28 @@ We have two classes of users at whom \name is directed.
 scenarios is where a non-\name user receives an invitation to view a
 file through \name.
 
-The user receives a URL as in Figure~\ref{fig:url} in a fun but
+The user receives a URL as in Figure~\ref{fig:inviteurl} in a fun but
 professional email inviting the user to accept their friend's
 invitation to download \name and receive a file using the \name
 service.
 
-\begin{figure*}
-{\tt http://sdb.trustycloudapps.com/?q=http://s3.amazonaws.com/<bucketname>/<filenamehash>}
+\begin{figure*} {\tt
+    http://sdb.trustycloudapps.com/invite.py?to=<email
+    addr>\&from=<email addr>}
 \caption{What the URL looks like.}
-\label{fig:url}
+\label{fig:inviteurl}
 \end{figure*}
+
+\begin{figure*}
+{\tt http://sdb.trustycloudapps.com/sendpub.py?bucket=<bucketname>}
+\caption{For each bucket in the \name system, we store the public keys
+  in a predefined object name in the bucket. This object contains a
+  JSON-formatted dictionary of (location, public key) pairs for the
+  bucket owner's email address. This makes it easy to locate the keys
+  and share the identity with the friend.}
+\label{fig:inviteurl}
+\end{figure*}
+
 
 Once the user chooses to download the \name application, she is
 presented with a ``Downloading \name...'' screen, which demonstrates
@@ -43,8 +55,9 @@ installed.
 
 This link contains a link that leverages a MIME type registered during
 the installation of \name. This MIME type enables the current and all
-future shared file links to be accessible. \note{Implement this on the
-  Mac prototype.}
+future shared file links to be accessible. \note{Register MIME type on
+  Mac. Register right-click menu option for files/directories
+  (contextual menu items).}
 
 Once the user has installed the application, she clicks a link that
 automatically sends her public key to the friend who sent her the
@@ -53,6 +66,11 @@ original invitation. The original user now can add the friend's (new
 
 \paragraph{Self-motivated} In the case that a user decides to install
 \name out of their own volition, setup is straightforward.
+
+\paragraph{Increasing Privacy} To reduce the trusted code base in the
+cloud, the users can opt to share invitations and public keys through
+emailing encrypted ``bundles'' that only \name can open.
+
 
 \subsubsection*{Existing \name User}
 

@@ -8,7 +8,6 @@ from threading import Thread, Lock
 from crypto import CryptoHelper
 from S3 import Connection
 from SQLiteHelper import SQLiteHelper as SQL
-from util import execute
 import constants as C
 
 class SafeDepositBox(Thread):

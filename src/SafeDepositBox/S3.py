@@ -58,6 +58,11 @@ class Connection(object):
         self._set_bucket(self.bucket_name)
 
     class Directory(object):
+        """
+        This class provides access to the 'directory' on S3. The idea
+        is that every file we care about in our system would have a
+        unique file path that it corresponds to.
+        """
         def __init__(self, connection, bucket, dirpath):
             self.conn = connection
             self.bucket = bucket

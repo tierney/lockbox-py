@@ -44,6 +44,7 @@ CREATE TABLE file_journal (
     plocal TINYINT,
     FOREIGN KEY(known_root) REFERENCES roots(id)
 );
+
 CREATE TABLE file_permission (
     user_id INTEGER NOT NULL,
     file_id INTEGER NOT NULL,

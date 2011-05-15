@@ -104,9 +104,11 @@ class LockboxCommand(cmd.Cmd):
            return
         print l[0] + l[1]
 
+
 def initialize_logging():
     FORMAT = "%(asctime)-15s %(levelname)-10s %(module)-10s %(lineno)-3d %(message)s"
     logging.basicConfig(filename="test.log", format=FORMAT)
+
 
 def main():
     initialize_logging()

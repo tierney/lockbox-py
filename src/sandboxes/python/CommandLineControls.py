@@ -11,7 +11,7 @@ class LockboxCommand(cmd.Cmd):
     def __init__(self):
         cmd.Cmd.__init__(self)
         self.prompt = prompt_string + '> '
-
+        
     # editors
     def do_addeditor(self):
         pass

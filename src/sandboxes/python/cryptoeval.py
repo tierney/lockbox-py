@@ -2,4 +2,9 @@
 
 import M2Crypto
 
-M2Crypto.RSA.gen_key(2048,11)
+def ocb():
+    pass
+
+k = M2Crypto.RSA.gen_key(2048,11, ocb)
+
+

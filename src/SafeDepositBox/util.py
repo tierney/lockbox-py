@@ -145,7 +145,7 @@ class Flags():
   def add_argument(self, *args, **kw):
     self.parser.add_argument(*args, **kw)
     
-flags = Flags()
+#flags = Flags()
 
 
 class NamedList(object):

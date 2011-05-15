@@ -42,12 +42,16 @@ class CryptoHelper(object):
       self.pub_key = M2Crypto.RSA.load_pub_key(pub)
     except:
       log.warn('Failed to load keys.  Regenerating...')
-      self.priv_key, self.pub_key = self._generate_pki_keys(priv, pub)
-    
+      self.priv_key = self._generate_pki_keys(priv, pub)
+
+      mem = M2Crypto.BIO.MemoryBuffer()
+      self.priv_key.save_key_bio(mem, cipher=None)
+      self.priv_key.save_pub_key_bio(mem)
+      print mem.getvalue()
+
   def _generate_pki_keys(self, privfile, pubfile):
     k = M2Crypto.RSA.gen_key(2048, 11)
     priv = k.as_pem(cipher=None)
-
     print """INSERT INTO config (key, value) VALUES ("private_key",%s)""" % priv
     return priv
 

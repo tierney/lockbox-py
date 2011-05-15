@@ -37,7 +37,6 @@ if not(hasattr(__builtins__, "bytes")) or str is bytes:
 __all__ = ["rollingchecksum", "weakchecksum", "patchstream", "rsyncdelta",
     "blockchecksums"]
 
-
 def rsyncdelta(datastream, remotesignatures, blocksize=4096):
     """
     Generates a binary patch when supplied with the weak and strong
@@ -285,9 +284,9 @@ if __name__ == "__main__":
 
     hostdata = ''.join(chunks)
 
-    # targetstream: file to be patched
-    # hoststream: what the unpatched target needs to become
-    # mergedstream: output after patching
+    # targetstream: file to be patched (original)
+    # hoststream: what the unpatched target needs to become (newer version)
+    # mergedstream (patcheddata): output after patching
 
     # Python 3 bytes compatibility
     mergedstream = StringIO()

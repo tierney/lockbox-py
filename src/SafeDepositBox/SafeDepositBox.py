@@ -44,9 +44,6 @@ class SafeDepositBox(Thread):
         for filename in self.known_files:
             self.known_files[filename][C.STATUS] = C.NOT_VISITED
 
-    def upload_updated_files(self):
-        pass
-
     def _bad_file(self, filename):
         extension = filename.split('.')[-1]
         if ('swp' == extension):

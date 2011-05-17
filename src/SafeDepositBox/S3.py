@@ -214,26 +214,6 @@ def main():
 
     b.send_filename('DESIGN', 'DESIGN', md5)
 
-    # b.get_filename('key1','key1.DESIGN')
-
-    # b = boto.s3.bucket.Bucket(s3c, 'testfiles.sdb')
-    # b.add_email_grant(<AWS user's email address>)
-    # b.configure_versioning(True)
-
-    # k = boto.s3.key.Key(b, 'key0')
-    # # k.add_email_grant(<AWS user's email address>)
-    # k.set_contents_from_filename("DESIGN.enc")
-
-    # k = boto.s3.key.Key(b, 'dir0/dir1/dir2/key0')
-    # k.set_contents_from_filename("DESIGN.enc")
-
-    # k = boto.s3.key.Key(b, 'dir0/dir1/dir3/key0')
-    # k.set_contents_from_filename("DESIGN.enc")
-
-    # k = boto.s3.key.Key(b, 'dir0/dir1/dir2/key1')
-    # k.set_contents_from_filename("DESIGN.enc")
-
-
 def test_string_to_dns():
     print Policy.string_to_dns("he")
     print Policy.string_to_dns("he               ")
@@ -248,7 +228,6 @@ def test_string_to_dns():
     print Policy.string_to_dns("277.247.61.26")
     print Policy.string_to_dns("I-.-.-like--.three.dots")
     print Policy.string_to_dns("I.like.three.dots")
-
 
 if __name__ == "__main__":
     main()

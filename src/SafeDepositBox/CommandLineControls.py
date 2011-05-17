@@ -4,14 +4,20 @@ import readline
 import cmd
 import logging
 import sys
-
 prompt_string = "Lockbox"
 
 class LockboxCommand(cmd.Cmd):
     def __init__(self):
         cmd.Cmd.__init__(self)
         self.prompt = prompt_string + '> '
-        
+
+    def do_viewlog(self): pass        
+
+    # local credentials    
+    def do_updateawsaccesskey(self): pass
+    
+    def do_updateawssecretkey(self): pass
+    
     # editors
     def do_addeditor(self):
         pass
@@ -25,6 +31,12 @@ class LockboxCommand(cmd.Cmd):
     def do_searcheditors(self):
         # see address book
         pass
+    
+    # viewer
+    def do_addviewer(self): pass
+    def do_delviewer(self): pass
+    def do_modviewer(self): pass
+    def do_searchviewers(self): pass
 
     # keys
     def do_genkey(self):
@@ -108,7 +120,6 @@ class LockboxCommand(cmd.Cmd):
 def initialize_logging():
     FORMAT = "%(asctime)-15s %(levelname)-10s %(module)-10s %(lineno)-3d %(message)s"
     logging.basicConfig(filename="test.log", format=FORMAT)
-
 
 def main():
     initialize_logging()

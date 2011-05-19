@@ -124,8 +124,3 @@ class SafeDepositBox(Thread):
             # self.reset_known_files()
 
             time.sleep(C.IDLE_WINDOW)
-    
-if __name__ == '__main__':
-    sdb = SafeDepositBox()
-    Thread(target=sdb.S3Conn.proc_queue, args=(sdb.sdb_directory, sdb.crypto_helper)).start()
-    sdb.start()

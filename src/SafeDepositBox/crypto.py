@@ -77,7 +77,7 @@ class CryptoHelper(object):
     If no key is specified, a random key will be generated.
     
     returns: aes_key, salt used for encryption.
-'''
+    '''
     log.info("Encrypting file...")
     
     if not aes_key:
@@ -96,7 +96,7 @@ class CryptoHelper(object):
     '''
     Decrypt a fileobject using the given AES key and salt.
     
-'''
+    '''
     log.info("Decrypting file...")
     iv = '\0' * 32
     cipher = M2Crypto.EVP.Cipher(alg='aes_256_cbc', key=aes_key, iv=iv, op=DECODE, salt=salt)    
@@ -121,8 +121,3 @@ def test_crypto():
   
   assert TEST_STR == decrypt.getvalue()
 
-def test_headers():
-  assert 0 == 0
-
-# if __name__=="__main__":
-#   test_crypto()

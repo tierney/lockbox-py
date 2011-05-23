@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from SafeDepositBox import SafeDepositBox
+# from SafeDepositBox import SafeDepositBox
 from CommandLineControls import LockboxCommands
 from LoggingHelper import LoggingHelper
 
@@ -14,9 +14,9 @@ def main():
     
     # 
 
-    sdb = SafeDepositBox()
-    Thread(target=sdb.S3Conn.proc_queue, args=(sdb.sdb_directory, sdb.crypto_helper)).start()
-    sdb.start()
+    # sdb = SafeDepositBox()
+    # Thread(target=sdb.S3Conn.proc_queue, args=(sdb.sdb_directory, sdb.crypto_helper)).start()
+    # sdb.start()
 
     cli = LockboxCommands()
     cli.cmdloop()

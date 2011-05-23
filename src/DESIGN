@@ -15,8 +15,19 @@ All other services can be handle from the PyMe interface to GPGME.
 When using the key generation phase of the wrapper, we should make
 sure to launch the random number generator daemon (rngd).
 
-----------------------------------------------------------------------
+Probably should use the python-gnupg python code from Google Code
+http://code.google.com/p/python-gnupg/
 
+Solid documentation:
+http://packages.python.org/python-gnupg/
+
+----------------------------------------------------------------------
+Database Interface
+
+May want to leverage something like SQLAlchemy+Elixir or SQLObject.
+
+
+----------------------------------------------------------------------
 
 Block caching.
 4 MB block size. 
@@ -30,6 +41,7 @@ MIME Type
 
 Handle user configuration with the web browser. 
 
+lockbox:// perhaps?
 
 ----------------------------------------------------------------------
 

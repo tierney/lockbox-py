@@ -81,7 +81,8 @@ class SafeDepositBox(Thread):
                 print 'Skipping %s' % pathname
 
     def _lm_to_epoch(self, last_modified_time):
-        return calendar.timegm(time.strptime(last_modified_time.replace("Z",''), u"%Y-%m-%dT%H:%M:%S.000"))
+        return calendar.timegm(time.strptime(last_modified_time.replace("Z",''), 
+                                             u"%Y-%m-%dT%H:%M:%S.000"))
 
     def monitor_local_file(self, filename):
         # Check for local file changes (make some queue of these results)

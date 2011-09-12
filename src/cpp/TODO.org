@@ -1,0 +1,5 @@
+* Components
+** inotify - Detect file changes.
+** libaws++ - Push to the cloud.
+** gpgme - Privacy through encryption.
+

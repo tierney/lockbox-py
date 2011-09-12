@@ -1,0 +1,3 @@
+[submodule "src/extern/gpgme"]
+	path = src/extern/gpgme
+	url = git@github.com:tierney/gpgme.git

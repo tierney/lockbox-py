@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-import calendar
+__author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
+
+from calendar import timegm
 import logging
 import os
 import stat
@@ -20,7 +22,6 @@ class SafeDepositBox(Thread):
 
     self.db = SQL(os.path.expanduser("~/.safedepositbox"))
 
-    # config: dict.
     config = self.db.get_config()
 
     # Should be apart of init process..
@@ -48,8 +49,8 @@ class SafeDepositBox(Thread):
       self.known_files[filename][C.STATUS] = C.NOT_VISITED
 
   def _lm_to_epoch(self, last_modified_time):
-    return calendar.timegm(time.strptime(last_modified_time.replace("Z",''),
-                       u"%Y-%m-%dT%H:%M:%S.000"))
+    return timegm(time.strptime(last_modified_time.replace("Z",''),
+                                u"%Y-%m-%dT%H:%M:%S.000"))
 
   def monitor_local_file(self, filename):
     # Check for local file changes (make some queue of these results)
@@ -68,6 +69,9 @@ class SafeDepositBox(Thread):
       self.S3Conn.enqueue(filename, C.PNEW)
 
   def monitor_cloud_files(self):
+    '''Pull for changes from the queue for the files that we want to monitor. We
+    should receive updates through SQS. (Likely, polling for state from S3 is
+    too expensive.)'''
     keys = self.S3Conn.get_all_keys()
     # make sure that we update our known_files table view of the
     # file time so that we don't continue to update
@@ -85,9 +89,5 @@ class SafeDepositBox(Thread):
         print " ", f, self.known_files.get(f)
 
       self.monitor_cloud_files()
-
-      # uploaded_updated_files()
-      # self.delete_not_visited_files()
-      # self.reset_known_files()
 
       time.sleep(C.IDLE_WINDOW)

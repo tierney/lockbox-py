@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+
+__author__ = 'power@cs.nyu.edu (Russell Power), tierney@cs.nyu.edu (Matt Tierney)'
+
 import hashlib
 import json
 import os
@@ -19,18 +23,18 @@ def _hash_flatten_filepath(filepath):
 
 class AWSFileBundle(object):
   '''Stores the state for a single file.
-  
-  Files are encrypted and versioned; delta compression is applied based on 
+
+  Files are encrypted and versioned; delta compression is applied based on
   previous versions to reduce the amount of data stored.
   '''
   def __init__(self, conf, bucket, file_name, crypto_helper):
     self.bucket = bucket
-                                
-    self.crypto = crypto_helper    
+
+    self.crypto = crypto_helper
     self.dir = self.bucket.create_dir(_hash_path(file_name))
     self.conf = conf
     self.enc_aes_keys = dict()
-    
+
     try:
       self.load_key_file()
     except FileNotFound:
@@ -38,9 +42,10 @@ class AWSFileBundle(object):
       # Create a new key for this bucket, and upload.
       self.aes_key = self.crypto.generate_aes_key()
       log.info("New AES key (base64): %s" % base64.encodestring(self.aes_key))
-      self.enc_aes_keys[self.conf['email_address']] = base64.encodestring(self.crypto.encrypt_aes_key(self.aes_key))
-      self.flush_key_file() 
-  
+      self.enc_aes_keys[self.conf['email_address']] = base64.encodestring(
+        self.crypto.encrypt_aes_key(self.aes_key))
+      self.flush_key_file()
+
   def load_key_file(self):
     '''Attempt to load the encrypted AES key for the given folder.'''
     # expects that AESKEY_FILE is a json'd dictionary (i.e., argument
@@ -52,20 +57,21 @@ class AWSFileBundle(object):
 
     for key in self.enc_aes_keys:
       self.enc_aes_keys[key] = base64.decodestring(self.enc_aes_keys[key])
-    
+
     if not self.conf['email_address'] in self.enc_aes_keys:
       raise PermissionDenied, 'Current user cannot decrypt file %s' % self.file_name
-    
-    self.aes_key = self.crypto.decrypt_aes_key(self.enc_aes_keys[self.conf['email_address']])
-  
+
+    self.aes_key = self.crypto.decrypt_aes_key(
+      self.enc_aes_keys[self.conf['email_address']])
+
   def flush_key_file(self):
     '''Write a new keyfile containing encrypted aes keys.'''
     self.dir.write(AESKEY_FILE, json.dumps(self.enc_aes_keys))
-    
+
   def add_key(self, userid, pubkey):
     self.enc_aes_keys[userid] = pubkey.public_encrypt(self.aes_key)
     self.flush_key_file()
-  
+
   def add_content(self, input, md5=None):
     '''Write a new content entry, encrypted using the current AES key.'''
     tf = tempfile(self.conf)
@@ -73,7 +79,7 @@ class AWSFileBundle(object):
     tf.seek(0)
     self.dir.write(CONTENT_FILE, tf.read(), md5)
     del tf
-  
+
   def get_content(self, fp):
     '''Return a file object representing the latest content for this bundle.'''
     enc = tempfile(self.conf)
@@ -84,4 +90,4 @@ class AWSFileBundle(object):
     dec.seek(0)
     del enc
     return dec
-    
+

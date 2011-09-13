@@ -1,3 +1,6 @@
 [submodule "src/extern/gpgme"]
 	path = src/extern/gpgme
 	url = git@github.com:tierney/gpgme.git
+[submodule "src/extern/watchdog"]
+	path = src/extern/watchdog
+	url = git@github.com:tierney/watchdog.git

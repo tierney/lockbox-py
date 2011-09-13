@@ -72,7 +72,18 @@ int main()
 
    /* create buffer for data exchange with gpgme*/
    err = gpgme_data_new(&data);
-   if(err != GPG_ERR_NO_ERROR) return 6;
+   if (err != GPG_ERR_NO_ERROR) {
+     return 6;
+   }
+
+   err = gpgme_data_new_from_mem(&data, "hello", 6, 1);
+   if (err != GPG_ERR_NO_ERROR) {
+     return 6;
+   } else if (err != GPG_ERR_INV_VALUE) {
+     return 6;
+   } else if (err != GPG_ERR_ENOMEM) {
+     return 6;
+   }
 
    /* set encoding for the buffer... */
    err = gpgme_data_set_encoding(data,GPGME_DATA_ENCODING_ARMOR);

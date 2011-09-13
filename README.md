@@ -4,6 +4,6 @@ python virtualenv.py --clear --no-site-packages --distribute -v .
 
 source bin/activate
 
-pip install Mako M2Crypto PyYAML nose simplejson
+pip install Mako M2Crypto PyYAML nose simplejson watchdog
 
 # optional: ipython

@@ -4,4 +4,6 @@ python virtualenv.py --clear --no-site-packages --distribute -v .
 
 source bin/activate
 
-pip install Mako PyYAML nose simplejson ipython TurboJson
+pip install Mako M2Crypto PyYAML nose simplejson
+
+# optional: ipython

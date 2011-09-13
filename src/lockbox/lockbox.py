@@ -15,12 +15,14 @@ from SQLiteHelper import SQLiteHelper as SQL
 
 import constants as C
 
-class SafeDepositBox(Thread):
-  def __init__(self):
+class Lockbox(Thread):
+  def __init__(self, event_handler):
     Thread.__init__(self)
-    self.admin_directory = os.path.expanduser("~/.safedepositbox")
 
-    self.db = SQL(os.path.expanduser("~/.safedepositbox"))
+    self.event_handler = event_handler
+
+    self.admin_directory = os.path.expanduser("~/.lockbox")
+    self.db = SQL(os.path.expanduser("~/.lockbox"))
 
     config = self.db.get_config()
 
@@ -37,7 +39,7 @@ class SafeDepositBox(Thread):
     self.known_files_lock = Lock()
     self.known_files_locks = dict()
 
-    self.crypto_helper = CryptoHelper(os.path.expanduser('~/.safedepositbox/keys'))
+    self.crypto_helper = CryptoHelper(os.path.expanduser('~/.lockbox/keys'))
 
     config['staging_directory'] = os.path.join(self.admin_directory, 'staging')
     config['bucket_name'] = 'safe-deposit-box'
@@ -91,3 +93,6 @@ class SafeDepositBox(Thread):
       self.monitor_cloud_files()
 
       time.sleep(C.IDLE_WINDOW)
+
+if __name__ == '__main__':
+  pass

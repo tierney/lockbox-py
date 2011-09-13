@@ -1,5 +1,10 @@
 #!/usr/bin/env python
+'''
+Filenames on the cloud should be the SHA-1 of file contents.
 
+Should have an interface version of this class so that we can use a mock for
+local testing.
+'''
 import os
 import random
 import re
@@ -46,12 +51,12 @@ class Connection(object):
     self.conf = conf
 
     self.prefix = prefix
-    self.bucket_name = conf.get("bucket_name")
-    self.staging_directory = conf.get("staging_directory")
-    self.aws_access_key_id = conf.get("aws_access_key")
-    self.aws_secret_access_key = conf.get("aws_secret_key")
-    self.email_address = conf.get("email_address")
-    self.computer_name = conf.get("computer_name")
+    self.bucket_name = conf.get('bucket_name')
+    self.staging_directory = conf.get('staging_directory')
+    self.aws_access_key_id = conf.get('aws_access_key')
+    self.aws_secret_access_key = conf.get('aws_secret_key')
+    self.email_address = conf.get('email_address')
+    self.computer_name = conf.get('computer_name')
 
     self.queue = Queue.Queue()
 
@@ -60,11 +65,11 @@ class Connection(object):
     self._set_bucket(self.bucket_name)
 
   class Directory(object):
-    """
+    '''
     This class provides access to the 'directory' on S3. The idea
     is that every file we care about in our system would have a
     unique file path that it corresponds to.
-    """
+    '''
     def __init__(self, connection, bucket, dirpath):
       self.conn = connection
       self.bucket = bucket
@@ -82,7 +87,7 @@ class Connection(object):
 
     def write(self, file, contentfp, md5=None):
       keyname = os.path.join(self.dir, file)
-      log.info("keyname: %s" % keyname)
+      log.info('keyname: %s' % keyname)
       key = boto.s3.key.Key(self.bucket, keyname)
       if md5: key.set_metadata(METADATA_TAG_MD5, md5)
       key.set_contents_from_string(contentfp)
@@ -92,7 +97,7 @@ class Connection(object):
 
   def _connect(self):
     self.conn = boto.connect_s3(self.aws_access_key_id,
-                  self.aws_secret_access_key)
+                                self.aws_secret_access_key)
 
   def _set_bucket(self, bucket_name):
     self.bucket = boto.s3.bucket.Bucket(self.conn, bucket_name)
@@ -102,15 +107,10 @@ class Connection(object):
     self.bucket = self.conn.get_bucket(bucket_name)
     self.bucket.configure_versioning(True)
     self.bucket.make_public()
-    pass
 
   def create_bucket(self):
-    # Need to make creating a public bucket and admin bucket easy.
-    #
-    # store the bucket_name in our configuration
     prefix = Policy.string_to_dns(self.prefix)
-
-    s = "".join([random.choice(string.lowercase + string.digits)
+    s = ''.join([random.choice(string.lowercase + string.digits)
                  for x in range(1, BUCKET_NAME_PADDING_LEN)])
     bucket_name = prefix + '.' + s
     return bucket_name
@@ -161,7 +161,7 @@ class Connection(object):
           bundle_helper = bundler(self.conf, self, filename, crypto_helper)
           with open(filename) as fp:
             bundle_helper.add_content(fp, file_md5)
-          print "Exact file we expect to send:", filename
+          print 'Exact file we expect to send:', filename
           # val_filename = os.path.join(self.staging_directory, enc_filepath)
           # self.send_filename(bundle_helper, filename, file_md5)
         else: # Existing file. Checking if stale.
@@ -207,9 +207,9 @@ def main():
   for k in b.get_all_keys():
     mtime = k.last_modified
     print mtime
-    print time.strptime(mtime.replace("Z", ''), u"%Y-%m-%dT%H:%M:%S.000")
-    print calendar.timegm(time.strptime(mtime.replace("Z", ''), u"%Y-%m-%dT%H:%M:%S.000"))
-    print "   ", k, mtime
+    print time.strptime(mtime.replace('Z', ''), u'%Y-%m-%dT%H:%M:%S.000')
+    print calendar.timegm(time.strptime(mtime.replace('Z', ''), u'%Y-%m-%dT%H:%M:%S.000'))
+    print '   ', k, mtime
 
   b.create_bucket()
 
@@ -231,5 +231,5 @@ def test_string_to_dns():
   print Policy.string_to_dns("I-.-.-like--.three.dots")
   print Policy.string_to_dns("I.like.three.dots")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   main()

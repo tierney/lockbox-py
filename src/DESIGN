@@ -1,3 +1,6 @@
+SHA-1 for the filenames (similar to Object model choice in git).
+
+
 ----------------------------------------------------------------------
 
 Key Management
@@ -30,7 +33,7 @@ May want to leverage something like SQLAlchemy+Elixir or SQLObject.
 ----------------------------------------------------------------------
 
 Block caching.
-4 MB block size. 
+4 MB block size.
 
 Groups implemented on the client itself. Modify permissions file to
 enforce policy.
@@ -39,7 +42,7 @@ enforce policy.
 
 MIME Type
 
-Handle user configuration with the web browser. 
+Handle user configuration with the web browser.
 
 lockbox:// perhaps?
 
@@ -50,7 +53,7 @@ Use this per "collection" that should be shared.
 
 Most users would only require one domain for their personal
 files. Items that are in a domain can track the entire metadata
-history of a file. 
+history of a file.
 
 ----------------------------------------------------------------------
 
@@ -70,7 +73,7 @@ address.
 ----------------------------------------------------------------------
 
 Can use regular user password that is encrypted and put on S3 for
-recovering the private key. 
+recovering the private key.
 
 How to notify users of updates in other buckets?
 

@@ -27,7 +27,7 @@ class Policy(object):
   @staticmethod
   def string_to_dns(string):
     # Reasonable replacements (don't know if users will hate us for this)
-    string = re.sub(r'[^\w.-]', '-',string).strip()
+    string = re.sub(r'[^\w.-]', '-', string).strip()
 
     # Check length of the string
     string = string.lower()

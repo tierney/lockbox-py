@@ -4,6 +4,8 @@ python virtualenv.py --clear --no-site-packages --distribute -v .
 
 source bin/activate
 
-pip install Mako M2Crypto PyYAML nose simplejson watchdog
+pip install M2Crypto nose ipython readline python-gnupg
 
-# optional: ipython
+Install boto from src/extern git submodules.
+
+(For reference: pip install Mako M2Crypto PyYAML nose simplejson watchdog)

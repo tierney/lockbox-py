@@ -4,7 +4,7 @@ python virtualenv.py --clear --no-site-packages --distribute -v .
 
 source bin/activate
 
-pip install M2Crypto nose ipython readline
+pip install M2Crypto nose ipython readline python-gnupg
 
 Install boto from src/extern git submodules.
 

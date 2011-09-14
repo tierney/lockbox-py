@@ -33,12 +33,17 @@ class LockboxEventHandler(FileSystemEventHandler):
     print event.src_path
 
   def on_created(self, event):
+    """Create a new set of
+    """
     if isinstance(event, DirCreatedEvent):
       pass
     if isinstance(event, FileCreatedEvent):
       pass
 
   def on_deleted(self, event):
+    """Just detect that we have a deleted event and remove the corresponding
+    values from the current view. Future: we will want to keep the values around
+    in the cloud until a cleaner time."""
     if isinstance(event, DirDeletedEvent):
       pass
     if isinstance(event, FileDeletedEvent):
@@ -51,6 +56,7 @@ class LockboxEventHandler(FileSystemEventHandler):
       print 'on_modified:', event.src_path
 
   def on_moved(self, event):
+    """Assuming that the filepath is the stored SHA2, then we can detect the change"""
     if isinstance(event, DirMovedEvent):
       for moved_event in event.sub_moved_events():
         pass

@@ -23,11 +23,11 @@ from util import log
 BUCKET_NAME_PADDING_LEN = 20
 METADATA_TAG_MD5 = 'orig_file_md5'
 
-def Policy(object):
+class Policy(object):
   @staticmethod
   def string_to_dns(string):
     # Reasonable replacements (don't know if users will hate us for this)
-    string = re.sub(r'[^\w.-]', '-',).strip()
+    string = re.sub(r'[^\w.-]', '-',string).strip()
 
     # Check length of the string
     string = string.lower()

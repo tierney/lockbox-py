@@ -4,3 +4,6 @@
 [submodule "src/extern/watchdog"]
 	path = src/extern/watchdog
 	url = git@github.com:tierney/watchdog.git
+[submodule "src/extern/boto"]
+	path = src/extern/boto
+	url = git@github.com:tierney/boto.git

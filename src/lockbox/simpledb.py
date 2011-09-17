@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-"""SimpleDB methods for the Lockbox project."""
+"""SimpleDB methods for the Lockbox project.
+
+TODO(tierney): Should address 503 service unavailable errors that we may get
+from boto SimpleDB.
+"""
 
 __copyright__ = 'Matt Tierney'
 __license__ = 'GPLv3'
@@ -48,8 +52,9 @@ def _lock_name(object_id):
 
 def get_domain(conn, domain_name):
   try:
-    domain = conn.get_domain(domain_name)
+    domain = conn.get_domain(domain_name, validate=True)
   except boto.exception.SDBResponseError:
+    logging.info('Did not get domain. Creating one instead.')
     domain = conn.create_domain(domain_name)
   return domain
 
@@ -77,13 +82,15 @@ def release_domain_object_lock(lock_domain, lock):
   """Deletes the lock for the object."""
   lock_domain.delete_item(lock)
 
-  
+
 def acquire_domain_object_lock(lock_domain, object_id):
-  """
+  """Try to get a lock on the object in the domain that manages locks for the
+  object.
+
   Returns:
     (bool success, lock)
     success: Indicates whether we won the bid to write the object.
-    lock: Data about the lock we either found for this object or that we crated.
+    lock: boto Lock object we either found for this object or that we created.
   """
   logging.debug("testing")
   # Get a valid new lock name
@@ -98,9 +105,7 @@ def acquire_domain_object_lock(lock_domain, object_id):
     return False, _
   except StopIteration:
     # Did not find any locks.
-    pass
-  except boto.exception.SDBResponseError:
-    logging.info('Not quite what we were hoping for.')
+    logging.info('Success! No matching lock for the object %s.' % object_id)
     pass
 
   # Set attributes for a new, unconfirmed lock.
@@ -122,7 +127,7 @@ def acquire_domain_object_lock(lock_domain, object_id):
     if (epoch_time() - float(_lock.epoch_time) > _TIMEOUT_SECONDS):
       logging.info('Encountered (and ignoring) an old lock: %s.' % _lock)
       continue
-    
+
     # Concede. Delete our lock and return failure.
     logging.info('Found a conflicting lock so we must release.\n' \
                  ' found lock: %s.\n' \
@@ -136,16 +141,87 @@ def acquire_domain_object_lock(lock_domain, object_id):
   return True, unconfirmed_lock
 
 
+def _find_latest(item):
+  _find_latest_given_backpointer_dict(item)
+
+
+def _find_latest_given_backpointer_dict(item):
+  """Expects that item is a dict sub-class.
+  O(n) algorithm. Precisely: O(2n).
+
+  Returns:
+    Name of the latest object.
+  """
+  logging.info('Reversing the DAG.')
+  reverse_dag = {}
+  for key in item:
+    reverse_dag[item[key]] = key
+
+  _next = ''
+  try:
+    while True:
+      _next = reverse_dag[_next]
+  except KeyError:
+    logging.info('Found the latest key (%s).' % _next)
+    return _next
+
+
+def add_delta(item, latest_id, penultimate_id):
+  # TODO(tierney): If changelist is getting too long, then we would want to
+  # collapse that here.
+
+  # Find the latest object in the metadata tables.
+  prev_id = _find_latest(item)
+  if prev_id != penultimate_id:
+    logging.error('Thought this would be the latest (%s) but found this ' \
+                  'to be the latest (%s).' % (penultimate_id, prev_id))
+    return False
+  
+  # Add the object_id and point to the previous object.
+  item[latest_id] = penultimate_id
+  item.save()
+  return True
+
+
+def add_object(domain, object_id, update_id):
+  object_item = domain.get_item(object_id, consistent_read=True)
+  if not object_item:
+    object_item = domain.new_item(object_id)
+
+  latest = _find_latest(object_item)
+  if not add_delta(object_item, update_id, latest):
+    logging.error('Delta problem.')
+  object_item.save()
+
+def _print_lock_domain(domain, object_id):
+  select_result = domain.select("select * from %s where lock_name like '%s%%'" %
+                                (domain.name, object_id), consistent_read=True)
+  for entry in select_result:
+    print entry.name
+    for key in entry:
+      print ' ', key, entry[key]
+
+  
+def _print_all_domain(domain):
+  for entry in domain.select('select * from %s' %
+                             domain.name, consistent_read=True):
+    print entry.name
+    for key in entry:
+      print ' ', key, entry[key]
+
 
 def main():
   """
   item: a super-object name in S3 (looks like UUID).
   key:  SHA1 of the GPG file contents.
   prev: value of the key that precedes this key's meaning.
-    (prev == NULL) ==> key represents a file checkpoint.
+     (prev == NULL) ==> key represents a file checkpoint.
   """
-
-  conn = boto.connect_sdb() # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+  try:
+    conn = boto.connect_sdb() # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+  except boto.exception.NoAuthHandlerFound, e:
+    logging.error(e)
+    return
 
   domain_name_group = 'group0'
   domain_name_group_locks = 'group0_locks'
@@ -160,28 +236,27 @@ def main():
 
   success, lock = acquire_domain_object_lock(domain_group_locks, object_id)
   if not success:
-    print 'We had a problem.'
-    print lock
-    return
+    logging.error('Did not acquire the log we wanted.')
+  add_object(domain_group, object_id, _get_random_uuid())
+  release_domain_object_lock(domain_group_locks, lock)
+
+  success, lock = acquire_domain_object_lock(domain_group_locks, object_id)
+  if not success:
+    logging.error('Did not acquire the lock we wanted. Check for update.')
+  add_object(domain_group, object_id, _get_random_uuid())
+  release_domain_object_lock(domain_group_locks, lock)
+
+  success, lock = acquire_domain_object_lock(domain_group_locks, object_id)
+  _print_lock_domain(domain_group_locks, object_id)
+  add_object(domain_group, object_id, _get_random_uuid())
+  release_domain_object_lock(domain_group_locks, lock)
+
+  print 'select everything from lock domain.'
+  _print_lock_domain(domain_group_locks, object_id)
   
-  object_name_0 = '%s-0' % object_id
-  object_name_1 = '%s-1' % object_id
-  data[object_name_0] = { 'sha1_0' : '',
-                          'sha1_1' : 'sha1_0',
-                          'sha1_2' : 'sha1_1' }
-  data[object_name_1] = { 'sha1_0' : '',
-                          'sha1_1' : 'sha1_0',
-                          'sha1_2' : 'sha1_1' }
-
-
-  domain_insert(domain_group, data)
-
-  print domain_group.get_item(object_name_0)
-  for entry in domain_group_locks.select("select * from %s where `lock_name` like '%s%%'" %
-                                         (domain_name_group_locks, object_id),
-                                         consistent_read=True):
-    print 'Lock entry:', entry
-
+  print 'select everything from domain.'
+  _print_all_domain(domain_group)
+  
   print 'Cleaning up.'
   conn.delete_domain(domain_name_group)
   conn.delete_domain(domain_name_group_locks)

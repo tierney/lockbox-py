@@ -5,7 +5,7 @@ __author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
 import boto
 import unittest
 from lockbox.simpledb import get_domain, acquire_domain_object_lock, \
-    add_object, release_domain_object_lock, _get_random_uuid
+    add_object, release_domain_object_lock, get_random_uuid
 
 class SimpleDBTestCase(unittest.TestCase):
   def setUp(self):
@@ -35,7 +35,7 @@ class SimpleDBTestCase(unittest.TestCase):
     domain_group = get_domain(conn, domain_name_group)
     domain_group_locks = get_domain(conn, domain_name_group_locks)
 
-    object_id = _get_random_uuid()
+    object_id = get_random_uuid()
     success, lock = acquire_domain_object_lock(domain_group_locks, object_id)
     select_result = domain_group_locks.select(
       "select * from %s where lock_name like '%s%%'" %
@@ -48,14 +48,11 @@ class SimpleDBTestCase(unittest.TestCase):
     if not success:
       logging.error('Did not acquire the log we wanted.')
 
-    new_id = _get_random_uuid()
+    new_id = get_random_uuid()
     add_object(domain_group, object_id, new_id)
     select_result = domain_group.select(
       'select * from %s' % (domain_group.name), consistent_read=True)
     retrieved_log = select_result.next()
-    print retrieved_log
-    print object_id
-    print new_id
     assert "" == retrieved_log[unicode(new_id)]
 
     release_domain_object_lock(domain_group_locks, lock)

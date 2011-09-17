@@ -23,7 +23,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def _get_random_uuid():
+def get_random_uuid():
   return unicode(uuid4().hex)
 
 
@@ -48,7 +48,7 @@ def _sha1_of_file(filename):
 
 
 def _lock_name(object_id):
-  return '%s-lock-%s' % (object_id, _get_random_uuid())
+  return '%s-lock-%s' % (object_id, get_random_uuid())
 
 
 def get_domain(conn, domain_name):
@@ -172,7 +172,7 @@ def add_delta(item, latest_id, penultimate_id):
 
   # Find the latest object in the metadata tables.
   prev_id = _find_latest(item)
-  if prev_id != penultimate_id:
+  if (prev_id != penultimate_id):
     logging.error('Thought this would be the latest (%s) but found this ' \
                   'to be the latest (%s).' % (penultimate_id, prev_id))
     return False
@@ -241,23 +241,23 @@ def main():
   domain_group = get_domain(conn, domain_name_group)
   domain_group_locks = get_domain(conn, domain_name_group_locks)
 
-  object_id = _get_random_uuid()
+  object_id = get_random_uuid()
 
   success, lock = acquire_domain_object_lock(domain_group_locks, object_id)
   if not success:
     logging.warning('Did not acquire the log we wanted.')
-  add_object(domain_group, object_id, _get_random_uuid())
+  add_object(domain_group, object_id, get_random_uuid())
   release_domain_object_lock(domain_group_locks, lock)
 
   success, lock = acquire_domain_object_lock(domain_group_locks, object_id)
   if not success:
     logging.warning('Did not acquire the lock we wanted. Check for update.')
-  add_object(domain_group, object_id, _get_random_uuid())
+  add_object(domain_group, object_id, get_random_uuid())
   release_domain_object_lock(domain_group_locks, lock)
 
   success, lock = acquire_domain_object_lock(domain_group_locks, object_id)
   _print_lock_domain(domain_group_locks, object_id)
-  add_object(domain_group, object_id, _get_random_uuid())
+  add_object(domain_group, object_id, get_random_uuid())
   release_domain_object_lock(domain_group_locks, lock)
 
   logging.info('select everything from lock domain. (should be empty.)')

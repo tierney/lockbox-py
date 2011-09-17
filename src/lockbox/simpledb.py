@@ -91,7 +91,6 @@ def acquire_domain_object_lock(lock_domain, object_id):
     success: Indicates whether we won the bid to write the object.
     lock: boto Lock object we either found for this object or that we created.
   """
-  logging.debug("testing")
   # Get a valid new lock name
   lock_id = _lock_name(object_id)
 
@@ -178,9 +177,22 @@ def add_delta(item, latest_id, penultimate_id):
     return False
 
   # Add the object_id and point to the previous object.
+  logging.info("Setting latest_id (%s) to penultimate_id (%s)." %
+               (latest_id, penultimate_id))
   item[latest_id] = penultimate_id
   item.save()
   return True
+
+
+def add_path(domain, object_id, filepath):
+  """Adds the encrypted filepath to the metadata as the 'path' item."""
+  # Should work if the file is modified.
+  object_item = domain.get_item(object_id, consistent_read=True)
+  # Enter this case if the file is new.
+  if not object_item:
+    object_item = domain.new_item(object_id)
+  object_item['path'] = filepath
+  object_item.save()
 
 
 def add_object(domain, object_id, new_id):
@@ -216,9 +228,9 @@ def _print_all_domain(domain):
   output = ''
   for entry in domain.select('select * from %s' %
                              domain.name, consistent_read=True):
-    output += '%s\n' % (entry.name)
+    output += 'Entry: (%s)\n' % (entry.name)
     for key in entry:
-      output += ' %s %s\n' % (key, entry[key])
+      output += ' key(%s) value(%s)\n' % (key, entry[key])
   logging.info(output)
 
 

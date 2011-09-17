@@ -223,8 +223,8 @@ def main():
     logging.error(e)
     return
 
-  domain_name_group = 'group0'
-  domain_name_group_locks = 'group0_locks'
+  domain_name_group = 'group1'
+  domain_name_group_locks = 'group1_locks'
 
   domain_group = get_domain(conn, domain_name_group)
   domain_group_locks = get_domain(conn, domain_name_group_locks)

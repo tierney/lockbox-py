@@ -16,14 +16,15 @@ from uuid import uuid4
 from time import time as epoch_time
 from hashlib import sha1
 
+_TIMEOUT_SECONDS = 10
+
 logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-_TIMEOUT_SECONDS = 10
 
 def _get_random_uuid():
-  return uuid4()
+  return unicode(uuid4().hex)
 
 
 def _sha1_hexdigest_of_file_handle(file_handle):
@@ -51,12 +52,10 @@ def _lock_name(object_id):
 
 
 def get_domain(conn, domain_name):
-  try:
-    domain = conn.get_domain(domain_name, validate=True)
-  except boto.exception.SDBResponseError:
-    logging.info('Did not get domain. Creating one instead.')
-    domain = conn.create_domain(domain_name)
-  return domain
+  if conn.lookup(domain_name, validate=True):
+    return conn.get_domain(domain_name, validate=True)
+  logging.info('Creating the new domain.')
+  return conn.create_domain(domain_name)
 
 
 def domain_insert(domain, data):
@@ -72,11 +71,11 @@ def domain_insert(domain, data):
 
 
 def _select_object_locks_query(lock_domain, object_id):
-  """
-  Return string query for locks whose names start with the name of the object.
-  """
+  """Return string query for locks whose names start with the name of the
+  object."""
   return "select * from %s where `lock_name` like '%s%%'" % \
          (lock_domain, object_id)
+
 
 def release_domain_object_lock(lock_domain, lock):
   """Deletes the lock for the object."""
@@ -113,7 +112,12 @@ def acquire_domain_object_lock(lock_domain, object_id):
   unconfirmed_lock[unicode('lock_name')] = unicode(lock_id)
   unconfirmed_lock[unicode('user')] = unicode('tierney')
   unconfirmed_lock[unicode('epoch_time')] = unicode(epoch_time())
-  unconfirmed_lock.save()
+  while True:
+    try:
+      unconfirmed_lock.save()
+      break
+    except boto.exception.SDBResponseError:
+      logging.warning('Domain does not exist.')
 
   # Check if another lock was taken at this time. If so, we release our lock.
   query = _select_object_locks_query(lock_domain.name, object_id)
@@ -142,10 +146,6 @@ def acquire_domain_object_lock(lock_domain, object_id):
 
 
 def _find_latest(item):
-  _find_latest_given_backpointer_dict(item)
-
-
-def _find_latest_given_backpointer_dict(item):
   """Expects that item is a dict sub-class.
   O(n) algorithm. Precisely: O(2n).
 
@@ -176,38 +176,50 @@ def add_delta(item, latest_id, penultimate_id):
     logging.error('Thought this would be the latest (%s) but found this ' \
                   'to be the latest (%s).' % (penultimate_id, prev_id))
     return False
-  
+
   # Add the object_id and point to the previous object.
   item[latest_id] = penultimate_id
   item.save()
   return True
 
 
-def add_object(domain, object_id, update_id):
+def add_object(domain, object_id, new_id):
   object_item = domain.get_item(object_id, consistent_read=True)
   if not object_item:
     object_item = domain.new_item(object_id)
 
-  latest = _find_latest(object_item)
-  if not add_delta(object_item, update_id, latest):
-    logging.error('Delta problem.')
+  penultimate = _find_latest(object_item)
+  while True:
+    try:
+      status = add_delta(object_item, new_id, penultimate)
+      break
+    except boto.exception.SDBResponseError:
+      logging.warning('Domain disappeared temporarily.')
+
   object_item.save()
+  return status
+
 
 def _print_lock_domain(domain, object_id):
-  select_result = domain.select("select * from %s where lock_name like '%s%%'" %
-                                (domain.name, object_id), consistent_read=True)
+  output = ''
+  select_result = domain.select(
+    "select * from %s where lock_name like '%s%%'" %
+    (domain.name, object_id), consistent_read=True)
   for entry in select_result:
-    print entry.name
+    output += '%s\n' % (entry.name)
     for key in entry:
-      print ' ', key, entry[key]
+      output += ' %s %s\n' % (key, entry[key])
+  logging.info(output)
 
-  
+
 def _print_all_domain(domain):
+  output = ''
   for entry in domain.select('select * from %s' %
                              domain.name, consistent_read=True):
-    print entry.name
+    output += '%s\n' % (entry.name)
     for key in entry:
-      print ' ', key, entry[key]
+      output += ' %s %s\n' % (key, entry[key])
+  logging.info(output)
 
 
 def main():
@@ -229,20 +241,17 @@ def main():
   domain_group = get_domain(conn, domain_name_group)
   domain_group_locks = get_domain(conn, domain_name_group_locks)
 
-  data = {}
-  locks = {}
-
   object_id = _get_random_uuid()
 
   success, lock = acquire_domain_object_lock(domain_group_locks, object_id)
   if not success:
-    logging.error('Did not acquire the log we wanted.')
+    logging.warning('Did not acquire the log we wanted.')
   add_object(domain_group, object_id, _get_random_uuid())
   release_domain_object_lock(domain_group_locks, lock)
 
   success, lock = acquire_domain_object_lock(domain_group_locks, object_id)
   if not success:
-    logging.error('Did not acquire the lock we wanted. Check for update.')
+    logging.warning('Did not acquire the lock we wanted. Check for update.')
   add_object(domain_group, object_id, _get_random_uuid())
   release_domain_object_lock(domain_group_locks, lock)
 
@@ -251,17 +260,16 @@ def main():
   add_object(domain_group, object_id, _get_random_uuid())
   release_domain_object_lock(domain_group_locks, lock)
 
-  print 'select everything from lock domain.'
+  logging.info('select everything from lock domain. (should be empty.)')
   _print_lock_domain(domain_group_locks, object_id)
-  
-  print 'select everything from domain.'
+
+  logging.info('select everything from domain.')
   _print_all_domain(domain_group)
-  
-  print 'Cleaning up.'
+
+  logging.info('Cleaning up.')
   conn.delete_domain(domain_name_group)
   conn.delete_domain(domain_name_group_locks)
-  print conn.get_usage()
-  print 'Done.'
+  logging.info('Usage: %f.' % conn.get_usage())
 
 
 if __name__ == '__main__':

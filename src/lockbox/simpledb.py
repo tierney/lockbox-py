@@ -215,7 +215,7 @@ def main():
   item: a super-object name in S3 (looks like UUID).
   key:  SHA1 of the GPG file contents.
   prev: value of the key that precedes this key's meaning.
-     (prev == NULL) ==> key represents a file checkpoint.
+    (prev == NULL) ==> key represents a file checkpoint.
   """
   try:
     conn = boto.connect_sdb() # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)

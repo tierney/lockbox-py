@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 """SimpleDB methods for the Lockbox project.
 
+Assumed layout of the SimpleDB domains.
+
+Lock Domain.
+<object_id>-lock-<lock_id> : <lock_id>, <user>, <timestamp>
+
+Data Domain.
+<object_id> : [ (<PGP object SHA1>, <previous PGP object SHA1.) ]
+
 TODO(tierney): Should address 503 service unavailable errors that we may get
 from boto SimpleDB.
 """
@@ -25,6 +33,12 @@ logger.setLevel(logging.INFO)
 
 def get_random_uuid():
   return unicode(uuid4().hex)
+
+def _sha1_of_string(string):
+  assert isinstance(string, str)
+  h = sha1()
+  h.update(string)
+  return h.hexdigest()
 
 
 def _sha1_hexdigest_of_file_handle(file_handle):
@@ -165,7 +179,19 @@ def _find_latest(item):
     return _next
 
 
-def add_delta(item, latest_id, penultimate_id):
+def _set_and_save_item_attr(item, key, value):
+  retries = 3
+  while retries > 0:
+    try:
+      item[key] = value
+      item.save()
+      break
+    except boto.exception.SDBResponseError:
+      logging.warning('Domain disappeared (should be temporary). '
+                      '%d attempts remain.' % retries)
+
+
+def _add_delta(item, latest_id, penultimate_id):
   # TODO(tierney): If changelist is getting too long, then we would want to
   # collapse that here.
 
@@ -179,8 +205,7 @@ def add_delta(item, latest_id, penultimate_id):
   # Add the object_id and point to the previous object.
   logging.info("Setting latest_id (%s) to penultimate_id (%s)." %
                (latest_id, penultimate_id))
-  item[latest_id] = penultimate_id
-  item.save()
+  _set_and_save_item_attr(item, latest_id, penultimate_id)
   return True
 
 
@@ -191,11 +216,10 @@ def add_path(domain, object_id, filepath):
   # Enter this case if the file is new.
   if not object_item:
     object_item = domain.new_item(object_id)
-  object_item['path'] = filepath
-  object_item.save()
+  _set_and_save_item_attr(object_item, 'path', filepath)
 
 
-def add_object(domain, object_id, new_id):
+def add_object_delta(domain, object_id, new_id):
   object_item = domain.get_item(object_id, consistent_read=True)
   if not object_item:
     object_item = domain.new_item(object_id)
@@ -203,12 +227,10 @@ def add_object(domain, object_id, new_id):
   penultimate = _find_latest(object_item)
   while True:
     try:
-      status = add_delta(object_item, new_id, penultimate)
+      status = _add_delta(object_item, new_id, penultimate)
       break
     except boto.exception.SDBResponseError:
       logging.warning('Domain disappeared temporarily.')
-
-  object_item.save()
   return status
 
 
@@ -258,18 +280,18 @@ def main():
   success, lock = acquire_domain_object_lock(domain_group_locks, object_id)
   if not success:
     logging.warning('Did not acquire the log we wanted.')
-  add_object(domain_group, object_id, get_random_uuid())
+  add_object_delta(domain_group, object_id, get_random_uuid())
   release_domain_object_lock(domain_group_locks, lock)
 
   success, lock = acquire_domain_object_lock(domain_group_locks, object_id)
   if not success:
     logging.warning('Did not acquire the lock we wanted. Check for update.')
-  add_object(domain_group, object_id, get_random_uuid())
+  add_object_delta(domain_group, object_id, get_random_uuid())
   release_domain_object_lock(domain_group_locks, lock)
 
   success, lock = acquire_domain_object_lock(domain_group_locks, object_id)
   _print_lock_domain(domain_group_locks, object_id)
-  add_object(domain_group, object_id, get_random_uuid())
+  add_object_delta(domain_group, object_id, get_random_uuid())
   release_domain_object_lock(domain_group_locks, lock)
 
   logging.info('select everything from lock domain. (should be empty.)')

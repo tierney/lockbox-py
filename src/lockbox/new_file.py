@@ -1,23 +1,32 @@
 #!/usr/bin/env python
 
 from boto import connect_sdb
+import cStringIO
 import logging
 import gnupg
 import os
+import re
 import tempfile
+import gflags
 from hashlib import sha1
 from simpledb import _sha1_of_file, add_path, get_domain, _print_all_domain, \
-    acquire_domain_object_lock, add_object, release_domain_object_lock
+    acquire_domain_object_lock, add_object_delta, \
+    release_domain_object_lock, _sha1_of_string
+
+FLAGS = gflags.FLAGS
+gflags.DEFINE_multistring('basepath', '/tmp/lockbox/', 'Base filepath(s) for Lockbox.')
 
 logging.basicConfig()
 # logger = logging.getLogger()
 # logger.setLevel(logging.DEBUG)
 
+
 def detected_new_file(new_file_fp, recipients):
   gpg = gnupg.GPG()
   enc_file_name = ''
   # Write out temporary GPG file to temp directory.
-  with tempfile.NamedTemporaryFile(delete=False) as enc_tmp_file:
+  with tempfile.NamedTemporaryFile(delete=False, prefix='lockbox/lockbox') \
+        as enc_tmp_file:
     edata = gpg.encrypt_file(new_file_fp,
                              recipients,
                              always_trust=True,
@@ -29,46 +38,68 @@ def detected_new_file(new_file_fp, recipients):
   file_sha1 = _sha1_of_file(enc_file_name)
 
   # Filepath
-  filepath = '/this/is/my/file.path'
-  h = sha1()
-  h.update(filepath)
-  sha_filepath = h.hexdigest()
+  filepath = new_file_fp.name # '/home/username/Lockbox/this/is/my/file.path'
+  oldfilepath = new_file_fp.name
+  for basepath in FLAGS.basepath:
+    if filepath.startswith(basepath):
+      filepath = re.sub(basepath, '', filepath)
+  if oldfilepath == filepath:
+    logging.error('Basepath not found for %s.' % filepath)
+  else:
+    logging.debug('Detected basepath: %s.' % basepath)
+    logging.debug('Shortened filepath: %s.' % filepath)
+
+  # Take SHA1 of path relative to the basepath.
+  sha_filepath = _sha1_of_string(filepath)
+
+  # Encrypt the exact value of the basepath.
   enc_filepath = gpg.encrypt(filepath,
                              recipients,
                              always_trust=True,
                              armor=True)
+  sha_enc_fp = _sha1_of_string(enc_filepath.data)
+  logging.info("S3: SHA1(enc_filepath): '%s' data: '%s'" % \
+                 (sha_enc_fp, enc_filepath.data))
   logging.debug('Original filepath: %s. Encrypted filepath: %s. '
                 'SHA-ed filepath: %s' %
                 (filepath, enc_filepath.data, sha_filepath))
 
+  # Scaffolding for testing.
   sdb_conn = connect_sdb()
   data_domain = get_domain(sdb_conn, 'group1')
   lock_domain = get_domain(sdb_conn, 'group1_locks')
-
   success, lock = acquire_domain_object_lock(lock_domain, sha_filepath)
   if not success:
-    logging.error("Houston, we didn't get a lock.")
-  try:
-    add_path(data_domain, sha_filepath, enc_filepath)
-  except Exception, e:
-    print "We a problem:", e
-    logging.error(e)
-  add_object(data_domain, sha_filepath, file_sha1)
+    logging.error("Houston, we didn't get a lock for the object.")
+
+  # Meat and potatoes.
+  add_path(data_domain, sha_filepath, sha_enc_fp) # enc_filepath)
+  add_object_delta(data_domain, sha_filepath, file_sha1)
+
+  # Scaffolding for testing.
   release_domain_object_lock(lock_domain, lock)
-
   _print_all_domain(data_domain)
-
   sdb_conn.delete_domain('group1')
   sdb_conn.delete_domain('group1_locks')
 
   return enc_file_name
 
 if __name__ == '__main__':
-  with tempfile.NamedTemporaryFile(delete=False) as tmp:
+  if os.path.exists('/tmp/lockbox'):
+    os.system('rm /tmp/lockbox/*')
+    os.rmdir('/tmp/lockbox')
+  os.mkdir('/tmp/lockbox')
+
+  with tempfile.NamedTemporaryFile(delete=False, prefix='lockbox/lockbox') as tmp:
     tmp.write("hello world")
     tmp.seek(0)
-    # name = detected_new_file(tmp, ["\'Matt Tierney\'"])
     name = detected_new_file(tmp, ["\'Matt Tierney\'"])
+    os.remove(tmp.name)
   print "Done."
+
+  print 'Here is the file returned from detected_new_file:'
   with open(name) as fh:
     print "".join(fh.readlines())
+
+  os.remove(name)
+  os.rmdir('/tmp/lockbox')

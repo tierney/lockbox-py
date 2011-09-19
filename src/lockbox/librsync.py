@@ -260,8 +260,10 @@ if __name__ == '__main__':
   gpg = gnupg.GPG()
   pgp_delta = gpg.encrypt(delta, ["\'Matt Tierney\'"], always_trust=True,
                           armor=True).data
-  print 'Upload these to the cloud: PGP(delta(file)): (%s), Prev Value: %s\'s %s' % \
-      (pgp_delta, _sha1_of_string(v1_name), 'TODO')
+  print 'Upload these to SDB: PGP(delta(file)): (%s), Prev Value: %s\'s %s' % \
+      (_sha1_of_string(pgp_delta), _sha1_of_string(v1_name), 'TODO')
+  print 'Upload these to S3: SHA1(PGP(delta(file))): (%s) pgp_delta (%s)' % \
+      (_sha1_of_string(pgp_delta), pgp_delta)
 
 
 

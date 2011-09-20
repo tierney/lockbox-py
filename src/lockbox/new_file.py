@@ -53,21 +53,27 @@ class LockboxFileUpdater(object):
 
 
   def update_metadata(self):
-    success, lock = store.acquire_lock(hash_file_path)
+    """Should account for VersioningConflict."""
+    success, lock = self.metadata_store.acquire_lock(hash_file_path)
     if not success:
       logging.error('Could NOT get lock on object.')
+      return False
 
     # New file so we should also set the file_path.
-    if self.enc_file_path_path and self.hash_prev_obj:
+    if self.hash_prev_obj:
       logging.info('Metadata like a new file.')
-      store.set_path(self.hash_file_path, self.hash_enc_file_path_path)
+      self.metadata_store.set_path(
+        self.hash_file_path, self.hash_enc_file_path_path)
 
-    if not store.update_object(
-      self.hash_file_path, self.hash_enc_file, self.hash_prev_obj):
-      logging.error('Did not set the log values for some reason...')
+    try:
+      self.metadata_store.update_object(
+        self.hash_file_path, self.hash_enc_file, self.hash_prev_obj)
+    except VersioningConflict:
+      self.metadata_store.release_lock(lock)
+      raise
 
-    store.release_lock(lock)
-
+    self.metadata_store.release_lock(lock)
+    return True
 
 
 def detected_new_file(new_file_fp, recipients):

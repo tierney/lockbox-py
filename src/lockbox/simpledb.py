@@ -17,6 +17,7 @@ __copyright__ = 'Matt Tierney'
 __license__ = 'GPLv3'
 __author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
 
+from exceptions import DomainDisappeared
 import os
 import boto
 import logging
@@ -69,7 +70,7 @@ class AsyncMetadataStore(object):
       except boto.exception.SDBResponseError:
         logging.warning('Domain disappeared (temporarily?): '
                         '%d attempts remain.' % retries_remaining)
-    return False
+    raise DomainDisappeared()
 
 
   @staticmethod
@@ -162,14 +163,11 @@ class AsyncMetadataStore(object):
     if latest_id != prev_hash:
       logging.error('Thought this would be the latest (%s) but found this ' \
                       'to be the latest (%s).' % (prev_hash, latest_id))
-      return False
+      raise VersioningConflict()
 
     logging.info('Confirmed that we can set the update. '
                  'Will say new (%s) -> prev (%s).' % (new_hash, prev_hash))
-    if not _set_and_save_item(item, new_hash, prev_hash):
-      logging.error('Could NOT set the metadata for object_path_hash (%s) new_hash (%s) '
-                    'prev_hash (%s).' % (object_path_hash, new_hash, prev_hash))
-      return False
+    _set_and_save_item_attr(item, new_hash, prev_hash):
 
     return True
 

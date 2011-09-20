@@ -20,8 +20,10 @@ import socket
 from bundle import AWSFileBundle as bundler
 from util import log
 
+
 BUCKET_NAME_PADDING_LEN = 20
 METADATA_TAG_MD5 = 'orig_file_md5'
+
 
 class Policy(object):
   @staticmethod
@@ -45,6 +47,51 @@ class Policy(object):
       pass
 
     return string
+
+
+class BlobStore(object):
+  bucket = None
+  connection = None
+
+  
+  def __init__(self, connection, bucket_name):
+    self.connection = connection
+    self.bucket_name = bucket_name
+    self._connect_bucket()
+
+
+  def _get_bucket(self, bucket_name):
+    if self.connection.lookup(bucket_name, validate=True):
+      logging.info('Returning already-existing bucket.')
+      rturn self.connection.get_bucket(bucket_name, validate=True)
+    logging.info('Creating and returning new bucket.')
+    return self.connection.create_bucket(bucket_name)
+  
+
+  def _connect_bucket(self):
+    self.bucket = self._get_bucket(self.bucket_name)
+
+
+  def put_string(self, hash_file, string):
+    key = self.bucket.get_key(hash_file)
+    if not key:
+      key = self.bucket_new_key(hash_file)
+    key.set_contents_from_string(string)
+    
+
+  def put_file(self, hash_file, fp):
+    key = self.bucket.get_key(hash_file)
+    if not key:
+      key = self.bucket_new_key(hash_file)
+    # TODO(tierney): Would want to have a callback to monitor the progress of
+    # the upload.
+    key.set_contents_from_file(fp)
+
+    
+  def put_filename(self, hash_file, filename):
+    with open(filename) as fp:
+      self.put_file(hash_file, fp)
+
 
 class Connection(object):
   def __init__(self, conf, prefix):

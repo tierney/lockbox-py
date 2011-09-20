@@ -35,7 +35,6 @@ logger.setLevel(logging.INFO)
 class AsyncMetadataStore(object):
   lock_domain = None
   data_domain = None
-  connection = None
 
 
   def __init__(self, connection, lock_domain_name, data_domain_name):
@@ -170,7 +169,9 @@ class AsyncMetadataStore(object):
     if not _set_and_save_item(item, new_hash, prev_hash):
       logging.error('Could NOT set the metadata for object_path_hash (%s) new_hash (%s) '
                     'prev_hash (%s).' % (object_path_hash, new_hash, prev_hash))
+      return False
 
+    return True
 
 
 def get_random_uuid():

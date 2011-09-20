@@ -14,6 +14,8 @@ from simpledb import _sha1_of_file, add_path, get_domain, _print_all_domain, \
 
 FLAGS = gflags.FLAGS
 gflags.DEFINE_multistring('basepath', '/tmp/lockbox/', 'Base filepath(s) for Lockbox.')
+gflags.DEFINE_string('lock_domain', 'group0_lock', 'Lock domain for a group.')
+gflags.DEFINE_string('data_domain', 'group0_data', 'Data domain for a group.')
 
 FORMAT = "%(asctime)-15s %(level)s %(module)-8s %(message)s"
 logging.basicConfig(format=FORMAT)
@@ -21,22 +23,68 @@ logging.basicConfig(format=FORMAT)
 # logger.setLevel(logging.DEBUG)
 
 
+class LockboxFileUpdater(object):
+  def __init__(self, blob_store, metadata_store, hash_enc_blob,
+               enc_file_path_string, enc_blob_path, hash_enc_file_path,
+               hash_prev_blob=''):
+    """Sets up the basic components for performing updates."""
+    # Stores.
+    self.blob_store = blob_store
+    self.metadata_store = metadata_store
+
+    # SDB: 'path' -> hash_enc_file_path.
+    self.hash_enc_file_path = hash_enc_file_path
+
+    # S3: hash_enc_file_path -> enc_file_path_string.
+    self.enc_file_path_string = enc_file_path_string
+
+    # S3: hash_enc_blob -> enc_blob_path.
+    self.hash_enc_blob = hash_enc_blob
+    self.enc_blob_path = enc_blob_path
+
+    # SDB: hash_enc_file_path -> [ (hash_enc_blob, hash_prev_blob) ].
+    self.hash_prev_blob = hash_prev_blob
+
+
+  def update_storage(self):
+    self.blob_store.put_string(
+      self.hash_enc_file_path, self.enc_file_path_string)
+    self.blob_store.put_filename(self.hash_enc_blob, self.enc_blob_path)
+
+
+  def update_metadata(self):
+    success, lock = store.acquire_lock(hash_file_path)
+    if not success:
+      logging.error('Could NOT get lock on object.')
+
+    # New file so we should also set the file_path.
+    if self.enc_file_path_path and self.hash_prev_obj:
+      logging.info('Metadata like a new file.')
+      store.set_path(self.hash_file_path, self.hash_enc_file_path_path)
+
+    if not store.update_object(
+      self.hash_file_path, self.hash_enc_file, self.hash_prev_obj):
+      logging.error('Did not set the log values for some reason...')
+
+    store.release_lock(lock)
+
+
+
 def detected_new_file(new_file_fp, recipients):
   logging.debug('Entered detected_new_file.')
   gpg = gnupg.GPG()
-  enc_file_name = ''
+
   # Write out temporary GPG file to temp directory.
-  with tempfile.NamedTemporaryFile(delete=False, prefix='lockbox/lockbox') \
-        as enc_tmp_file:
+  with tempfile.NamedTemporaryFile(delete=False) as enc_tmp_file:
     edata = gpg.encrypt_file(new_file_fp,
                              recipients,
                              always_trust=True,
                              armor=True,
                              output=enc_tmp_file.name)
     enc_file_name = enc_tmp_file.name
-  logging.debug('Finished encrypting the original file.')
+  logging.info('Finished encrypting the original file.')
 
-  # Get the SHA1 of the file.
+  # Get the SHA1 of the encrypted file.
   file_sha1 = _sha1_of_file(enc_file_name)
 
   # Filepath
@@ -59,12 +107,10 @@ def detected_new_file(new_file_fp, recipients):
                              recipients,
                              always_trust=True,
                              armor=True)
+
   sha_enc_fp = _sha1_of_string(enc_filepath.data)
-  logging.info("Upload to S3: SHA1(enc_filepath): '%s' data: '%s'" % \
+  logging.info("Upload to S3: SHA1(PGP(filepath)): '%s' data: '%s'" % \
                  (sha_enc_fp, enc_filepath.data))
-  # logging.debug('Original filepath: %s. Encrypted filepath: %s. '
-  #               'SHA-ed filepath: %s' %
-  #               (filepath, enc_filepath.data, sha_filepath))
 
   # Scaffolding for testing.
   sdb_conn = connect_sdb()
@@ -87,18 +133,15 @@ def detected_new_file(new_file_fp, recipients):
   return enc_file_name
 
 if __name__ == '__main__':
-  if os.path.exists('/tmp/lockbox'):
-    os.system('rm /tmp/lockbox/*')
-    os.rmdir('/tmp/lockbox')
-  os.mkdir('/tmp/lockbox')
+  os.system('rm /tmp/tmp*')
 
-  logging.debug('Creating file.')
-  with tempfile.NamedTemporaryFile(delete=False, prefix='lockbox/lockbox') as tmp:
+  logging.info('Creating file.')
+  with tempfile.NamedTemporaryFile(delete=False) as tmp:
     # tmp.write('hello world ' * 100000000)
     tmp.write('hello world ' * 100000)
     tmp.seek(0)
     name = detected_new_file(tmp, ["\'Matt Tierney\'"])
-    os.remove(tmp.name)
+    # os.remove(tmp.name)
   print "Done."
 
   print 'Here is the file returned from detected_new_file:'
@@ -108,5 +151,5 @@ if __name__ == '__main__':
   print 'Upload to S3: SHA1(PGP(file)): \'%s\' data: %s' % \
       (_sha1_of_file(name), data[:1000])
 
-  os.remove(name)
-  os.rmdir('/tmp/lockbox')
+  # os.remove(name)
+

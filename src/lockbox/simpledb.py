@@ -17,7 +17,7 @@ __copyright__ = 'Matt Tierney'
 __license__ = 'GPLv3'
 __author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
 
-from exceptions import DomainDisappeared
+from exception import DomainDisappearedError
 import os
 import boto
 import logging
@@ -60,8 +60,7 @@ class AsyncMetadataStore(object):
     self.data_domain = self._get_domain(self.data_domain_name)
 
 
-  @staticmethod
-  def _save_item(item):
+  def _save_item(self, item):
     retries_remaining = _NUM_RETRIES
     while retries_remaining > 0:
       try:
@@ -73,11 +72,10 @@ class AsyncMetadataStore(object):
     raise DomainDisappeared()
 
 
-  @staticmethod
-  def _set_and_save_item_attr(item, key, value, retries=_NUM_RETRIES):
+  def _set_and_save_item_attr(self, item, key, value, retries=_NUM_RETRIES):
     """item should be a boto SimpleDB item."""
     item[key] = value
-    return _save_item(item)
+    return self._save_item(item)
 
 
   def acquire_lock(self, object_path_hash):
@@ -93,7 +91,7 @@ class AsyncMetadataStore(object):
     lock_id = _lock_name(object_path_hash)
 
     # Check if we already have a lock for the object.
-    query = _select_object_locks_query(lock_domain.name, object_path_hash)
+    query = _select_object_locks_query(self.lock_domain.name, object_path_hash)
     matching_locks = self.lock_domain.select(query, consistent_read=True)
     try:
       _ = matching_locks.next()
@@ -109,10 +107,10 @@ class AsyncMetadataStore(object):
     unconfirmed_lock[unicode('lock_name')] = unicode(lock_id)
     unconfirmed_lock[unicode('user')] = unicode('tierney')
     unconfirmed_lock[unicode('epoch_time')] = unicode(epoch_time())
-    _save_item(unconfirmed_lock)
+    self._save_item(unconfirmed_lock)
 
     # Check if another lock was taken at this time. If so, we release our lock.
-    query = _select_object_locks_query(lock_domain.name, object_path_hash)
+    query = _select_object_locks_query(self.lock_domain.name, object_path_hash)
     matching_locks = self.lock_domain.select(query, consistent_read=True)
     for _lock in matching_locks:
       # Finding a matching lock verifies that we can read the lock that we wrote.
@@ -142,22 +140,22 @@ class AsyncMetadataStore(object):
     self.lock_domain.delete_item(lock)
 
 
-  def set_path(object_path_hash, hash_of_encrypted_relative_filepath):
+  def set_path(self, object_path_hash, hash_of_encrypted_relative_filepath):
     """Adds a pointer to the hash of the encrypted relative (to a monitored
     directory) filepath to the metadata."""
     item = self.data_domain.get_item(object_path_hash, consistent_read=True)
     if not item:
       item = self.data_domain.new_item(object_path_hash)
-    _set_and_save_item_attr(item, 'path', hash_of_encrypted_relative_filepath)
+    self._set_and_save_item_attr(item, 'path', hash_of_encrypted_relative_filepath)
 
 
-  def update_object(object_path_hash, new_hash, prev_hash=''):
+  def update_object(self, object_path_hash, new_hash, prev_hash=''):
     """Assumes that we have a lock on the object_path_hash."""
     item = self.data_domain.get_item(object_path_hash, consistent_read=True)
     if not item:
       assert prev_hash == ''
       logging.info('Creating new item.')
-      item = domain.new_item(object_path_hash)
+      item = self.data_domain.new_item(object_path_hash)
 
     latest_id = _find_latest(item)
     if latest_id != prev_hash:
@@ -167,8 +165,7 @@ class AsyncMetadataStore(object):
 
     logging.info('Confirmed that we can set the update. '
                  'Will say new (%s) -> prev (%s).' % (new_hash, prev_hash))
-    _set_and_save_item_attr(item, new_hash, prev_hash):
-
+    self._set_and_save_item_attr(item, new_hash, prev_hash)
     return True
 
 
@@ -364,6 +361,10 @@ def add_object_delta(domain, object_path_hash, new_id):
   return status
 
 
+def _select_all(domain):
+  return domain.select('select * from %s' % domain.name, consistent_read=True)
+
+
 def _print_lock_domain(domain, object_path_hash):
   output = ''
   select_result = domain.select(
@@ -377,12 +378,12 @@ def _print_lock_domain(domain, object_path_hash):
 
 
 def _print_all_domain(domain):
-  output = ''
-  for entry in domain.select('select * from %s' %
-                             domain.name, consistent_read=True):
-    output += 'Entry: (%s)\n' % (entry.name)
-    for key in entry:
-      output += ' key(%s) value(%s)\n' % (key, entry[key])
+  output = 'Domain Print Output:\n'
+  for item in _select_all(domain):
+    output += 'Item Name: (%s)\n' % (item.name)
+    for attr in item:
+      # We use len 40 for the SHA1 hash outputs.
+      output += '  attr key (%40s) --> value (%40s)\n' % (attr, item[attr])
   logging.info(output)
 
 

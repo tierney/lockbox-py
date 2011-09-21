@@ -5,6 +5,7 @@ Filenames on the cloud should be the SHA-1 of file contents.
 Should have an interface version of this class so that we can use a mock for
 local testing.
 '''
+import logging
 import os
 import random
 import re
@@ -63,7 +64,7 @@ class BlobStore(object):
   def _get_bucket(self, bucket_name):
     if self.connection.lookup(bucket_name, validate=True):
       logging.info('Returning already-existing bucket.')
-      rturn self.connection.get_bucket(bucket_name, validate=True)
+      return self.connection.get_bucket(bucket_name, validate=True)
     logging.info('Creating and returning new bucket.')
     return self.connection.create_bucket(bucket_name)
   
@@ -72,17 +73,20 @@ class BlobStore(object):
     self.bucket = self._get_bucket(self.bucket_name)
 
 
-  def put_string(self, hash_file, string):
-    key = self.bucket.get_key(hash_file)
+  def _get_key(self, key_name):
+    key = self.bucket.get_key(key_name)
     if not key:
-      key = self.bucket_new_key(hash_file)
+      key = self.bucket.new_key(key_name)
+    return key
+    
+
+  def put_string(self, hash_file, string):
+    key = self._get_key(hash_file)
     key.set_contents_from_string(string)
     
 
   def put_file(self, hash_file, fp):
-    key = self.bucket.get_key(hash_file)
-    if not key:
-      key = self.bucket_new_key(hash_file)
+    key = self._get_key(hash_file)
     # TODO(tierney): Would want to have a callback to monitor the progress of
     # the upload.
     key.set_contents_from_file(fp)

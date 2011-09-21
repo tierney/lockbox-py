@@ -733,9 +733,9 @@ class Verify(object):
 class ImportResult(object):
     "Handle status messages for --import"
 
-    counts = '''count no_user_id imported imported_rsa unchanged
+    counts = """count no_user_id imported imported_rsa unchanged
             n_uids n_subk n_sigs n_revoc sec_read sec_imported
-            sec_dups not_imported'''.split()
+            sec_dups not_imported""".split()
     def __init__(self):
         self.imported = []
         self.results = []
@@ -813,7 +813,7 @@ class ImportResult(object):
         return ', '.join(l)
 
 class ListKeys(list):
-    ''' Handle status messages for --list-keys.
+    """ Handle status messages for --list-keys.
 
         Handle pub and uid (relating the latter to the former).
 
@@ -829,7 +829,7 @@ class ListKeys(list):
         pkd = public key data (special field format, see below)
         grp = reserved for gpgsm
         rvk = revocation key
-    '''
+    """
     def __init__(self):
         self.curkey = None
         self.fingerprints = []

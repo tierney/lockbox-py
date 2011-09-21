@@ -10,6 +10,7 @@ import os
 import random
 import re
 import string
+import sys
 import time
 
 import ConfigParser
@@ -24,6 +25,14 @@ from util import log
 
 BUCKET_NAME_PADDING_LEN = 20
 METADATA_TAG_MD5 = 'orig_file_md5'
+
+
+def _progress_meter(so_far, total):
+  percent = 100 * (so_far / (1. * total))
+  percent_int = int(percent)
+  sys.stdout.write('[%-100s] %7s\r' % (100 * '*', 7 * ' '))
+  sys.stdout.write('[%-100s] %-3.2f%%\r' % (percent_int * '*', percent))
+  sys.stdout.flush()
 
 
 class Policy(object):
@@ -82,14 +91,14 @@ class BlobStore(object):
 
   def put_string(self, hash_file, string):
     key = self._get_key(hash_file)
-    key.set_contents_from_string(string)
+    key.set_contents_from_string(string, cb=_progress_meter)
     
 
   def put_file(self, hash_file, fp):
     key = self._get_key(hash_file)
     # TODO(tierney): Would want to have a callback to monitor the progress of
     # the upload.
-    key.set_contents_from_file(fp)
+    key.set_contents_from_file(fp, cb=_progress_meter)
 
     
   def put_filename(self, hash_file, filename):
@@ -259,7 +268,8 @@ def main():
     mtime = k.last_modified
     print mtime
     print time.strptime(mtime.replace('Z', ''), u'%Y-%m-%dT%H:%M:%S.000')
-    print calendar.timegm(time.strptime(mtime.replace('Z', ''), u'%Y-%m-%dT%H:%M:%S.000'))
+    print calendar.timegm(time.strptime(mtime.replace('Z', ''),
+                                        u'%Y-%m-%dT%H:%M:%S.000'))
     print '   ', k, mtime
 
   b.create_bucket()

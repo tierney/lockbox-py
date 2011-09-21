@@ -101,7 +101,8 @@ class CryptoFileUpdate(object):
   Attributes:
     gpg: GPG module.
     file_path: Path to file.
-    recipients: List of recipients. Should correspond to GPG identities.
+    recipients: List of recipients. Should correspond to GPG uids or keyids or
+      fingerprints that have ALREADY BEEN VALIDATED before being passed in.
     hash_of_encrypted_blob: SHA1 of the PGP-encrypted file.
     raw_data_of_encrypted_blob_path: Raw data of the PGP-encrypted blob path.
     path_to_encrypted_blob:
@@ -235,11 +236,77 @@ def main_backup():
   # os.remove(name)
 
 
+class GPGTest(object):
+  fingerprints = []
+
+
+  def __init__(self, gpg):
+    self.gpg = gpg
+
+
+  def __del__(self):
+    self.delete_keys()
+    
+
+  def delete_keys(self):
+    for fingerprint in self.fingerprints:
+      logging.info('Deleting: %s.' % fingerprint)
+      self.gpg.delete_keys(fingerprint, secret=True)
+      self.gpg.delete_keys(fingerprint)
+    
+
+  def generate_key(self, first_name, last_name, domain,
+                   comment='', passphrase=None):
+    """Generate a key"""
+    params = {
+      'Key-Type': 'DSA',
+      'Key-Length': 1024,
+      'Subkey-Type': 'ELG-E',
+      'Subkey-Length': 4096,
+      'Name-Comment': comment,
+      'Expire-Date': 0,
+      }
+    params['Name-Real'] = '%s %s' % (first_name, last_name)
+    params['Name-Email'] = ('%s.%s@%s' % (first_name, last_name, domain)).lower()
+    if passphrase is None:
+      passphrase = ('%s%s' % (first_name[0], last_name)).lower()
+    params['Passphrase'] = passphrase
+    cmd = self.gpg.gen_key_input(**params)
+    return self.gpg.gen_key(cmd)
+
+
+  def generate_keys(self):
+    result = self.generate_key(self.gpg, 'George', 'Washington', '1789.com',
+                               'First President.')
+    self.fingerprints.append(result.fingerprint)
+    logging.info('Generated key %s.' % result.fingerprint)
+    result = self.generate_key(self.gpg, 'John', 'Adams', '1787.com',
+                               'Second President.')
+    self.fingerprints.append(result.fingerprint)
+    logging.info('Generated key %s.' % result.fingerprint)
+    result = self.generate_key(self.gpg, 'Thomas', 'Jefferson', '1801.com',
+                               'Third President.')
+    self.fingerprints.append(result.fingerprint)
+    logging.info('Generated key %s.' % result.fingerprint)
+    result = self.generate_key(self.gpg, 'James', 'Madison', '1809.com',
+                               'Fourth President.')
+    self.fingerprints.append(result.fingerprint)  
+    logging.info('Generated key %s.' % result.fingerprint)
+    result = self.generate_key(self.gpg, 'James', 'Monroe', '1817.com',
+                               'Fifth President.')
+    self.fingerprints.append(result.fingerprint)
+    logging.info('Generated key %s.' % result.fingerprint)
+    
+
+
 from S3 import BlobStore
 from simpledb import AsyncMetadataStore
 from boto import connect_s3, connect_sdb
 
+
 def main():
+  """NB: Sharing a new file means having to reencrypt the file with the new set
+  of keys."""
   # Generate the file that we use for testing.
   logging.info('Generating file contents.')
   rand_contents = os.urandom(10 * 2 ** 20)
@@ -249,20 +316,25 @@ def main():
   logging.info('File written.')
 
   # Useful strings.
-  recipients = ["\'Matt Tierney\'"]
-  bucket_name = 'safe-deposit-box'
+  recipients = ["John Adams", "George Washington"]
+  escaped_recipients = ["\'%s\'" % (recipient) for recipient in recipients]
+  
+  blob_bucket_name = 'safe-deposit-box'
   lock_domain_name = 'group0_lock'
   data_domain_name = 'group0_data'
 
   # GPG setup.
   gpg = gnupg.GPG()
-  crypto = CryptoFileUpdate(gpg, filepath, recipients)
+  # gpgtest = GPGTest(gpg)
+  # gpgtest.generate_keys()
+  
+  crypto = CryptoFileUpdate(gpg, filepath, escaped_recipients)
   crypto.run()
   logging.info('Finished GPG.')
 
   # Blob store setup.
   blob_conn = connect_s3()
-  blob_store = BlobStore(blob_conn, bucket_name)
+  blob_store = BlobStore(blob_conn, blob_bucket_name)
   logging.info('BlobStore initialized.')
 
   # Metdata store setup.
@@ -285,8 +357,11 @@ def main():
   logging.info('Updated blob.')
 
   # Cleanup after the GPG.
-  crypto.cleanup()
+  # crypto.cleanup()
 
+  # Local GPG cleanup.
+  # gpgtest.delete_keys()
+  
   # Cleanup the tmepfile.
   os.remove(filepath)
 

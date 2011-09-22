@@ -15,6 +15,11 @@ from SQLiteHelper import SQLiteHelper as SQL
 
 import constants as C
 
+import gflags
+gflags.DEFINE_string('lock_domain', 'group0_lock', 'Lock domain for a group.')
+gflags.DEFINE_string('data_domain', 'group0_data', 'Data domain for a group.')
+
+
 class Lockbox(Thread):
   def __init__(self, event_handler):
     Thread.__init__(self)
@@ -94,5 +99,7 @@ class Lockbox(Thread):
 
       time.sleep(C.IDLE_WINDOW)
 
+def main():
+  
 if __name__ == '__main__':
   pass

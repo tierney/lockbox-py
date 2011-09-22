@@ -29,13 +29,17 @@ class LockboxEventHandler(FileSystemEventHandler):
   handler. To catch this case, we must periodically call DirectorySnapshot to
   catch any files that move out of our watched file path.
   """
+  def __init__(self, lockbox_sp=None):
+    # Initialize the superclass.
+    self.lockbox_sp = lockbox_sp
 
-
+    
   def on_any_event(self, event):
     # log values from here?
     print event.event_type
     print event.is_directory
     print event.src_path
+    if self.lockbox_sp: self.lockbox_sp.run()
 
 
   def on_created(self, event):

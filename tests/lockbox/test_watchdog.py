@@ -2,6 +2,7 @@
 
 __author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
 
+import logging
 import os
 import sys
 import tempfile
@@ -12,12 +13,18 @@ from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 from watchdog.utils.dirsnapshot import DirectorySnapshot, DirectorySnapshotDiff
 
+
+logging.basicConfig()
+
+
 class WatchdogTestCase(unittest.TestCase):
   def setUp(self):
     pass
 
+
   def tearDown(self):
     pass
+
 
   def test_watchdog(self):
     file_path = './'

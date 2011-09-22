@@ -1,9 +1,19 @@
 #!/usr/bin/env python
+"""
+Protocols:
+  Download a file or delta. Once the file is locally constructed in a temporary
+  file, calculate the signature of the file and store the signature value
+  locally. Also, store the SHA1 of the file as it was posted online. These
+  values will enable us to correctly calculate the DeltaFile as well as produce
+  a correct backpointer when uploading a delta update.
+"""
+
 
 import logging
 FORMAT = "%(asctime)-15s %(levelname)s %(module)-8s %(message)s"
 logging.basicConfig(level=logging.INFO,
                     format=FORMAT)
+
 
 from exception import VersioningError
 from boto import connect_sdb
@@ -96,7 +106,10 @@ class LockboxFileUpdater(object):
     return True
 
 
-class CryptoFileUpdate(object):
+from librsync import SigFile, DeltaFile
+
+
+class CryptoForFileUpdate(object):
   """
   Attributes:
     gpg: GPG module.
@@ -128,6 +141,13 @@ class CryptoFileUpdate(object):
     except Exception, e:
       logging.error(e)
       raise
+
+    # Calculate rsync signature to be used when calculating / applying deltas.
+    with open(self.file_path) as cleartext_file:
+      sigfile = SigFile(cleartext_file)
+    self.ascii_signature = binascii.b2a_base64(sigfile.read())
+
+    # GPG-encrypt and hash the file, filepath.
     with open(self.file_path) as cleartext_file:
       with tempfile.NamedTemporaryFile(delete=False) as encrypted_blob_file:
         self.path_to_encrypted_blob = encrypted_blob_file.name
@@ -307,30 +327,10 @@ from boto import connect_s3, connect_sdb
 def main():
   """NB: Sharing a new file means having to reencrypt the file with the new set
   of keys."""
-  # Generate the file that we use for testing.
-  logging.info('Generating file contents.')
-  rand_contents = os.urandom(10 * 2 ** 20)
-  with tempfile.NamedTemporaryFile(delete=False) as tmp:
-    tmp.write(rand_contents)
-    filepath = tmp.name
-  logging.info('File written.')
-
   # Useful strings.
-  recipients = ["John Adams", "George Washington"]
-  escaped_recipients = ["\'%s\'" % (recipient) for recipient in recipients]
-  
   blob_bucket_name = 'safe-deposit-box'
   lock_domain_name = 'group0_lock'
   data_domain_name = 'group0_data'
-
-  # GPG setup.
-  gpg = gnupg.GPG()
-  # gpgtest = GPGTest(gpg)
-  # gpgtest.generate_keys()
-  
-  crypto = CryptoFileUpdate(gpg, filepath, escaped_recipients)
-  crypto.run()
-  logging.info('Finished GPG.')
 
   # Blob store setup.
   blob_conn = connect_s3()
@@ -341,10 +341,33 @@ def main():
   metadata_conn = connect_sdb()
   metadata_store = AsyncMetadataStore(
     metadata_conn, lock_domain_name, data_domain_name)
-  logging.info('MetadataStore initilized.')
+  logging.info('MetadataStore initialized.')
+
+  # Generate the file that we use for testing.
+  logging.info('Generating file contents.')
+  rand_contents = os.urandom(10 * 2 ** 20)
+  with tempfile.NamedTemporaryFile(delete=False) as tmp:
+    tmp.write(rand_contents)
+    filepath = tmp.name
+  logging.info('File written.')
+
+  # GPG setup.
+  gpg = gnupg.GPG()
+  # gpgtest = GPGTest(gpg)
+  # gpgtest.generate_keys()
+  recipients = ["John Adams", "George Washington"]
+  escaped_recipients = ["\'%s\'" % (recipient) for recipient in recipients]
+
+  with open(filepath) as fp:
+    sigfile = SigFile(fp)
+  
+  crypto = CryptoForFileUpdate(gpg, filepath, escaped_recipients)
+  crypto.run()
+  logging.info('Finished GPG.')
 
   # Configuring the updater.
-  updater = LockboxFileUpdater(blob_store, metadata_store, crypto)
+  updater = LockboxFileUpdater(blob_store, metadata_store, crypto,
+                               hash_of_prev_blob='')
 
   # Sending the metadata.
   logging.info('Sending metadata.')

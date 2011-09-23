@@ -503,6 +503,47 @@ class GPG(object):
                 getattr(result, keyword)(L)
         return result
 
+
+    def uid_to_fingerprint(self, secret=False):
+        which='keys'
+        if secret:
+            which='secret-keys'
+        args = "--list-%s --with-colons" % (which,)
+        args = [args]
+        p = self._open_subprocess(args)
+        # there might be some status thingumy here I should handle... (amk)
+        # ...nope, unless you care about expired sigs or keys (stevegt)
+
+        # Get the response information
+        # Get the response information
+        result = ListKeys()
+        self._collect_output(p, result, stdin=p.stdin)
+        lines = result.data.decode(self.encoding).splitlines()
+        valid_keywords = 'pub uid sec fpr'.split()
+        for line in lines:
+            if self.verbose:
+                print(line)
+            logger.debug("line: %r", line.rstrip())
+            if not line:
+                break
+            L = line.strip().split(':')
+            if not L:
+                continue
+            keyword = L[0]
+            if keyword in valid_keywords:
+                getattr(result, keyword)(L)
+        keyid_to_uids = {}
+        for keyinfo in result:
+            keyid_to_uids[keyinfo['keyid']] = keyinfo['uids']
+        # Reverse so that we have UIDs to fingerprints.
+        uid_to_keyid = {}
+        for keyid in keyid_to_uids:
+            for uid in keyid_to_uids[keyid]:
+                uid_to_keyid[uid] = keyid
+        return uid_to_keyid
+
+
+
     def gen_key(self, input):
         """Generate a key; you might use gen_key_input() to create the
         control input.

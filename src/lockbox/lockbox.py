@@ -1,11 +1,14 @@
 #!/usr/bin/env python
+"""Driver module for the Lockbox program."""
 
 __author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
 
 from calendar import timegm
+import boto
 import logging
 import os
 import stat
+import sys
 import time
 
 from threading import Thread, Lock
@@ -16,20 +19,18 @@ from SQLiteHelper import SQLiteHelper as SQL
 import constants as C
 
 import gflags
-gflags.DEFINE_string('lock_domain', 'group0_lock', 'Lock domain for a group.')
-gflags.DEFINE_string('data_domain', 'group0_data', 'Data domain for a group.')
+FLAGS = gflags.FLAGS
+gflags.DEFINE_string('lock_domain_name', None, 'Lock domain name for a group.')
+gflags.DEFINE_string('data_domain_name', None, 'Data domain name for a group.')
+gflags.DEFINE_string('blob_bucket_name', None, 'Blob bucket name.')
+gflags.MarkFlagAsRequired('lock_domain_name')
+gflags.MarkFlagAsRequired('data_domain_name')
+gflags.MarkFlagAsRequired('blob_bucket_name')
 
 
-class Lockbox(Thread):
+class Lockbox(object):
   def __init__(self, event_handler):
-    Thread.__init__(self)
-
     self.event_handler = event_handler
-
-    self.admin_directory = os.path.expanduser("~/.lockbox")
-    self.db = SQL(os.path.expanduser("~/.lockbox"))
-
-    config = self.db.get_config()
 
     # Should be apart of init process..
     self.sdb_directory = os.path.expanduser(config['sdb_directory'])
@@ -39,67 +40,42 @@ class Lockbox(Thread):
       os.remove(self.sdb_directory)
       os.mkdir(self.sdb_directory)
 
-    # file -> [updated?, file's mtime]
-    self.known_files = dict()
-    self.known_files_lock = Lock()
-    self.known_files_locks = dict()
-
     self.crypto_helper = CryptoHelper(os.path.expanduser('~/.lockbox/keys'))
-
-    config['staging_directory'] = os.path.join(self.admin_directory, 'staging')
-    config['bucket_name'] = 'safe-deposit-box'
-
     self.S3Conn = Connection(config, prefix='/data')
 
-  def reset_known_files(self):
-    for filename in self.known_files:
-      self.known_files[filename][C.STATUS] = C.NOT_VISITED
-
-  def _lm_to_epoch(self, last_modified_time):
-    return timegm(time.strptime(last_modified_time.replace("Z",''),
-                                u"%Y-%m-%dT%H:%M:%S.000"))
-
-  def monitor_local_file(self, filename):
-    # Check for local file changes (make some queue of these results)
-    filename_mtime = os.stat(filename).st_mtime
-    if filename in self.known_files:
-      self.known_files[filename][C.LOCK].acquire()
-      if (self.known_files[filename][C.MTIME] < filename_mtime):
-        self.known_files[filename][C.STATUS] = C.UPDATED
-        self.known_files[filename][C.MTIME] = filename_mtime
-        self.S3Conn.enqueue(filename, C.UPDATED)
-      else:
-        self.known_files[filename][C.STATUS] = C.UNCHANGED
-      self.known_files[filename][C.LOCK].release()
-    else: # don't have this file information stored in memory
-      self.known_files[filename] = [C.PNEW, filename_mtime, Lock()]
-      self.S3Conn.enqueue(filename, C.PNEW)
 
   def monitor_cloud_files(self):
-    '''Pull for changes from the queue for the files that we want to monitor. We
-    should receive updates through SQS. (Likely, polling for state from S3 is
-    too expensive.)'''
-    keys = self.S3Conn.get_all_keys()
-    # make sure that we update our known_files table view of the
-    # file time so that we don't continue to update
-    for key in keys:
-      print "CLOUD:", self.sdb_directory, key.name, self._lm_to_epoch(key.last_modified)
+    """Pull for changes from the queue for the files that we want to monitor. We
+    should receive updates through SNS+SQS. (Likely, polling for state from S3
+    is too expensive.)"""
+    boto.sqs.
+
 
   def run(self):
-    while True:
-      # figure out who's new and who's updated
-      self.walktree(self.sdb_directory, self.monitor_local_file)
+    observer = Observer()
+    # Much verify that the roots are not included in each other.
+    for root in self.file_roots:
+      observer.schedule(self.event_handler, root, recursive=True)
 
-      # see if anyone needs removing
-      print time.time()
-      for f in self.known_files:
-        print " ", f, self.known_files.get(f)
+    # TODO(tierney): Can we add an observer that detects tree diffs.
+    observer.start()
 
-      self.monitor_cloud_files()
+    # Subscribe to SNS and SQS.
 
-      time.sleep(C.IDLE_WINDOW)
+    # TODO(tierney): Continue running until the input says to quit.
 
-def main():
-  
+def main(argv):
+  try:
+    argv = FLAGS(argv)
+  except gflags.FlagsError, e:
+    print '%s\\nUsage: %s ARGS\\n%s' % (e, sys.argv[0], FLAGS)
+    sys.exit(1)
+  if FLAGS.debug:
+    print 'non-flag arguments:', argv
+
+  # Event handler.
+  Lockbox()
+
 if __name__ == '__main__':
-  pass
+  main(sys.argv)
+

@@ -9,7 +9,8 @@ from boto import connect_sdb
 
 FLAGS = gflags.FLAGS
 gflags.DEFINE_string('domain', '', 'Domain.')
-gflags.DEFINE_boolean('print_domain', True, 'Print entire domain.')
+gflags.DEFINE_boolean('list_domains', False, 'List domains.')
+gflags.DEFINE_boolean('print_domain', False, 'Print entire domain.')
 gflags.DEFINE_boolean('delete_domain', False, 'Delete entire domain.')
 gflags.DEFINE_multistring('delete_domain_items', None,
                           'Delete specified items from domain.')
@@ -46,7 +47,13 @@ def delete_domain_items(domain_name):
     domain.delete_item(item)
     logging.info('Deleted item: %s.' % item_name)
 
-  
+
+def list_domains():
+  connection = connect_sdb()
+  for i, domain in enumerate(connection.get_all_domains()):
+    logging.info('Domain #%3d: \'%s\'' % (i, domain.name))
+
+
 def main(argv):
   try:
     argv = FLAGS(argv)
@@ -56,11 +63,14 @@ def main(argv):
   if FLAGS.debug:
     print 'non-flag arguments:', argv
 
+  if FLAGS.list_domains:
+    list_domains()
+
   if FLAGS.print_domain:
     print_domain(FLAGS.domain)
 
   if FLAGS.delete_domain_items:
-    delete_domain_items(FLAGS.domain)    
+    delete_domain_items(FLAGS.domain)
 
   if FLAGS.delete_domain:
     delete_domain(FLAGS.domain)

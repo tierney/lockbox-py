@@ -11,6 +11,15 @@ Data Domain.
 
 TODO(tierney): Should address 503 service unavailable errors that we may get
 from boto SimpleDB.
+
+Aim for lock-based concurrency serializability since we do not assume the
+possiblity of a Multiversion Concurrency Control system to sweep and detect
+conflicts.: If built on multiversion concurrency control, snapshot isolation
+allows transactions to proceed without worrying about concurrent operations, and
+more importantly without needing to re-verify all read operations when the
+transaction finally commits. The only information that must be stored during the
+transaction is a list of updates made, which can be scanned for conflicts fairly
+easily before being committed.
 """
 
 __copyright__ = 'Matt Tierney'

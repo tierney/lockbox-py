@@ -47,7 +47,7 @@ class LockboxFileUpdater(object):
     hash_of_prev_blob:
   """
 
-  
+
   def __init__(self, blob_store, metadata_store, crypto_file_update,
                hash_of_prev_blob=''):
     """Sets up the basic components for performing updates."""
@@ -76,6 +76,9 @@ class LockboxFileUpdater(object):
 
 
   def update_storage(self):
+    # TODO(tierney): If these should fail, we should undo the operation of the
+    # update_metadata. How do we achieve isolation when we can only communiate
+    # through a shared medium like SimpleDB?
     self.blob_store.put_string(self.hash_of_raw_data_of_encrypted_blob_path,
                                self.raw_data_of_encrypted_blob_path)
     self.blob_store.put_filename(self.hash_of_encrypted_blob,
@@ -121,8 +124,8 @@ class CryptoForFileUpdate(object):
     path_to_encrypted_blob:
     hash_of_raw_data_of_encrypted_blob_path:
   """
-  
-  
+
+
   def __init__(self, gpg, file_path, recipients):
     self.gpg = gpg
     self.file_path = file_path
@@ -162,11 +165,11 @@ class CryptoForFileUpdate(object):
     self.raw_data_of_encrypted_blob_path = encrypted_blob_path.data
     self.hash_of_raw_data_of_encrypted_blob_path =\
       hash_string(self.raw_data_of_encrypted_blob_path)
-  
+
 
   def cleanup(self):
     if not os.path.exists(self.path_to_encrypted_blob):
-      logging.error('Temporary encrypted file disappeared; original file %s.' % 
+      logging.error('Temporary encrypted file disappeared; original file %s.' %
                     self.file_path)
     os.remove(self.path_to_encrypted_blob)
 
@@ -266,14 +269,14 @@ class GPGTest(object):
 
   def __del__(self):
     self.delete_keys()
-    
+
 
   def delete_keys(self):
     for fingerprint in self.fingerprints:
       logging.info('Deleting: %s.' % fingerprint)
       self.gpg.delete_keys(fingerprint, secret=True)
       self.gpg.delete_keys(fingerprint)
-    
+
 
   def generate_key(self, first_name, last_name, domain,
                    comment='', passphrase=None):
@@ -310,13 +313,13 @@ class GPGTest(object):
     logging.info('Generated key %s.' % result.fingerprint)
     result = self.generate_key(self.gpg, 'James', 'Madison', '1809.com',
                                'Fourth President.')
-    self.fingerprints.append(result.fingerprint)  
+    self.fingerprints.append(result.fingerprint)
     logging.info('Generated key %s.' % result.fingerprint)
     result = self.generate_key(self.gpg, 'James', 'Monroe', '1817.com',
                                'Fifth President.')
     self.fingerprints.append(result.fingerprint)
     logging.info('Generated key %s.' % result.fingerprint)
-    
+
 
 
 from S3 import BlobStore
@@ -360,7 +363,7 @@ def main():
 
   with open(filepath) as fp:
     sigfile = SigFile(fp)
-  
+
   crypto = CryptoForFileUpdate(gpg, filepath, escaped_recipients)
   crypto.run()
   logging.info('Finished GPG.')
@@ -384,7 +387,7 @@ def main():
 
   # Local GPG cleanup.
   # gpgtest.delete_keys()
-  
+
   # Cleanup the tmepfile.
   os.remove(filepath)
 

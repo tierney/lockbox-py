@@ -2,10 +2,11 @@
 
 import logging
 import gflags
+import gnupg
 import sys
 from simpledb import get_domain, _print_all_domain
 from boto import connect_sdb
-
+from crypto_util import hash_string
 
 FLAGS = gflags.FLAGS
 gflags.DEFINE_string('domain', '', 'Domain.')
@@ -54,7 +55,31 @@ def list_domains():
     logging.info('Domain #%3d: \'%s\'' % (i, domain.name))
 
 
+def key_limit():
+  gpg = gnupg.GPG()
+  keyid = '3fa60037'
+  exported_keys = gpg.export_keys(keyid)
+  print exported_keys
+  print len(exported_keys)
+  connection = connect_sdb()
+  gpg_test_domain_name = 'gpg_test_domain'
+
+  if not connection.lookup(gpg_test_domain_name):
+    domain = connection.create_domain(gpg_test_domain_name)
+  else:
+    domain = connection.get_domain(gpg_test_domain_name, validate=True)
+    
+  item = domain.new_item('keys')
+  item[keyid] = hash_string(exported_keys)
+  item.save()
+
+  connection.delete_domain(gpg_test_domain_name)
+  
+
 def main(argv):
+  key_limit()
+  return
+
   try:
     argv = FLAGS(argv)
   except gflags.FlagsError, e:

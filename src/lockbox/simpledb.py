@@ -43,12 +43,13 @@ logger.setLevel(logging.INFO)
 
 
 class AsyncMetadataStore(object):
+  """This should be instantiated one per active Domain."""
   lock_domain = None
   data_domain = None
 
 
   def __init__(self, connection, lock_domain_name, data_domain_name):
-    """Assume that the conneciton we receive is one that already works (usually
+    """Assume that the connection we receive is one that already works (usually
     called with boto.connect_sdb())."""
     self.connection = connection
     self.lock_domain_name = lock_domain_name
@@ -157,6 +158,14 @@ class AsyncMetadataStore(object):
       item = self.data_domain.new_item(object_path_hash)
     self._set_and_save_item_attr(item, 'path', hash_of_encrypted_relative_filepath)
 
+
+  def set_keys(self, hash_of_exported_keys):
+    """hash_of_exported_keys should have a corresponding S3 object."""
+    item = self.data_domain.get_item('keyring', consistent_read=True)
+    if not item:
+      item = self.data_domain.new_item('keyring')
+    self._set_and_save_item_attr(item, 'public_key_block', hash_of_exported_keys)
+               
 
   def update_object(self, object_path_hash, new_hash, prev_hash=''):
     """Assumes that we have a lock on the object_path_hash."""

@@ -504,7 +504,7 @@ class GPG(object):
         return result
 
 
-    def uid_to_fingerprint(self, secret=False):
+    def uid_to_keyid(self, secret=False):
         which='keys'
         if secret:
             which='secret-keys'

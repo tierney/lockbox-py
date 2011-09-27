@@ -3,16 +3,16 @@
 import gnupg
 import logging
 
-logging.basicConfig() # level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
+
+def _is_sequence(instance):
+    return isinstance(instance,list) or isinstance(instance,tuple)
+
 
 class GroupManager(object):
   """Manages local knowledge of group membership."""
   def __init__(self):
     pass
-
-
-def _is_sequence(instance):
-    return isinstance(instance,list) or isinstance(instance,tuple)
 
 
 class Group(object):
@@ -26,6 +26,11 @@ class Group(object):
     self.member_uid_to_keyid = {}
     self.public_key_block = None
     self.permissions = None
+
+    self.bucket_name = ''
+    self.domain_name = ''
+    self.sns_topic_name = ''
+    self.sqs_queue_name = ''
 
 
   def _get_already_imported_keys(self):

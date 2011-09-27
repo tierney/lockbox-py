@@ -10,7 +10,9 @@ def enum(*sequential, **named):
   enums = dict(zip(sequential, range(len(sequential))), **named)
   return type('Enum', (), enums)
 
+
 # Global enums.
+_VERSION = 1
 _NOTIFICATION_TYPES = enum('UPLOAD_PROGRESS', 'FS_EVENT')
 _FS_EVENT_TYPES = enum('MODIFIED', 'CREATED', 'MOVED', 'DELETED')
 
@@ -19,7 +21,8 @@ class Notification(object):
   def __init__(self, user, timestamp, notification_type):
     # TODO(tierney): Verify notification_type.
     assert isinstance(timestamp, float)
-    self.__dict__ = { 'user' : user,
+    self.__dict__ = { 'version' : _VERSION,
+                      'user' : user,
                       'timestamp' : timestamp,
                       'notification_type' : notification_type }
 

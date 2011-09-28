@@ -60,13 +60,10 @@ class Policy(object):
 
 
 class BlobStore(object):
-  bucket = None
-  connection = None
-
-  
   def __init__(self, connection, bucket_name):
     self.connection = connection
     self.bucket_name = bucket_name
+    self.bucket = None
     self._connect_bucket()
 
 
@@ -76,7 +73,7 @@ class BlobStore(object):
       return self.connection.get_bucket(bucket_name, validate=True)
     logging.info('Creating and returning new bucket.')
     return self.connection.create_bucket(bucket_name)
-  
+
 
   def _connect_bucket(self):
     self.bucket = self._get_bucket(self.bucket_name)
@@ -87,12 +84,12 @@ class BlobStore(object):
     if not key:
       key = self.bucket.new_key(key_name)
     return key
-    
+
 
   def put_string(self, hash_file, string):
     key = self._get_key(hash_file)
     key.set_contents_from_string(string, cb=_progress_meter)
-    
+
 
   def put_file(self, hash_file, fp):
     key = self._get_key(hash_file)
@@ -100,7 +97,7 @@ class BlobStore(object):
     # the upload.
     key.set_contents_from_file(fp, cb=_progress_meter)
 
-    
+
   def put_filename(self, hash_file, filename):
     with open(filename) as fp:
       self.put_file(hash_file, fp)

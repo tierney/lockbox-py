@@ -54,6 +54,26 @@ class GroupMessages(object):
     pass
 
 
+  def publish(self, message_str):
+    assert self.topic_arn
+    if not isinstance(message_str, unicode):
+      message_str = unicode(message_str)
+    self.sns_connection.publish(self.topic_arn, message_str)
+
+
+  def receive(self):
+    assert self.queue
+    return self.queue.read()
+
+
+  def delete(self, message):
+    assert isinstance(message, boto.sqs.message.Message)
+    if not self.queue.delete_message(message):
+      logging.error('Unable to delete message (%s).' % (message.get_body())).
+      return False
+    return True
+
+
   def get_or_create_queue(self, queue_name):
     try:
       self.queue = self.sqs_connection.lookup(queue_name)
@@ -73,6 +93,7 @@ class GroupMessages(object):
 
     self.sns_connection.delete_topic(self.topic_arn)
     return True
+
 
   def check_subscription(self):
     subscriptions_result = self.sns_connection.get_all_subscriptions()

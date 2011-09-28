@@ -43,6 +43,7 @@ class GroupManager(object):
       return False
 
     gms = self.group_to_messages.get(name_prefix)
+    # Fit this into a retry decorator (e.g., util.retry).
     retries = 3
     while retries > 0:
       if gms.delete():

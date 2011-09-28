@@ -5,6 +5,7 @@ import time
 import boto
 from boto import connect_sns, connect_sqs
 from boto.exception import BotoServerError
+from util import retry
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -65,12 +66,13 @@ class GroupMessages(object):
 
 
   def delete(self):
-    if not self.sqs_connection.lookup(self.queue.name):
-      logging.error('Could not find the queue to delete (%s).' % (self.queue.name))
-      return False
-    self.sqs_connection.delete_queue(self.queue, force_deletion=True)
-    self.sns_connection.delete_topic(self.topic_arn)
+    if self.sqs_connection.lookup(self.queue.name):
+      self.sqs_connection.delete_queue(self.queue, force_deletion=True)
+    else:
+      logging.warning('Could not find the queue to delete (%s).' % (self.queue.name))
 
+    self.sns_connection.delete_topic(self.topic_arn)
+    return True
 
   def check_subscription(self):
     subscriptions_result = self.sns_connection.get_all_subscriptions()
@@ -112,11 +114,16 @@ class GroupMessages(object):
       print 'No messages.'
 
 
+  @retry(3)
   def _verify_or_create_subscription(self):
     assert self.topic_arn
     assert self.queue
     if not self.check_subscription():
-      self.sns_connection.subscribe_sqs_queue(self.topic_arn, self.queue)
+      try:
+        self.sns_connection.subscribe_sqs_queue(self.topic_arn, self.queue)
+      except boto.exception.SQSError:
+        return False
+    return True
 
 
   def setup_topic_queue(self, topic_name='', queue_name=''):

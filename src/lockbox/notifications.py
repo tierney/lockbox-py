@@ -4,6 +4,7 @@ import sys
 import yaml
 import zlib
 
+
 # Utility functions.
 def enum(*sequential, **named):
   """Automatic enumeration of sequential arguments."""
@@ -62,6 +63,7 @@ class NotificationSerializer(object):
   def serialize(obj):
     return zlib.compress(yaml.dump(obj))
 
+
   @staticmethod
   def deserialize(obj):
     return yaml.load(zlib.decompress(obj))
@@ -92,6 +94,7 @@ def main(argv):
   cloud_obj = NotificationSerializer.serialize(fn)
   print len(cloud_obj)
   print NotificationSerializer.deserialize(cloud_obj)
+
 
 if __name__=='__main__':
   main(sys.argv)

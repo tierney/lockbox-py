@@ -4,7 +4,7 @@ import os
 from hashlib import sha1
 from uuid import uuid4
 
-def _random_uuid():
+def get_random_uuid():
   return unicode(uuid4().hex)
 
 
@@ -17,7 +17,7 @@ def hash_string(string):
 
 def hash_file(file_handle):
   """Hashes an opened file handle.
-  
+
   Args:
     file_handle: An open file (callable seek(), read(), etc. methods).
 
@@ -37,4 +37,4 @@ def hash_filename(filename):
 
 
 def lock_name(object_hash):
-  return '%s-lock-%s' % (object_hash, _random_uuid())
+  return '%s-lock-%s' % (object_hash, get_random_uuid())

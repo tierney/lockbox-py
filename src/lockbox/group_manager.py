@@ -1,100 +1,58 @@
 #!/usr/bin/env python
 
-import gnupg
+import boto
+import group
+import group_messages
 import logging
+import random
+import sys
+import time
 
 logging.basicConfig(level=logging.DEBUG)
 
-def _is_sequence(instance):
-    return isinstance(instance,list) or isinstance(instance,tuple)
-
 
 class GroupManager(object):
-  """Manages local knowledge of group membership."""
-  def __init__(self):
+  """Creates groups, manages local state of group membership."""
+  def __init__(self, sns_connection, sqs_connection):
+    assert isinstance(sns_connection, boto.sns.connection.SNSConnection)
+    assert isinstance(sqs_connection, boto.sqs.connection.SQSConnection)
+    self.sns_connection = sns_connection
+    self.sqs_connection = sqs_connection
+    self.group_to_messages = {}
+
+
+  def create_group(self, name_prefix):
+    """Create a group that I will own."""
+    gmsgs = group_messages.GroupMessages(
+      self.sns_connection, self.sqs_connection, name_prefix, name_prefix)
+    if not gmsgs.setup_topic_queue():
+      logging.error('Topic and queue not setup properly')
+      return False
+
+    self.group_to_messages[name_prefix] = gmsgs
+    # TODO(tierney): Serialize and save this information somewhere persistent.
+
+    return True
+
+  def join_group(self, name_prefix, address, more_info):
     pass
 
 
-class Group(object):
-  def __init__(self, gpg, service_name_prefix):
-    """
-    Attributes:
-      service_name_prefix: group0_data domain => group0
-    """
-    self.gpg = gpg
-    self.service_names_prefix = service_name_prefix
-    self.member_uid_to_keyid = {}
-    self.public_key_block = None
-    self.permissions = None
-
-    self.bucket_name = ''
-    self.domain_name = ''
-    self.sns_topic_name = ''
-    self.sqs_queue_name = ''
-
-
-  def _get_already_imported_keys(self):
-    return self.gpg.uid_to_keyid()
-
-
-  def _get_similar_already_imported_keys(self, name):
-    uid_to_fp = self._get_already_imported_keys()
-    logging.debug(str(uid_to_fp))
-    candidate_keys = [(uid, uid_to_fp.get(uid)) for uid in uid_to_fp
-                      if name.lower() in uid.lower()]
-    return candidate_keys
-
-
-  def _group_keyids(self):
-    return self.member_uid_to_keyid.values()
-
-
-  def add_members(self, members):
-    if not _is_sequence(members):
-      return add_member(members)
-
-    uid_to_keyids = self._get_already_imported_keys()
-    lowered_uids = [uid.lower() for uid in uid_to_keyids.keys()]
-    matching_uid_to_keyids = [(uid, uid_to_keyids.get(uid))
-                              for uid in uid_to_keyids
-                              if uid.lower() in lowered_uids]
-    if len(matching_uid_to_keyids) < len(members):
-      logging.warning('Not all members matched (%s) found vs. (%s) given.' %
-                      ([match[0] for match in matching_uid_to_keyids], members))
-    for match in matching_uid_to_keyids:
-      self.member_uid_to_keyid[match[0]] = match[1]
-
-
-  def add_member(self, member):
-    """Verifies that the member key exists and that sets the local cache version
-    to the KeyID."""
-    candidates = self._get_similar_already_imported_keys(member)
-    if not candidates:
+  def delete_group(self, name_prefix):
+    if not name_prefix in self.group_to_messages:
       return False
 
-    if len(candidates) > 1:
-      logging.warning('We do not account for multiple matching names yet. '
-                      'Taking first match.')
-    uid = candidates[0][0]
-    keyid = candidates[0][1]
-    self.member_uid_to_keyid[uid] = keyid
+    gms = self.group_to_messages.get(name_prefix)
+    retries = 3
+    while retries > 0:
+      if gms.delete():
+        break
+      sleep_duration = random.randint(2,5)
+      logging.warning('Could not delete group (%s) so sleeping %d sec. '
+                      '%d retries remain.' %
+                      (name_prefix, sleep_duration, retries))
+      time.sleep(sleep_duration)
+      retries -= 1
 
-
-  def set_public_key_block(self):
-    keyids = self._group_keyids()
-    self.public_key_block = self.gpg.export_keys(keyids)
-
-
-def main():
-  gpg = gnupg.GPG()
-  group = Group(gpg, 'group0')
-  members = ['matt tierney', 'george washington', 'john adams', 'bristol palin']
-  group.add_members(members)
-  # for member in members:
-  #   group.add_member(member)
-  print group.member_uid_to_keyid
-  group.set_public_key_block()
-  print group.public_key_block
-
-if __name__=='__main__':
-  main()
+    del self.group_to_messages[name_prefix]
+    return True

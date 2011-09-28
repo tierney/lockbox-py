@@ -2,10 +2,12 @@
 
 import logging
 import time
+import boto
 from boto import connect_sns, connect_sqs
 from boto.exception import BotoServerError
 
 logging.basicConfig(level=logging.DEBUG)
+
 
 def _print_dict(dictionary, spaces=''):
   for key in dictionary:
@@ -18,12 +20,17 @@ def _print_dict(dictionary, spaces=''):
 
 
 class GroupMessages(object):
-  def __init__(self, sns_connection=None, sqs_connection=None,
+  def __init__(self, sns_connection, sqs_connection,
                queue_name='', topic_name=''):
+    assert isinstance(sns_connection, boto.sns.connection.SNSConnection)
+    assert isinstance(sqs_connection, boto.sqs.connection.SQSConnection)
+
     self.sns_connection = sns_connection
     self.sqs_connection = sqs_connection
-    self.queue_name = queue_name
     self.topic_name = topic_name
+    self.queue_name = queue_name
+    self.topic_arn = None
+    self.queue = None
 
 
   @staticmethod
@@ -34,22 +41,43 @@ class GroupMessages(object):
 
   def _create_and_set_topic_arn(self, topic_name):
     topic = self.sns_connection.create_topic(topic_name)
-    return topic[u'CreateTopicResponse'][u'CreateTopicResult'][u'TopicArn']
+    self.topic_arn =\
+        topic[u'CreateTopicResponse'][u'CreateTopicResult'][u'TopicArn']
+
+
+  def add_user(self, user):
+    pass
+
+
+  def remove_user(self, user):
+    pass
 
 
   def get_or_create_queue(self, queue_name):
-    queue = self.sqs_connection.lookup(queue_name)
-    if not queue:
-      queue = self.sqs_connection.create_queue(queue_name)
-    return queue
+    try:
+      self.queue = self.sqs_connection.lookup(queue_name)
+      if not self.queue:
+        self.queue = self.sqs_connection.create_queue(queue_name)
+      return True
+    except Exception, e:
+      logging.error(e)
+      return False
 
 
-  def check_subscription(self, topic_arn):
+  def delete(self):
+    if not self.sqs_connection.lookup(self.queue.name):
+      logging.error('Could not find the queue to delete (%s).' % (self.queue.name))
+      return False
+    self.sqs_connection.delete_queue(self.queue, force_deletion=True)
+    self.sns_connection.delete_topic(self.topic_arn)
+
+
+  def check_subscription(self):
     subscriptions_result = self.sns_connection.get_all_subscriptions()
     subscriptions = subscriptions_result[u'ListSubscriptionsResponse']\
         [u'ListSubscriptionsResult'][u'Subscriptions']
     for subscription_info in subscriptions:
-      if topic_arn == subscription_info[u'TopicArn']:
+      if self.topic_arn == subscription_info[u'TopicArn']:
         return True
     return False
 
@@ -84,25 +112,12 @@ class GroupMessages(object):
       print 'No messages.'
 
 
-  def verify_or_create_subscription(self, sns_topic_arn, sqs_queue):
-    if not self.check_subscription(sns_topic_arn):
-      self.sns_connection.subscribe_sqs_queue(sns_topic_arn, sqs_queue)
+  def _verify_or_create_subscription(self):
+    assert self.topic_arn
+    assert self.queue
+    if not self.check_subscription():
+      self.sns_connection.subscribe_sqs_queue(self.topic_arn, self.queue)
 
-
-  def setup_connections(self):
-    """Sets up the connections when not specified initially."""
-    if not self.sns_connection:
-      self.sns_connection = connect_sns()
-
-    if not self.sqs_connection:
-      self.sqs_connection = connect_sqs()
-
-    if not self.sns_connection or self.sqs_connection:
-      logging.error('SNS (%s) or SQS (%s) Connection not set.' %
-                    (type(self.sns_connection), type(self.sqs_connection)))
-      return False
-
-    return True
 
   def setup_topic_queue(self, topic_name='', queue_name=''):
     if not topic_name:
@@ -114,9 +129,11 @@ class GroupMessages(object):
                     (topic_name, queue_name))
       return False
 
-    topic_arn = self._create_and_set_topic_arn(topic_name)
-    queue = self.get_or_create_queue(queue_name)
-    self.verify_or_create_subscription(topic_arn, queue)
+    self._create_and_set_topic_arn(topic_name)
+    if not self.get_or_create_queue(queue_name):
+      logging.error('queue_name not set (%s).' % (queue_name))
+      return False
+    self._verify_or_create_subscription()
     return True
 
 

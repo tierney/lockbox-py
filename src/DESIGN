@@ -1,6 +1,8 @@
 When joining a group, we must set the S3 bucket, SDB domain, SNS topic
 subscription, and create the local SQS queue.
 
+
+
 ================================================================================
 
 SHA-1 for the filenames (similar to Object model choice in git).

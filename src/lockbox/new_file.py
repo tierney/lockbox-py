@@ -38,6 +38,8 @@ gflags.DEFINE_string('data_domain', 'group0_data', 'Data domain for a group.')
 
 
 def detected_new_file(new_file_fp, recipients):
+  """Original model function for handling created files."""
+
   logging.debug('Entered detected_new_file.')
   gpg = gnupg.GPG()
 
@@ -70,10 +72,8 @@ def detected_new_file(new_file_fp, recipients):
   sha_filepath = _sha1_of_string(filepath)
 
   # Encrypt the exact value of the basepath.
-  enc_filepath = gpg.encrypt(filepath,
-                             recipients,
-                             always_trust=True,
-                             armor=False)
+  enc_filepath = gpg.encrypt(
+    filepath, recipients, always_trust=True, armor=False)
 
   sha_enc_fp = _sha1_of_string(enc_filepath.data)
   logging.info("Upload to S3: SHA1(PGP(filepath)): '%s' data: '%s'" % \
@@ -120,69 +120,6 @@ def main_backup():
       (_sha1_of_file(name), data[:1000])
 
   # os.remove(name)
-
-
-class GPGTest(object):
-  fingerprints = []
-
-
-  def __init__(self, gpg):
-    self.gpg = gpg
-
-
-  def __del__(self):
-    self.delete_keys()
-
-
-  def delete_keys(self):
-    for fingerprint in self.fingerprints:
-      logging.info('Deleting: %s.' % fingerprint)
-      self.gpg.delete_keys(fingerprint, secret=True)
-      self.gpg.delete_keys(fingerprint)
-
-
-  def generate_key(self, first_name, last_name, domain,
-                   comment='', passphrase=None):
-    """Generate a key"""
-    params = {
-      'Key-Type': 'DSA',
-      'Key-Length': 1024,
-      'Subkey-Type': 'ELG-E',
-      'Subkey-Length': 4096,
-      'Name-Comment': comment,
-      'Expire-Date': 0,
-      }
-    params['Name-Real'] = '%s %s' % (first_name, last_name)
-    params['Name-Email'] = ('%s.%s@%s' % (first_name, last_name, domain)).lower()
-    if passphrase is None:
-      passphrase = ('%s%s' % (first_name[0], last_name)).lower()
-    params['Passphrase'] = passphrase
-    cmd = self.gpg.gen_key_input(**params)
-    return self.gpg.gen_key(cmd)
-
-
-  def generate_keys(self):
-    result = self.generate_key(self.gpg, 'George', 'Washington', '1789.com',
-                               'First President.')
-    self.fingerprints.append(result.fingerprint)
-    logging.info('Generated key %s.' % result.fingerprint)
-    result = self.generate_key(self.gpg, 'John', 'Adams', '1787.com',
-                               'Second President.')
-    self.fingerprints.append(result.fingerprint)
-    logging.info('Generated key %s.' % result.fingerprint)
-    result = self.generate_key(self.gpg, 'Thomas', 'Jefferson', '1801.com',
-                               'Third President.')
-    self.fingerprints.append(result.fingerprint)
-    logging.info('Generated key %s.' % result.fingerprint)
-    result = self.generate_key(self.gpg, 'James', 'Madison', '1809.com',
-                               'Fourth President.')
-    self.fingerprints.append(result.fingerprint)
-    logging.info('Generated key %s.' % result.fingerprint)
-    result = self.generate_key(self.gpg, 'James', 'Monroe', '1817.com',
-                               'Fifth President.')
-    self.fingerprints.append(result.fingerprint)
-    logging.info('Generated key %s.' % result.fingerprint)
-
 
 
 from S3 import BlobStore

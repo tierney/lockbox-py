@@ -32,11 +32,13 @@ gflags.MarkFlagAsRequired('blob_bucket_name')
 
 class Lockbox(object):
   def __init__(self, s3_connection, sdb_connection, sns_connection,
-               sqs_connection, event_handler):
+               sqs_connection, gpg, event_handler):
+    # TODO(tierney): Add connection type assertions.
     self.s3_connection = s3_connection
     self.sdb_connection = sdb_connection
     self.sns_connection = sns_connection
     self.sqs_connection = sqs_connection
+    self.gpg = gpg
     self.event_handler = event_handler
 
     self.id = None

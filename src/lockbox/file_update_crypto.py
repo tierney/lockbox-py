@@ -16,10 +16,9 @@ class FileUpdateCrypto(object):
     hash_of_encrypted_blob: SHA1 of the PGP-encrypted file.
     raw_data_of_encrypted_blob_path: Raw data of the PGP-encrypted blob path.
     path_to_encrypted_blob:
-    hash_of_raw_data_of_encrypted_blob_path:
+    hash_of_raw_data_of_encrypted_blob_path: This is the key in S3 for the
+      decryptable raw data of the blob path.
   """
-
-
   def __init__(self, gpg, file_path, recipients):
     self.gpg = gpg
     self.file_path = file_path

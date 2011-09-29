@@ -232,8 +232,8 @@ def main():
   logging.info('Finished GPG.')
 
   # Configuring the updater.
-  updater = UpdateCloudFile(blob_store, metadata_store, crypto,
-                            hash_of_prev_blob='')
+  updater = UpdateCloudFile(
+    blob_store, metadata_store, crypto, hash_of_prev_blob='')
 
   # Sending the metadata.
   logging.info('Sending metadata.')

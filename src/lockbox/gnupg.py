@@ -713,6 +713,34 @@ class GPG(object):
         logger.debug('decrypt result: %r', result.data)
         return result
 
+    def show_session_key(self, message, **kwargs):
+        data = _make_binary_stream(message, self.encoding)
+        result = self.decrypt_File(data, **kwargs)
+        data.close()
+        return result
+
+    def show_session_key_file(self, file, always_trust=False, passphrase=None,
+                              output=None):
+        args = []
+        if output:  # write the output to a file with the specified name
+            if os.path.exists(output):
+                os.remove(output) # to avoid overwrite confirmation message
+            args.append('--output %s' % output)
+        if always_trust:
+            args.append("--always-trust")
+        args.append('--show-session-key')
+        result = Crypt(self.encoding)
+        self._handle_io(args, file, result, passphrase, binary=True)
+        logger.debug('show session key result: %r', result.data)
+        return result
+
+    def override_session_key(self, message **kwargs):
+        pass
+
+    def override_session_key_file(self, file, session_key):
+        pass
+
+
 class Verify(object):
     "Handle status messages for --verify"
 

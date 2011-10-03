@@ -4,13 +4,16 @@ import sys
 import yaml
 import zlib
 
+
 # Utility functions.
 def enum(*sequential, **named):
   """Automatic enumeration of sequential arguments."""
   enums = dict(zip(sequential, range(len(sequential))), **named)
   return type('Enum', (), enums)
 
+
 # Global enums.
+_VERSION = 1
 _NOTIFICATION_TYPES = enum('UPLOAD_PROGRESS', 'FS_EVENT')
 _FS_EVENT_TYPES = enum('MODIFIED', 'CREATED', 'MOVED', 'DELETED')
 
@@ -19,7 +22,8 @@ class Notification(object):
   def __init__(self, user, timestamp, notification_type):
     # TODO(tierney): Verify notification_type.
     assert isinstance(timestamp, float)
-    self.__dict__ = { 'user' : user,
+    self.__dict__ = { 'version' : _VERSION,
+                      'user' : user,
                       'timestamp' : timestamp,
                       'notification_type' : notification_type }
 
@@ -59,6 +63,7 @@ class NotificationSerializer(object):
   def serialize(obj):
     return zlib.compress(yaml.dump(obj))
 
+
   @staticmethod
   def deserialize(obj):
     return yaml.load(zlib.decompress(obj))
@@ -89,6 +94,7 @@ def main(argv):
   cloud_obj = NotificationSerializer.serialize(fn)
   print len(cloud_obj)
   print NotificationSerializer.deserialize(cloud_obj)
+
 
 if __name__=='__main__':
   main(sys.argv)

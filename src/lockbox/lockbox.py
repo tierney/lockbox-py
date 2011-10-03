@@ -5,6 +5,7 @@ __author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
 
 from calendar import timegm
 import boto
+import cPickle
 import logging
 import os
 import stat
@@ -13,10 +14,11 @@ import time
 
 from threading import Thread, Lock
 from crypto import CryptoHelper
-from S3 import Connection
+from S3 import Connection, BlobStore
 from SQLiteHelper import SQLiteHelper as SQL
+from group_manager import GroupManager
+from crypto_util import get_random_uuid
 
-import constants as C
 
 import gflags
 FLAGS = gflags.FLAGS
@@ -29,8 +31,17 @@ gflags.MarkFlagAsRequired('blob_bucket_name')
 
 
 class Lockbox(object):
-  def __init__(self, event_handler):
+  def __init__(self, s3_connection, sdb_connection, sns_connection,
+               sqs_connection, gpg, event_handler):
+    # TODO(tierney): Add connection type assertions.
+    self.s3_connection = s3_connection
+    self.sdb_connection = sdb_connection
+    self.sns_connection = sns_connection
+    self.sqs_connection = sqs_connection
+    self.gpg = gpg
     self.event_handler = event_handler
+
+    self.id = None
 
     # Should be apart of init process..
     self.sdb_directory = os.path.expanduser(config['sdb_directory'])
@@ -43,12 +54,19 @@ class Lockbox(object):
     self.crypto_helper = CryptoHelper(os.path.expanduser('~/.lockbox/keys'))
     self.S3Conn = Connection(config, prefix='/data')
 
+  def bootstrap(self):
+    # Corresponds to the local, monitored directory.
+    self.id = get_random_uuid()
+    self.group_manager = GroupManager(self.sns_connection, self.sqs_connection)
+    self.group_manager = create_group(self.id)
+
 
   def monitor_cloud_files(self):
     """Pull for changes from the queue for the files that we want to monitor. We
     should receive updates through SNS+SQS. (Likely, polling for state from S3
     is too expensive.)"""
-    boto.sqs.
+    group = self.group_manager.get(self.id)
+    message = group.receive()
 
 
   def run(self):

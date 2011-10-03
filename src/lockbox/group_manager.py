@@ -1,35 +1,59 @@
 #!/usr/bin/env python
 
-import gnupg
+import boto
+import group
+import group_messages
+import logging
+import random
+import sys
+import time
+
+logging.basicConfig(level=logging.DEBUG)
+
 
 class GroupManager(object):
-  """Manages local knowledge of group membership."""
-  def __init__(self):
+  """Creates groups, manages local state of group membership."""
+  def __init__(self, sns_connection, sqs_connection):
+    assert isinstance(sns_connection, boto.sns.connection.SNSConnection)
+    assert isinstance(sqs_connection, boto.sqs.connection.SQSConnection)
+    self.sns_connection = sns_connection
+    self.sqs_connection = sqs_connection
+    self.group_to_messages = {}
+
+
+  def create_group(self, name_prefix):
+    """Create a group that I will own."""
+    gmsgs = group_messages.GroupMessages(
+      self.sns_connection, self.sqs_connection, name_prefix, name_prefix)
+    if not gmsgs.setup_topic_queue():
+      logging.error('Topic and queue not setup properly')
+      return False
+
+    self.group_to_messages[name_prefix] = gmsgs
+    # TODO(tierney): Serialize and save this information somewhere persistent.
+
+    return True
+
+  def join_group(self, name_prefix, address, more_info):
     pass
 
-class Group(object):
-  def __init__(self, gpg, owner, service_name_prefix):
-    self.gpg = gpg
-    self.owner = owner
-    self.service_names_prefix = service_name_prefix
-    self.members = [owner]
-    self.public_key_block = None
-    self.permissions = None
 
+  def delete_group(self, name_prefix):
+    if not name_prefix in self.group_to_messages:
+      return False
 
-  def __verify_username_key_already_imported(self, name):
-    pass
+    gms = self.group_to_messages.get(name_prefix)
+    # Fit this into a retry decorator (e.g., util.retry).
+    retries = 3
+    while retries > 0:
+      if gms.delete():
+        break
+      sleep_duration = random.randint(2,5)
+      logging.warning('Could not delete group (%s) so sleeping %d sec. '
+                      '%d retries remain.' %
+                      (name_prefix, sleep_duration, retries))
+      time.sleep(sleep_duration)
+      retries -= 1
 
-
-  def add_member(self, member):
-    self.members.append(member)
-
-
-def main():
-  gpg = gnupg.GPG()
-  uid_to_fp = gpg.uid_to_fingerprint()
-  for uid in uid_to_fp:
-    print uid, uid_to_fp[uid]
-
-if __name__=='__main__':
-  main()
+    del self.group_to_messages[name_prefix]
+    return True

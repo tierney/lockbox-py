@@ -165,7 +165,7 @@ class AsyncMetadataStore(object):
     if not item:
       item = self.data_domain.new_item('keyring')
     self._set_and_save_item_attr(item, 'public_key_block', hash_of_exported_keys)
-               
+
 
   def update_object(self, object_path_hash, new_hash, prev_hash=''):
     """Assumes that we have a lock on the object_path_hash."""
@@ -185,10 +185,6 @@ class AsyncMetadataStore(object):
                  'Will say new (%s) -> prev (%s).' % (new_hash, prev_hash))
     self._set_and_save_item_attr(item, new_hash, prev_hash)
     return True
-
-
-def get_random_uuid():
-  return unicode(uuid4().hex)
 
 
 def _sha1_of_string(string):

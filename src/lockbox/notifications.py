@@ -3,13 +3,7 @@
 import sys
 import yaml
 import zlib
-
-
-# Utility functions.
-def enum(*sequential, **named):
-  """Automatic enumeration of sequential arguments."""
-  enums = dict(zip(sequential, range(len(sequential))), **named)
-  return type('Enum', (), enums)
+from util import enum
 
 
 # Global enums.

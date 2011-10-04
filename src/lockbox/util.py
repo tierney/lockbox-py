@@ -13,6 +13,13 @@ import tempfile as tf
 logging.basicConfig(stream=sys.stderr, level=logging.INFO,
                     format="%(levelname).1s %(filename)s:%(lineno)s -- %(message)s ")
 
+
+def enum(*sequential, **named):
+  """Automatic enumeration of sequential arguments."""
+  enums = dict(zip(sequential, range(len(sequential))), **named)
+  return type('Enum', (), enums)
+
+
 def _lm_to_epoch(self, last_modified_time):
   # TODO(tierney): May not be useful anymore.
   return timegm(time.strptime(last_modified_time.replace("Z",''),

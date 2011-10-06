@@ -13,40 +13,6 @@ if not os.path.exists(_DEFAULT_DATABASE_DIRECTORY):
   os.makedirs(_DEFAULT_DATABASE_DIRECTORY)
 
 
-_POSSIBLE_STATES = enum('PREPARE', 'CANCELED', 'UPLOADING', 'FAILED')
-
-class FileChangeStatus(object):
-  def __init__(self, timestamp, state, filepath):
-    assert isinstance(timestamp, float)
-    self.timestamp = timestamp
-    self.state = state
-    self.filepath = filepath
-
-
-  def __conform__(self, protocol):
-    if protocol is sqlite3.PrepareProtocol:
-      return '%f;%d;%s' % (self.timestamp, self.state, self.filepath)
-
-  def __repr__(self):
-    return '(%f;%d;%s)' % (self.timestamp, self.state, self.filepath)
-
-
-def adapt_file_change_status(file_change_status):
-  return '%f;%d;%s' % (file_change_status.timestamp,
-                       file_change_status.state,
-                       file_change_status.filepath)
-
-
-def convert_file_change_status(string):
-  untyped_timestamp, untyped_state, untyped_filepath = string.split(';')
-
-  return FileChangeStatus(
-    float(untyped_timestamp), int(untyped_state), str(untyped_filepath))
-
-sqlite3.register_adapter(FileChangeStatus, adapt_file_change_status)
-sqlite3.register_converter('filechangestatus', convert_file_change_status)
-
-
 class RemoteLocalMediator(threading.Thread):
   def __init__(self, database_directory=_DEFAULT_DATABASE_DIRECTORY,
                database_name=_DEFAULT_DATABASE_NAME):
@@ -90,7 +56,3 @@ class RemoteLocalMediator(threading.Thread):
   def run(self):
     while not self._stop.is_set():
       pass
-
-
-
-

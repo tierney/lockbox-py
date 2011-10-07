@@ -4,6 +4,7 @@
 Usage:
   lockbox_event_handler = LockboxEventHandler()
 
+  from watchdog.observers import Observer
   observer = Observer()
   observer.schedule(lockbox_event_handler, file_path, recursive=True)
   observer.start()
@@ -49,5 +50,6 @@ class LockboxEventHandler(FileSystemEventHandler):
       logging.info('Do NOT work with directories alone.')
       return
 
-    self.mediator.enqueue(event)
+    if not self.mediator.enqueue(event):
+      logging.error('Problem with enqueuing message.')
 

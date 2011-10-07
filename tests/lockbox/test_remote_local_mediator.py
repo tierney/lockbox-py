@@ -6,8 +6,10 @@ import tempfile
 import time
 import unittest
 from lockbox.remote_local_mediator import RemoteLocalMediator
-from lockbox.file_change_status import FileChangeStatus, _POSSIBLE_STATES
 
+import lockbox.file_change_status
+from lockbox.file_change_status import FileChangeStatus
+from watchdog.events import FileMovedEvent
 
 class RemoteLocalMediatorTestCase(unittest.TestCase):
   def setUp(self):
@@ -27,10 +29,10 @@ class RemoteLocalMediatorTestCase(unittest.TestCase):
     mediator = self.mediator
     mediator._initialize_queue()
 
-    fcs = FileChangeStatus(
-      time.time(), _POSSIBLE_STATES.PREPARE, '/tmp/garbage')
-    mediator.enqueue(fcs)
-    mediator.enqueue(fcs)
+    event = FileMovedEvent('/tmp/src', '/tmp/dest')
+    fcs = FileChangeStatus(time.time(), event)
+    self.assertTrue(mediator.enqueue(fcs))
+    self.assertTrue(mediator.enqueue(fcs))
     queue = mediator._list_queue()
     for item in queue:
       rowid = item[0]

@@ -9,8 +9,9 @@ class MasterDBConnection():
 
 
   def __enter__(self):
-    self.dbcon = sqlite3.connect(database=self.database,
-                                 detect_types=sqlite3.PARSE_DECLTYPES)
+    self.dbcon = sqlite3.connect(
+      database=self.database,
+      detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
     self.dbcon.row_factory = sqlite3.dbapi2.Row
     return self.dbcon.cursor()
 

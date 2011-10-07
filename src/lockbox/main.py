@@ -3,20 +3,21 @@
 
 __author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
 
+import logging
+import sys
+FORMAT = "%(asctime)-15s %(levelname)-8s %(module)-30s %(lineno)-3d "\
+    "ThreadID:%(thread)-2d %(message)s"
+logging.basicConfig(level=logging.DEBUG,
+                    format=FORMAT,
+                    stream=sys.stderr)
+
 import boto
 import gflags
 import gnupg
-import logging
-import sys
 from event_handler import LockboxEventHandler
 from remote_local_mediator import RemoteLocalMediator
 from lockbox import Lockbox
 
-FORMAT = "%(asctime)-15s %(levelname)-10s %(module)-10s %(lineno)-3d ThreadID:%(thread)-2d %(message)s"
-
-logging.basicConfig(level=logging.INFO,
-                    format=FORMAT,
-                    stream=sys.stderr)
 
 FLAGS = gflags.FLAGS
 

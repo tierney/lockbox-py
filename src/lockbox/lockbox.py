@@ -19,20 +19,15 @@ from SQLiteHelper import SQLiteHelper as SQL
 from group_manager import GroupManager
 from crypto_util import get_random_uuid
 
+from watchdog.observers import Observer
+from util import enum
 
-import gflags
-FLAGS = gflags.FLAGS
-gflags.DEFINE_string('lock_domain_name', None, 'Lock domain name for a group.')
-gflags.DEFINE_string('data_domain_name', None, 'Data domain name for a group.')
-gflags.DEFINE_string('blob_bucket_name', None, 'Blob bucket name.')
-gflags.MarkFlagAsRequired('lock_domain_name')
-gflags.MarkFlagAsRequired('data_domain_name')
-gflags.MarkFlagAsRequired('blob_bucket_name')
-
+_DIR_AGE = enum('UNKNOWN', 'NEW', 'EXISTING')
 
 class Lockbox(object):
   def __init__(self, s3_connection, sdb_connection, sns_connection,
-               sqs_connection, gpg, event_handler):
+               sqs_connection, gpg, event_handler, remote_local_mediator,
+               directories):
     # TODO(tierney): Add connection type assertions.
     self.s3_connection = s3_connection
     self.sdb_connection = sdb_connection
@@ -40,19 +35,33 @@ class Lockbox(object):
     self.sqs_connection = sqs_connection
     self.gpg = gpg
     self.event_handler = event_handler
-
+    self.mediator = remote_local_mediator
+    self.directories = [os.path.expanduser(path) for path in directories]
+    self.directories_foreknowledge = dict((directory, _DIR_AGE.UNKNOWN) for
+                                          directory in self.directories)
     self.id = None
 
-    # Should be apart of init process..
-    self.sdb_directory = os.path.expanduser(config['sdb_directory'])
-    if not os.path.exists(self.sdb_directory):
-      os.mkdir(self.sdb_directory)
-    elif not os.path.isdir(self.sdb_directory):
-      os.remove(self.sdb_directory)
-      os.mkdir(self.sdb_directory)
+    # self.crypto_helper = CryptoHelper(os.path.expanduser('~/.lockbox/keys'))
+    # self.S3Conn = Connection(config, prefix='/data')
+    logging.info('dirs: %s' % self.directories)
 
-    self.crypto_helper = CryptoHelper(os.path.expanduser('~/.lockbox/keys'))
-    self.S3Conn = Connection(config, prefix='/data')
+
+  def _validate_or_create_directories(self, directories):
+    for directory in directories:
+      if not os.path.exists(directory):
+        logging.info('Creating directory: %s.' % directory)
+        try:
+          os.makedirs(directory)
+          self.directories_foreknowledge[directory] = _DIR_AGE.NEW
+        except Exception, e:
+          logging.error('Could not create directory (%s) because: %s.' % e)
+      else:
+        logging.info('Directory already exists %s. '
+                     'SHOULD CHECK IF WE HAVE LOGGED STATE ABOUT DIRECTORY.' %
+                     directory)
+        self.directories_foreknowledge[directory] = _DIR_AGE.EXISTING
+    logging.info(self.directories_foreknowledge)
+
 
   def bootstrap(self):
     # Corresponds to the local, monitored directory.
@@ -70,9 +79,14 @@ class Lockbox(object):
 
 
   def run(self):
+    self.mediator.start()
+
+    # Make sure top level directoris are okay.
+    self._validate_or_create_directories(self.directories)
+
     observer = Observer()
     # Much verify that the roots are not included in each other.
-    for root in self.file_roots:
+    for root in self.directories:
       observer.schedule(self.event_handler, root, recursive=True)
 
     # TODO(tierney): Can we add an observer that detects tree diffs.
@@ -81,19 +95,12 @@ class Lockbox(object):
     # Subscribe to SNS and SQS.
 
     # TODO(tierney): Continue running until the input says to quit.
-
-def main(argv):
-  try:
-    argv = FLAGS(argv)
-  except gflags.FlagsError, e:
-    print '%s\\nUsage: %s ARGS\\n%s' % (e, sys.argv[0], FLAGS)
-    sys.exit(1)
-  if FLAGS.debug:
-    print 'non-flag arguments:', argv
-
-  # Event handler.
-  Lockbox()
-
-if __name__ == '__main__':
-  main(sys.argv)
+    try:
+      logging.info('Quietly looping until keyboard interrupt.')
+      while True:
+        time.sleep(1)
+    except KeyboardInterrupt:
+      logging.info('Quitting with KeyboardInterrupt.')
+      logging.info('Notifying mediator.')
+      self.mediator.stop()
 

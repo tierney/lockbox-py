@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Provides hashing and hybrid cryptosystem functionality."""
 
 import logging
 import os

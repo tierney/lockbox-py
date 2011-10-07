@@ -5,6 +5,7 @@ from S3 import BlobStore
 from simpledb import AsyncMetadataStore
 from file_update_crypto import FileUpdateCrypto
 
+
 class UpdateCloudFile(object):
   """Interacts directly with the stores blob and metadata store. Sets values in
   the meatdata store and uploads files to the stores.

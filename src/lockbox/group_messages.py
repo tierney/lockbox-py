@@ -69,7 +69,7 @@ class GroupMessages(object):
   def delete(self, message):
     assert isinstance(message, boto.sqs.message.Message)
     if not self.queue.delete_message(message):
-      logging.error('Unable to delete message (%s).' % (message.get_body())).
+      logging.error('Unable to delete message (%s).' % (message.get_body()))
       return False
     return True
 

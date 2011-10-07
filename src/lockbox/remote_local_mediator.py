@@ -4,6 +4,9 @@ import os
 import logging
 import threading
 import sqlite3
+import time
+from file_change_status import _POSSIBLE_STATES, FileChangeStatus
+from master_db_connection import MasterDBConnection
 from util import enum
 
 _DEFAULT_DATABASE_NAME = 'mediator.db'
@@ -23,36 +26,44 @@ class RemoteLocalMediator(threading.Thread):
                                       self.database_name)
 
     self._stop = threading.Event()
-    self.queue_conn = sqlite3.connect(self.database_path,
-                                      detect_types=sqlite3.PARSE_DECLTYPES)
+
 
   def _initialize_queue(self):
-    self.queue_conn.execute(
-      'CREATE TABLE queue(id INTEGER PRIMARY KEY AUTOINCREMENT, '
-      'status filechangestatus)')
-
-
-  def enqueue(self, status):
     try:
-      self.queue_conn.execute('INSERT INTO queue(status) values (?)', (status,))
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute(
+          'CREATE TABLE queue(id INTEGER PRIMARY KEY AUTOINCREMENT, '
+          'status filechangestatus)')
+    except sqlite3.OperationalError:
+      logging.info('Already have queue table.')
+
+
+  def enqueue(self, event):
+    status = FileChangeStatus(time.time(), event)
+    logging.info('thread id: %s' % threading.current_thread())
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute('INSERT INTO queue(status) values (?)', (status,))
       return True
     except Exception, e:
       logging.error(e)
       return False
 
   def _list_queue(self):
-    results = self.queue_conn.execute('SELECT rowid, status FROM queue')
+    with MasterDBConnection(self.database_path) as cursor:
+      results = cursor.execute('SELECT rowid, status FROM queue')
     return results.fetchall()
 
 
   def update(self, status_id, state):
-    self.queue_conn.execute('UPDATE queue SET state = ? WHERE rowid')
+    with MasterDBConnection(self.database_path) as cursor:
+      cursor.execute('UPDATE queue SET state = ? WHERE rowid')
 
 
   def stop(self):
     self._stop.set()
 
-
   def run(self):
+    self._initialize_queue()
     while not self._stop.is_set():
-      pass
+      time.sleep(1)

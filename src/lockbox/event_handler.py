@@ -17,7 +17,7 @@ Usage:
 
 __author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
 
-
+import logging
 from watchdog.events import FileSystemEventHandler, FileMovedEvent, \
     DirMovedEvent, FileModifiedEvent, DirModifiedEvent, FileCreatedEvent, \
     DirCreatedEvent, FileDeletedEvent, DirDeletedEvent, EVENT_TYPE_MOVED, \
@@ -31,56 +31,23 @@ class LockboxEventHandler(FileSystemEventHandler):
   handler. To catch this case, we must periodically call DirectorySnapshot to
   catch any files that move out of our watched file path.
   """
-  # def __init__(self, lockbox_sp=None):
-  #   # Initialize the superclass.
-  #   self.lockbox_sp = lockbox_sp
+  def __init__(self, mediator):
+    self.mediator = mediator
 
 
   def on_any_event(self, event):
     # log values from here?
-    print event.event_type
-    print event.is_directory
-    print event.src_path
-    if self.lockbox_sp:
-      self.lockbox_sp.run()
+    log_statement = 'type (%s) is_dir (%s) src (%s)' %\
+        (event.event_type, event.is_directory, event.src_path)
+    if event.event_type is EVENT_TYPE_MOVED:
+      log_statement += ' dest (%s).' % event.dest_path
+    else:
+      log_statement += '.'
 
+    logging.info(log_statement)
+    if event.is_directory:
+      logging.info('Do NOT work with directories alone.')
+      return
 
-  def on_created(self, event):
-    """Create a new set of..."""
-    if isinstance(event, DirCreatedEvent):
-      pass
-    if isinstance(event, FileCreatedEvent):
-      pass
-
-
-  def on_deleted(self, event):
-    """Just detect that we have a deleted event and remove the corresponding
-    values from the current view. Future: we will want to keep the values around
-    in the cloud until a cleaner time."""
-    if isinstance(event, DirDeletedEvent):
-      pass
-    if isinstance(event, FileDeletedEvent):
-      pass
-
-
-  def on_modified(self, event):
-    if isinstance(event, DirModifiedEvent):
-      print 'on_modified:', event.src_path
-    if isinstance(event, FileModifiedEvent):
-      print 'on_modified:', event.src_path
-
-
-  def on_moved(self, event):
-    """Assuming that the filepath is the stored SHA1, then we can detect the
-    change.
-
-    NB: Event will contain dest_path field as well.
-    """
-    if isinstance(event, DirMovedEvent):
-      for moved_event in event.sub_moved_events():
-        pass
-
-    if isinstance(event, FileMovedEvent):
-      print 'on_moved:', event.src_path
-      print 'on_moved:', event.dest_path
+    self.mediator.enqueue(event)
 

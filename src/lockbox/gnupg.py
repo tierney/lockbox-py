@@ -734,7 +734,7 @@ class GPG(object):
         logger.debug('show session key result: %r', result.data)
         return result
 
-    def override_session_key(self, message **kwargs):
+    def override_session_key(self, message, **kwargs):
         pass
 
     def override_session_key_file(self, file, session_key):

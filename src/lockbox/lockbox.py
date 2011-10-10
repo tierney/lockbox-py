@@ -24,6 +24,7 @@ from util import enum
 
 _DIR_AGE = enum('UNKNOWN', 'NEW', 'EXISTING')
 
+
 class Lockbox(object):
   def __init__(self, s3_connection, sdb_connection, sns_connection,
                sqs_connection, gpg, event_handler, remote_local_mediator,

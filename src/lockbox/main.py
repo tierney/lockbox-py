@@ -5,9 +5,11 @@ __author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
 
 import logging
 import sys
+
 FORMAT = "%(asctime)-15s %(levelname)-8s %(module)-30s %(lineno)-3d "\
     "ThreadID:%(thread)-2d %(message)s"
-logging.basicConfig(level=logging.DEBUG,
+
+logging.basicConfig(level=logging.INFO,
                     format=FORMAT,
                     stream=sys.stderr)
 
@@ -47,9 +49,13 @@ def main(argv):
   sns_connection = boto.connect_sns()
   sqs_connection = boto.connect_sqs()
 
-  gpg = gnupg.GPG()
+  blob_store = BlobStore(s3_connection, FLAGS.blob_bucket_name)
+  metadata_store = MetadataStore(
+    sdb_connection, FLAGS.lock_domain_name, FLAGS.data_domain_name)
 
-  remote_local_mediator = RemoteLocalMediator()
+  gpg = gnupg.GPG()
+  remote_local_mediator = RemoteLocalMediator(gpg, blob_store, metadata_store)
+
   event_handler = LockboxEventHandler(remote_local_mediator)
 
   lockbox = Lockbox(s3_connection, sdb_connection, sns_connection,

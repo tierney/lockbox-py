@@ -2,10 +2,12 @@
 
 import logging
 import threading
-from random import randint
 import time
 from file_change_status import STATUS_PREPARE, STATUS_CANCELED, \
     STATUS_UPLOADING, STATUS_FAILED, STATUS_COMPLETED, STATUS_ENCRYPTING
+from file_update_crypto import FileUpdateCrypto
+from update_cloud_file import UpdateCloudFile
+from random import randint
 from util import enum
 
 
@@ -18,11 +20,12 @@ SHEPHERD_STATE_SHUTDOWN = 'shutdown'
 
 
 class LocalFileShepherd(threading.Thread):
-  def __init__(self, mediator):
+  def __init__(self, mediator, gpg, blob_store, metadata_store):
     threading.Thread.__init__(self)
     self.mediator = mediator
-    # self.file_update_crypto = file_update_crypto
-    # self.update_cloud_file = update_cloud_file
+    self.gpg = gpg
+    self.blob_store = blob_store
+    self.metadata_store = metadata_store
     self.state = SHEPHERD_STATE_READY
 
 
@@ -33,7 +36,35 @@ class LocalFileShepherd(threading.Thread):
 
 
   def _lookup_previous(self):
-    pass
+    logging.warning('_lookup_previous not implemented yet.')
+    self.previous = ''
+
+
+  def _lookup_recipients(self):
+    logging.warning('_lookup_recipients not implemented yet.')
+    logging.warning('Must escape recipients.')
+    self.escaped_recipients = ['\"Matt Tierney\"']
+
+
+  def _get_crypto_info(self):
+    members = self._get_members()
+    self.crypto = FileUpdateCrypto(
+      self.gpg, self.src_path, self.escaped_recipients)
+    self.crypto.run()
+
+
+  def _update_cloud_file(self):
+    """Should already have set self.crypto."""
+    self.updater = UpdateCloudFile(self.blob_store, self.metadata_store,
+                                   self.crypto, self.previous)
+
+    logging.info('Sending metadata.')
+    self.updater.update_metadata()
+    logging.info('Updated metadata.')
+
+    logging.info('Sending blobdata.')
+    self.updater.update_storage()
+    logging.info('Updated blobdata.')
 
 
   def assign(self, status_id, timestamp, state, event_type, src_path,
@@ -46,6 +77,7 @@ class LocalFileShepherd(threading.Thread):
     self.src_path = src_path
     self.dest_path = dest_path
     self.state = _SHEPHERD_STATE_ASSIGNED_AND_READY
+
 
   def get_state(self):
     return self.state

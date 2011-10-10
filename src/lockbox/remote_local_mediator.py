@@ -23,9 +23,13 @@ if not os.path.exists(_DEFAULT_DATABASE_DIRECTORY):
 
 
 class RemoteLocalMediator(threading.Thread):
-  def __init__(self, database_directory=_DEFAULT_DATABASE_DIRECTORY,
+  def __init__(self, gpg, blob_store, metadata_store,
+               database_directory=_DEFAULT_DATABASE_DIRECTORY,
                database_name=_DEFAULT_DATABASE_NAME):
     threading.Thread.__init__(self)
+    self.gpg = gpg
+    self.blob_store = blob_store
+    self.metadata_store = metadata_store
     self.database_directory = database_directory
     self.database_name = database_name
     self.database_path = os.path.join(self.database_directory,
@@ -55,9 +59,11 @@ class RemoteLocalMediator(threading.Thread):
 
 
   def _prepare_shepherds(self):
+    """Spawns the threads and puts them in a simple list that will act as our
+    ThreadPool."""
     logging.info('Preparing shepherds.')
     self.shepherds = [
-      LocalFileShepherd(self) # , file_update_crypto, update_cloud_file)
+      LocalFileShepherd(self, self.gpg, self.blob_store, self.metadata_store)
       for shepherd_num in range(self.num_shepherds)]
     for shepherd in self.shepherds:
       shepherd.start()

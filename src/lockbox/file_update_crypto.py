@@ -44,6 +44,8 @@ class FileUpdateCrypto(object):
     with open(self.file_path) as cleartext_file:
       sigfile = SigFile(cleartext_file)
       self.ascii_signature = b2a_base64(sigfile.read())
+      logging.info('File (%s) signature: (%s).' %
+                   (self.file_path, self.ascii_signature))
 
     # GPG-encrypt and hash the file, filepath.
     with open(self.file_path) as cleartext_file:

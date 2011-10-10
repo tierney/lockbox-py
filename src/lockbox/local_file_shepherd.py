@@ -3,12 +3,13 @@
 import logging
 import threading
 import time
-from file_change_status import STATUS_PREPARE, STATUS_CANCELED, \
-    STATUS_UPLOADING, STATUS_FAILED, STATUS_COMPLETED, STATUS_ENCRYPTING
 from file_update_crypto import FileUpdateCrypto
 from update_cloud_file import UpdateCloudFile
 from random import randint
 from util import enum
+from exception import VersioningError
+from file_change_status import STATUS_PREPARE, STATUS_CANCELED, \
+    STATUS_UPLOADING, STATUS_FAILED, STATUS_COMPLETED, STATUS_ENCRYPTING
 
 
 SHEPHERD_STATE_READY = 'ready'
@@ -36,8 +37,11 @@ class LocalFileShepherd(threading.Thread):
 
 
   def _lookup_previous(self):
-    logging.warning('_lookup_previous not implemented yet.')
-    self.previous = ''
+    logging.info('Looking up local view of previous (%s).' %
+                 self.crypto.hash_of_file_path)
+    self.previous = self.metadata_store.local_view_of_previous(
+      self.crypto.hash_of_file_path)
+    logging.info('Previous set to (%s).' % self.previous)
 
 
   def _lookup_recipients(self):
@@ -59,7 +63,10 @@ class LocalFileShepherd(threading.Thread):
                                    self.crypto, self.previous)
 
     logging.info('Sending metadata.')
-    self.updater.update_metadata()
+    if not self.updater.update_metadata():
+      logging.warning('Could not update the metadata.')
+      return False
+
     logging.info('Updated metadata.')
 
     logging.info('Sending blobdata.')
@@ -106,6 +113,11 @@ class LocalFileShepherd(threading.Thread):
       if self.state is SHEPHERD_STATE_ENCRYPTING:
         logging.info('Encrypting.')
         self._get_crypto_info()
+        self._lookup_previous()
+
+        # Now have the value self.crypto.
+        # self.mediator.set_item_key_value()
+
         logging.info('Finished encrypting.')
         self.mediator.update(self.status_id, STATUS_UPLOADING)
         self.state = SHEPHERD_STATE_UPLOADING
@@ -113,7 +125,13 @@ class LocalFileShepherd(threading.Thread):
 
       if self.state is SHEPHERD_STATE_UPLOADING:
         logging.info('Uploading.')
-        self._update_cloud_file()
+        try:
+          self._update_cloud_file()
+        except VersioningError:
+          logging.error('Got a VersioningError so did not upload (%s).' %
+                        self.src_path)
+
+
         logging.info('Done.')
         self.mediator.update(self.status_id, STATUS_COMPLETED)
         self.mediator.done(self.src_path, self.ident)

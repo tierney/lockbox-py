@@ -9,7 +9,7 @@ import sys
 FORMAT = "%(asctime)-15s %(levelname)-8s %(module)-30s %(lineno)-3d "\
     "ThreadID:%(thread)-2d %(message)s"
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format=FORMAT,
                     stream=sys.stderr)
 

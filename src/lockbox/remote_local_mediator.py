@@ -6,14 +6,14 @@ import threading
 import sqlite3
 import time
 import file_change_status
+import watchdog.events
 from file_change_status import FileChangeStatus
 from local_file_shepherd import LocalFileShepherd, SHEPHERD_STATE_READY, \
     SHEPHERD_STATE_ASSIGNED, SHEPHERD_STATE_ENCRYPTING, \
     SHEPHERD_STATE_UPLOADING, SHEPHERD_STATE_SHUTDOWN
-
 from master_db_connection import MasterDBConnection
 from util import enum
-import watchdog.events
+
 
 _DEFAULT_DATABASE_NAME = 'mediator.db'
 _DEFAULT_DATABASE_DIRECTORY = os.path.join(os.path.expanduser('~'),
@@ -54,8 +54,8 @@ class RemoteLocalMediator(threading.Thread):
           'src_path text, '
           'dest_path text'
           ')')
-    except sqlite3.OperationalError:
-      logging.info('Already have queue table.')
+    except sqlite3.OperationalError, e:
+      logging.info('SQLite error (%s).' % e)
 
 
   def _prepare_shepherds(self):
@@ -80,7 +80,7 @@ class RemoteLocalMediator(threading.Thread):
       with MasterDBConnection(self.database_path) as cursor:
         cursor.execute('INSERT INTO queue('
                        'timestamp, state, event_type, src_path, dest_path) '
-                       'values (?, ?, ?, ?, ?)',
+                       'VALUES (?, ?, ?, ?, ?)',
                        (time.time(), 'prepare', event.event_type,
                         event.src_path, dest_path))
       return True
@@ -138,12 +138,12 @@ class RemoteLocalMediator(threading.Thread):
           time.sleep(1)
           continue
 
-        rowid = result[0]
-        timestamp = result[1]
-        state = result[2]
+        rowid      = result[0]
+        timestamp  = result[1]
+        state      = result[2]
         event_type = result[3]
-        src_path = result[4]
-        dest_path = result[5]
+        src_path   = result[4]
+        dest_path  = result[5]
         logging.info('selected row: (%(rowid)d, %(timestamp)f, '
                      '%(state)s, %(event_type)s, %(src_path)s, '
                      '%(dest_path)s).' % locals())

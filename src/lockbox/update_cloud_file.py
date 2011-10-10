@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 import logging
-from S3 import BlobStore
-from simpledb import AsyncMetadataStore
+from blob_store import BlobStore
+from exception import VersioningError
+from metadata_store import MetadataStore
 from file_update_crypto import FileUpdateCrypto
 
 
@@ -19,7 +20,7 @@ class UpdateCloudFile(object):
   def __init__(self, blob_store, metadata_store, file_update_crypto,
                hash_of_prev_blob=''):
     assert isinstance(blob_store, BlobStore)
-    assert isinstance(metadata_store, AsyncMetadataStore)
+    assert isinstance(metadata_store, MetadataStore)
     assert isinstance(file_update_crypto, FileUpdateCrypto)
 
     """Sets up the basic components for performing updates."""
@@ -74,6 +75,8 @@ class UpdateCloudFile(object):
       self.metadata_store.update_object(
         self.hash_of_file_path, self.hash_of_encrypted_blob, self.hash_of_prev_blob)
     except VersioningError:
+      logging.error('Got a versioning error. Releasing lock on (%s).' %
+                    self.hash_of_file_path)
       self.metadata_store.release_lock(lock)
       raise
 

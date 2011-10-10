@@ -68,17 +68,17 @@ def key_limit():
     domain = connection.create_domain(gpg_test_domain_name)
   else:
     domain = connection.get_domain(gpg_test_domain_name, validate=True)
-    
+
   item = domain.new_item('keys')
   item[keyid] = hash_string(exported_keys)
   item.save()
 
   connection.delete_domain(gpg_test_domain_name)
-  
+
 
 def main(argv):
-  key_limit()
-  return
+  # key_limit()
+  # return
 
   try:
     argv = FLAGS(argv)

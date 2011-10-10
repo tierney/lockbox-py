@@ -26,20 +26,24 @@ __copyright__ = 'Matt Tierney'
 __license__ = 'GPLv3'
 __author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
 
-from exception import DomainDisappearedError
 import os
 import boto
 import logging
-from uuid import uuid4
-from time import time as epoch_time
+import sqlite3
+from crypto_util import get_random_uuid
+from exception import DomainDisappearedError, VersioningError
 from hashlib import sha1
+from master_db_connection import MasterDBConnection
+from time import time as epoch_time
+
 
 _TIMEOUT_SECONDS = 10
 _NUM_RETRIES = 3
 
-logging.basicConfig()
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+_DEFAULT_DATABASE_NAME = 'metadata.db'
+_DEFAULT_DATABASE_DIRECTORY = os.path.join(os.path.expanduser('~'), '.lockbox')
+if not os.path.exists(_DEFAULT_DATABASE_DIRECTORY):
+  os.makedirs(_DEFAULT_DATABASE_DIRECTORY)
 
 
 class MetadataStore(object):
@@ -48,13 +52,73 @@ class MetadataStore(object):
   data_domain = None
 
 
-  def __init__(self, connection, lock_domain_name, data_domain_name):
+  def __init__(self, connection, lock_domain_name, data_domain_name,
+               database_directory=_DEFAULT_DATABASE_DIRECTORY,
+               database_name=_DEFAULT_DATABASE_NAME):
     """Assume that the connection we receive is one that already works (usually
     called with boto.connect_sdb())."""
     self.connection = connection
     self.lock_domain_name = lock_domain_name
     self.data_domain_name = data_domain_name
     self._connect_domains()
+    self.database_directory = database_directory
+    self.database_name = database_name
+    self.database_path = os.path.join(self.database_directory,
+                                      self.database_name)
+    self._initialize_metadata()
+
+
+  def _connect_domains(self):
+    self.lock_domain = self._get_domain(self.lock_domain_name)
+    self.data_domain = self._get_domain(self.data_domain_name)
+
+
+  def _initialize_metadata(self):
+    logging.info('Initializing metadata table.')
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute(
+          'CREATE TABLE metadata('
+          'item text, '
+          'key text, '
+          'value text, '
+          'PRIMARY KEY (item, key))')
+    except sqlite3.OperationalError, e:
+      logging.info('SQLite error (%s).' % e)
+
+
+  @staticmethod
+  def _lock_name(object_path_hash):
+    return '%s-lock-%s' % (object_path_hash, get_random_uuid())
+
+
+  def _select_object_locks_query(self, object_path_hash):
+    """Return string query for locks whose names start with the name of the
+    object."""
+    return "SELECT * FROM %s WHERE `lock_name` LIKE '%s%%'" % \
+        (self.lock_domain.name, object_path_hash)
+
+
+  @staticmethod
+  def _find_latest(in_dict):
+    """Expects that in_dict is a dict sub-class.
+    O(n) algorithm. Precisely: O(2n).
+
+    Returns:
+      Name of the latest object.
+    """
+    logging.debug('Reversing the DAG.')
+    reverse_dag = {}
+    for key in in_dict:
+      reverse_dag[in_dict[key]] = key
+
+    _next = ''
+    try:
+      while True:
+        _next = reverse_dag[_next]
+    except KeyError:
+      logging.debug('Found the latest key (%s).' % _next)
+      return _next
 
 
   def _get_domain(self, domain):
@@ -63,11 +127,6 @@ class MetadataStore(object):
       return self.connection.get_domain(domain, validate=True)
     logging.info('Creating and returning new domain.')
     return self.connection.create_domain(domain)
-
-
-  def _connect_domains(self):
-    self.lock_domain = self._get_domain(self.lock_domain_name)
-    self.data_domain = self._get_domain(self.data_domain_name)
 
 
   def _save_item(self, item):
@@ -88,6 +147,47 @@ class MetadataStore(object):
     return self._save_item(item)
 
 
+  def _set_local_item_key_value(self, item, key, value):
+    logging.info('Setting local metadata (%s, %s, %s).' % (item, key, value))
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute('INSERT INTO metadata(item, key, value) '
+                       'VALUES (?, ?, ?)', (item, key, value))
+      return True
+    except Exception, e:
+      logging.error('Metadata insert error: %s.' % e)
+      return False
+
+
+  @staticmethod
+  def _create_dag_from_list(in_list):
+    ret = {}
+    for key, value in in_list:
+      ret[key] = value
+    return ret
+
+
+  def local_view_of_previous(self, item):
+    logging.info('Gettting local view of previous.')
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        results = cursor.execute('SELECT key, value FROM metadata '
+                                 'WHERE item = ?', (item,))
+        dag = results.fetchall()
+    except Exception, e:
+      logging.error('Could not select item because: %s.' % e)
+      return False
+
+    logging.info('DAG: (%s).' % dag)
+    if not dag:
+      return ''
+
+    dict_dag = self._create_dag_from_list(dag)
+    latest = self._find_latest(dict_dag)
+    logging.info('For item (%s), latest is (%s).' % (item, latest))
+    return latest
+
+
   def acquire_lock(self, object_path_hash):
     """Try to get a lock on the object in the domain that manages locks for the
     object.
@@ -98,10 +198,10 @@ class MetadataStore(object):
       lock: boto Lock object we either found for this object or that we created.
     """
     # Get a valid new lock name
-    lock_id = _lock_name(object_path_hash)
+    lock_id = self._lock_name(object_path_hash)
 
-    # Check if we already have a lock for the object.
-    query = _select_object_locks_query(self.lock_domain.name, object_path_hash)
+    # Check if we already have al ock for the object.
+    query = self._select_object_locks_query(object_path_hash)
     matching_locks = self.lock_domain.select(query, consistent_read=True)
     try:
       _ = matching_locks.next()
@@ -120,7 +220,7 @@ class MetadataStore(object):
     self._save_item(unconfirmed_lock)
 
     # Check if another lock was taken at this time. If so, we release our lock.
-    query = _select_object_locks_query(self.lock_domain.name, object_path_hash)
+    query = self._select_object_locks_query(object_path_hash)
     matching_locks = self.lock_domain.select(query, consistent_read=True)
     for _lock in matching_locks:
       # Finding a matching lock verifies that we can read the lock that we wrote.
@@ -157,6 +257,8 @@ class MetadataStore(object):
     if not item:
       item = self.data_domain.new_item(object_path_hash)
     self._set_and_save_item_attr(item, 'path', hash_of_encrypted_relative_filepath)
+    self._set_local_item_key_value(
+      object_path_hash, 'path', hash_of_encrypted_relative_filepath)
 
 
   def set_keys(self, hash_of_exported_keys):
@@ -165,6 +267,7 @@ class MetadataStore(object):
     if not item:
       item = self.data_domain.new_item('keyring')
     self._set_and_save_item_attr(item, 'public_key_block', hash_of_exported_keys)
+    logging.warning('Do not store exported keys in metadata.')
 
 
   def update_object(self, object_path_hash, new_hash, prev_hash=''):
@@ -175,13 +278,14 @@ class MetadataStore(object):
       logging.info('Creating new item.')
       item = self.data_domain.new_item(object_path_hash)
 
-    latest_id = _find_latest(item)
+    latest_id = self._find_latest(item)
     if latest_id != prev_hash:
       logging.error('Thought this would be the latest (%s) but found this ' \
                       'to be the latest (%s).' % (prev_hash, latest_id))
-      raise VersioningConflict()
+      raise VersioningError()
 
     logging.info('Confirmed that we can set the update. '
                  'Will say new (%s) -> prev (%s).' % (new_hash, prev_hash))
     self._set_and_save_item_attr(item, new_hash, prev_hash)
+    self._set_local_item_key_value(object_path_hash, new_hash, prev_hash)
     return True

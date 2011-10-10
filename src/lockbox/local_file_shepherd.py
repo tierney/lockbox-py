@@ -63,6 +63,8 @@ class LocalFileShepherd(threading.Thread):
 
   def _run_encryption(self):
     self.crypto.run()
+    self.metadata_store.set_version(self.crypto.hash_of_encrypted_blob,
+                                    self.crypto.ascii_signature)
 
 
   def _update_cloud_file(self):
@@ -103,6 +105,31 @@ class LocalFileShepherd(threading.Thread):
         self.src_path, self.dest_path, self.crypto, self.previous
 
 
+  def _modified(self):
+    # Look up the signature of the previous whole file (from the src_path index?)
+    latest = self.metadata_store.local_view_of_previous(hash_of_file_path)
+    if not latest:
+      logging.error('Have not seen this file before (%s), yet '
+                    'we are shepherding a modification.' % self.src_path)
+      return False
+
+    latest_signature = self.metadata_store.lookup_signature(latest)
+    if not latest_signature:
+      logging.error('We do not have the latest signature.')
+      return False
+
+    # compute_cleartext_delta(prev_sig, latest_filename)
+    self.crypto.compute_cleartext_delta(latest_signature, self.src_path)
+
+    # encrypt delta (get back the hash_of_encrypted_blob)
+    self.crypto.rsync_signature()
+    self.crypto.encrypt_file(self.src_path)
+
+    # Locally store: hash(gpg(delta)) -> signature(file)
+    self.metadata_store.set_version(self.crypto.hash_of_encrypted_blob,
+                                    self.crypto.ascii_signature)
+
+
   def run(self):
     while self.state is not SHEPHERD_STATE_SHUTDOWN:
       if self.state is SHEPHERD_STATE_READY:
@@ -126,7 +153,7 @@ class LocalFileShepherd(threading.Thread):
           self._run_encryption()
         elif self.event_type == EVENT_TYPE_MODIFIED:
           logging.warning('EVENT_TYPE_MODIFIED encryption not implemented yet.')
-          self._run_encryption()
+          self._modified()
 
         logging.info('Finished encrypting.')
         self.mediator.update(self.status_id, STATUS_UPLOADING)

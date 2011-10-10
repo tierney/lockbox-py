@@ -66,6 +66,7 @@ class MetadataStore(object):
     self.database_path = os.path.join(self.database_directory,
                                       self.database_name)
     self._initialize_metadata()
+    self._initialize_signatures()
 
 
   def _connect_domains(self):
@@ -85,6 +86,41 @@ class MetadataStore(object):
           'PRIMARY KEY (item, key))')
     except sqlite3.OperationalError, e:
       logging.info('SQLite error (%s).' % e)
+
+
+  def _initialize_signatures(self):
+    logging.info('Initializing signatures table.')
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute(
+          'CREATE TABLE signatures('
+          'hash text,'
+          'signature text,'
+          'PRIMARY KEY hash)')
+    except sqlite3.OperationalError, e:
+      logging.info('SQLite error (%s).' % e)
+
+
+  def set_version(self, hash_of_encrypted_blob, signature_of_blob):
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute('INSERT INTO signatures(hash, signature) VALUES (?, ?)',
+                       hash_of_encrypted_blob, signature_of_blob)
+    except sqlite3.OperationalError, e:
+      logging.error('Version insert error: (%s).' % e)
+
+
+  def lookup_signature(self, hash_of_encrypted_blob):
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        result = cursor.execute('SELECT signature FROM signatures '
+                                'WHERE hash = ?', hash_of_encrypted_blob)
+        signature = result.fetchone()
+        logging.info('Retrieved signature for (%s): (%s).' %
+                     hash_of_encrypted_blob, signature)
+        return signature
+    except sqlite3.OperationalError, e:
+      logging.error('Version insert error: (%s).' % e)
 
 
   @staticmethod

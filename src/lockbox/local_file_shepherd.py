@@ -3,6 +3,7 @@
 import logging
 import threading
 import time
+from crypto_util import hash_string
 from file_update_crypto import FileUpdateCrypto
 from update_cloud_file import UpdateCloudFile
 from random import randint
@@ -10,6 +11,9 @@ from util import enum
 from exception import VersioningError
 from file_change_status import STATUS_PREPARE, STATUS_CANCELED, \
     STATUS_UPLOADING, STATUS_FAILED, STATUS_COMPLETED, STATUS_ENCRYPTING
+from watchdog.events import EVENT_TYPE_CREATED, EVENT_TYPE_MODIFIED, \
+    EVENT_TYPE_DELETED, EVENT_TYPE_MOVED, FileMovedEvent, FileDeletedEvent, \
+    FileCreatedEvent, FileModifiedEvent
 
 
 SHEPHERD_STATE_READY = 'ready'
@@ -51,9 +55,13 @@ class LocalFileShepherd(threading.Thread):
 
 
   def _get_crypto_info(self):
-    members = self._lookup_recipients()
+    self._lookup_recipients()
     self.crypto = FileUpdateCrypto(
       self.gpg, self.src_path, self.escaped_recipients)
+    self.crypto.hash_file_path()
+
+
+  def _run_encryption(self):
     self.crypto.run()
 
 
@@ -114,9 +122,11 @@ class LocalFileShepherd(threading.Thread):
         logging.info('Encrypting.')
         self._get_crypto_info()
         self._lookup_previous()
-
-        # Now have the value self.crypto.
-        # self.mediator.set_item_key_value()
+        if self.event_type == EVENT_TYPE_CREATED:
+          self._run_encryption()
+        elif self.event_type == EVENT_TYPE_MODIFIED:
+          logging.warning('EVENT_TYPE_MODIFIED encryption not implemented yet.')
+          self._run_encryption()
 
         logging.info('Finished encrypting.')
         self.mediator.update(self.status_id, STATUS_UPLOADING)

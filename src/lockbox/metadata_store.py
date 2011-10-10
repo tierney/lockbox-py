@@ -138,7 +138,8 @@ class MetadataStore(object):
       except boto.exception.SDBResponseError:
         logging.warning('Domain disappeared (temporarily?): '
                         '%d attempts remain.' % retries_remaining)
-    raise DomainDisappeared()
+        retries_remaining -= 1
+    raise DomainDisappearedError()
 
 
   def _set_and_save_item_attr(self, item, key, value, retries=_NUM_RETRIES):

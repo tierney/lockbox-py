@@ -4,7 +4,7 @@
 import logging
 import os
 import tempfile
-from binascii import b2a_base64
+from binascii import b2a_base64, a2b_base64
 from crypto_util import hash_string, hash_filename
 from librsync import SigFile, DeltaFile
 
@@ -33,6 +33,12 @@ class FileUpdateCrypto(object):
 
 
   def run(self):
+    self.hash_file_path()
+    self.rsync_signature()
+    self.encrypt()
+
+
+  def hash_file_path(self):
     try:
       os.path.exists(self.file_path)
       self.hash_of_file_path = hash_string(self.file_path)
@@ -40,21 +46,36 @@ class FileUpdateCrypto(object):
       logging.error(e)
       raise
 
+
+  def rsync_signature(self):
     # Calculate rsync signature to be used when calculating / applying deltas.
     with open(self.file_path) as cleartext_file:
       sigfile = SigFile(cleartext_file)
       self.ascii_signature = b2a_base64(sigfile.read())
-      logging.info('File (%s) signature: (%s).' %
-                   (self.file_path, self.ascii_signature))
+    logging.info('File (%s) signature: (%s).' %
+                 (self.file_path, self.ascii_signature))
 
+
+  def compute_cleartext_delta(prev_signature, latest_filename):
+    with tempfile.NamedTemporaryFile(delete=False) as cleartext_delta_file:
+      with open(latest_filename) as latest_file:
+        delta_file = DeltaFile(a2b_base64(prev_signature), latest_file)
+        delta = b2a_base64(delta_file.read())
+      cleartext_delta_file.write(delta)
+      return cleartext_delta_file.name
+
+
+  def encrypt_file(self, file_path):
     # GPG-encrypt and hash the file, filepath.
-    with open(self.file_path) as cleartext_file:
+    with open(file_path) as cleartext_file:
       with tempfile.NamedTemporaryFile(delete=False) as encrypted_blob_file:
         self.path_to_encrypted_blob = encrypted_blob_file.name
-        edata = self.gpg.encrypt_file(cleartext_file, self.recipients,
-                                      always_trust=True, armor=False,
-                                      output=self.path_to_encrypted_blob)
+        self.gpg.encrypt_file(cleartext_file, self.recipients,
+                              always_trust=True, armor=False,
+                              output=self.path_to_encrypted_blob)
 
+  def encrypt(self):
+    self.encrypt_file(self.file_path)
     self.hash_of_encrypted_blob = hash_filename(self.path_to_encrypted_blob)
     encrypted_blob_path = self.gpg.encrypt(self.file_path, self.recipients,
                                            always_trust=True, armor=False)

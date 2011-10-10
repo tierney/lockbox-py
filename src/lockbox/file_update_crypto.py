@@ -4,8 +4,9 @@
 import logging
 import os
 import tempfile
+from binascii import b2a_base64
+from crypto_util import hash_string, hash_filename
 from librsync import SigFile, DeltaFile
-
 
 class FileUpdateCrypto(object):
   """
@@ -42,7 +43,7 @@ class FileUpdateCrypto(object):
     # Calculate rsync signature to be used when calculating / applying deltas.
     with open(self.file_path) as cleartext_file:
       sigfile = SigFile(cleartext_file)
-    self.ascii_signature = binascii.b2a_base64(sigfile.read())
+      self.ascii_signature = b2a_base64(sigfile.read())
 
     # GPG-encrypt and hash the file, filepath.
     with open(self.file_path) as cleartext_file:

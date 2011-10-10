@@ -9,7 +9,7 @@ import sys
 FORMAT = "%(asctime)-15s %(levelname)-8s %(module)-30s %(lineno)-3d "\
     "ThreadID:%(thread)-2d %(message)s"
 
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     format=FORMAT,
                     stream=sys.stderr)
 
@@ -18,6 +18,8 @@ import gflags
 import gnupg
 from event_handler import LockboxEventHandler
 from remote_local_mediator import RemoteLocalMediator
+from metadata_store import MetadataStore
+from blob_store import BlobStore
 from lockbox import Lockbox
 
 

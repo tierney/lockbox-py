@@ -47,7 +47,7 @@ class LocalFileShepherd(threading.Thread):
 
 
   def _get_crypto_info(self):
-    members = self._get_members()
+    members = self._lookup_recipients()
     self.crypto = FileUpdateCrypto(
       self.gpg, self.src_path, self.escaped_recipients)
     self.crypto.run()
@@ -85,7 +85,7 @@ class LocalFileShepherd(threading.Thread):
 
   def _clear(self):
     del self.status_id, self.timestamp, self.state, self.event_type, \
-        self.src_path, self.dest_path
+        self.src_path, self.dest_path, self.crypto, self.previous
 
 
   def run(self):
@@ -105,7 +105,7 @@ class LocalFileShepherd(threading.Thread):
 
       if self.state is SHEPHERD_STATE_ENCRYPTING:
         logging.info('Encrypting.')
-        time.sleep(randint(1, 5))
+        self._get_crypto_info()
         logging.info('Finished encrypting.')
         self.mediator.update(self.status_id, STATUS_UPLOADING)
         self.state = SHEPHERD_STATE_UPLOADING
@@ -113,7 +113,7 @@ class LocalFileShepherd(threading.Thread):
 
       if self.state is SHEPHERD_STATE_UPLOADING:
         logging.info('Uploading.')
-        time.sleep(randint(1, 5))
+        self._update_cloud_file()
         logging.info('Done.')
         self.mediator.update(self.status_id, STATUS_COMPLETED)
         self.mediator.done(self.src_path, self.ident)

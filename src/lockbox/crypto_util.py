@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import logging
 import os
 from hashlib import sha1
 from uuid import uuid4
@@ -9,7 +10,13 @@ def get_random_uuid():
 
 
 def hash_string(string):
-  assert isinstance(string, str)
+  try:
+    assert isinstance(string, str) or isinstance(string, unicode)
+  except AssertionError:
+    logging.fatal('hash_string input (%s) and type (%s).'
+                  % (string, type(string)))
+    raise
+
   h = sha1()
   h.update(string)
   return h.hexdigest()

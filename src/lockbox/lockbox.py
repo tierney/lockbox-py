@@ -13,9 +13,7 @@ import sys
 import time
 
 from threading import Thread, Lock
-from crypto import CryptoHelper
-from S3 import Connection, BlobStore
-from SQLiteHelper import SQLiteHelper as SQL
+from blob_store import BlobStore
 from group_manager import GroupManager
 from crypto_util import get_random_uuid
 
@@ -41,9 +39,6 @@ class Lockbox(object):
     self.directories_foreknowledge = dict((directory, _DIR_AGE.UNKNOWN) for
                                           directory in self.directories)
     self.id = None
-
-    # self.crypto_helper = CryptoHelper(os.path.expanduser('~/.lockbox/keys'))
-    # self.S3Conn = Connection(config, prefix='/data')
     logging.info('dirs: %s' % self.directories)
 
 

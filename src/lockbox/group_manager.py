@@ -10,15 +10,59 @@ import time
 
 logging.basicConfig(level=logging.DEBUG)
 
+_DEFAULT_DATABASE_NAME = 'groups.db'
+_DEFAULT_DATABASE_DIRECTORY = os.path.join(os.path.expanduser('~'), '.lockbox')
+if not os.path.exists(_DEFAULT_DATABASE_DIRECTORY):
+  os.makedirs(_DEFAULT_DATABASE_DIRECTORY)
+
 
 class GroupManager(object):
   """Creates groups, manages local state of group membership."""
-  def __init__(self, sns_connection, sqs_connection):
+  def __init__(self, sns_connection, sqs_connection,
+               database_directory=_DEFAULT_DATABASE_DIRECTORY,
+               database_name=_DEFAULT_DATABASE_NAME):
     assert isinstance(sns_connection, boto.sns.connection.SNSConnection)
     assert isinstance(sqs_connection, boto.sqs.connection.SQSConnection)
     self.sns_connection = sns_connection
     self.sqs_connection = sqs_connection
+    self.database_directory = database_directory
+    self.database_path = os.path.join(self.database_directory,
+                                      self.database_name)
     self.group_to_messages = {}
+
+
+  def _initialize_groups_apparent(self):
+    logging.info('Initialzing groups table.')
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute('CREATE TABLE groups_apparent('
+                       'group_id text, '
+                       'name text, '
+                       'sqs text, '
+                       'sns text, '
+                       'PRIMARY KEY (group_id))')
+    except sqlite3.OperationalError, e:
+      if 'table groups_apparent already exists' in e:
+        logging.info(e)
+        return
+      logging.error('SQLite error (%s).' % e)
+
+
+  def _initialize_groups_internal(self):
+    logging.info('Initializing groups internal.')
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute('CREATE TABLE groups_internal('
+                       'group_id text, '
+                       'human_name text, '
+                       'fingerprint text, '
+                       'permissions text, '
+                       'PRIMARY KEY (group_id, human_name))')
+    except sqlite3.OperationalError, e:
+      if 'table groups_internal already exists' in e:
+        logging.info(e)
+        return
+      logging.error('SQLite error (%s).' % e)
 
 
   def create_group(self, name_prefix):
@@ -33,6 +77,7 @@ class GroupManager(object):
     # TODO(tierney): Serialize and save this information somewhere persistent.
 
     return True
+
 
   def join_group(self, name_prefix, address, more_info):
     pass

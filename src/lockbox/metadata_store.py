@@ -34,7 +34,9 @@ from crypto_util import get_random_uuid
 from exception import DomainDisappearedError, VersioningError
 from hashlib import sha1
 from master_db_connection import MasterDBConnection
+from random import randint
 from time import time as epoch_time
+from time import sleep
 
 
 _TIMEOUT_SECONDS = 10
@@ -92,20 +94,18 @@ class MetadataStore(object):
     logging.info('Initializing signatures table.')
     try:
       with MasterDBConnection(self.database_path) as cursor:
-        cursor.execute(
-          'CREATE TABLE signatures('
-          'hash text,'
-          'signature text,'
-          'PRIMARY KEY hash)')
+        cursor.execute('CREATE TABLE signatures(hash text, signature text, '
+                       'PRIMARY KEY (hash))')
     except sqlite3.OperationalError, e:
       logging.info('SQLite error (%s).' % e)
 
 
-  def set_version(self, hash_of_encrypted_blob, signature_of_blob):
+  def set_signature(self, hash_of_encrypted_blob, signature_of_blob):
     try:
       with MasterDBConnection(self.database_path) as cursor:
-        cursor.execute('INSERT INTO signatures(hash, signature) VALUES (?, ?)',
-                       hash_of_encrypted_blob, signature_of_blob)
+        cursor.execute('INSERT OR REPLACE INTO signatures(hash, signature) '
+                       'VALUES (?, ?)',
+                       (hash_of_encrypted_blob, signature_of_blob))
     except sqlite3.OperationalError, e:
       logging.error('Version insert error: (%s).' % e)
 
@@ -114,10 +114,12 @@ class MetadataStore(object):
     try:
       with MasterDBConnection(self.database_path) as cursor:
         result = cursor.execute('SELECT signature FROM signatures '
-                                'WHERE hash = ?', hash_of_encrypted_blob)
-        signature = result.fetchone()
+                                'WHERE hash = ?', (hash_of_encrypted_blob,))
+        signature_row = result.fetchone()
+        assert signature_row
+        signature = signature_row[0]
         logging.info('Retrieved signature for (%s): (%s).' %
-                     hash_of_encrypted_blob, signature)
+                     (hash_of_encrypted_blob, signature))
         return signature
     except sqlite3.OperationalError, e:
       logging.error('Version insert error: (%s).' % e)
@@ -171,10 +173,16 @@ class MetadataStore(object):
       try:
         item.save()
         return True
-      except boto.exception.SDBResponseError:
-        logging.warning('Domain disappeared (temporarily?): '
-                        '%d attempts remain.' % retries_remaining)
-        retries_remaining -= 1
+      except boto.exception.SDBResponseError, e:
+        if 'InvalidParameterValue' in e:
+          logging.error('SDBResponseError: (%s).' % e)
+          return False
+        else:
+          logging.warning('Domain disappeared (temporarily?): '
+                          '%d attempts remain.' % retries_remaining)
+          sleep(randint(1,4))
+          retries_remaining -= 1
+
     raise DomainDisappearedError()
 
 
@@ -205,7 +213,7 @@ class MetadataStore(object):
 
 
   def local_view_of_previous(self, item):
-    logging.info('Gettting local view of previous.')
+    logging.info('Getting local view of previous.')
     try:
       with MasterDBConnection(self.database_path) as cursor:
         results = cursor.execute('SELECT key, value FROM metadata '
@@ -215,7 +223,6 @@ class MetadataStore(object):
       logging.error('Could not select item because: %s.' % e)
       return False
 
-    logging.info('DAG: (%s).' % dag)
     if not dag:
       return ''
 

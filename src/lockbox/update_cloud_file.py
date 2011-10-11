@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 import logging
+from binascii import b2a_base64
 from blob_store import BlobStore
 from exception import VersioningError
 from metadata_store import MetadataStore
 from file_update_crypto import FileUpdateCrypto
-
 
 class UpdateCloudFile(object):
   """Interacts directly with the stores blob and metadata store. Sets values in
@@ -48,14 +48,26 @@ class UpdateCloudFile(object):
     self.hash_of_prev_blob = hash_of_prev_blob
 
 
-  def update_storage(self):
-    # TODO(tierney): If these should fail, we should undo the operation of the
-    # update_metadata. How do we achieve isolation when we can only communiate
-    # through a shared medium like SimpleDB?
+  def update_path(self):
+    logging.info('Path blobs (%s) : (%s).' %
+                 (self.hash_of_raw_data_of_encrypted_blob_path,
+                  b2a_base64(self.raw_data_of_encrypted_blob_path)))
     self.blob_store.put_string(self.hash_of_raw_data_of_encrypted_blob_path,
-                               self.raw_data_of_encrypted_blob_path)
+                               b2a_base64(self.raw_data_of_encrypted_blob_path))
+
+
+  def update_blob(self):
+    logging.info('Encrypted blobs (%s) : (%s).' % (self.hash_of_encrypted_blob,
+                                                   self.path_to_encrypted_blob))
     self.blob_store.put_filename(self.hash_of_encrypted_blob,
                                  self.path_to_encrypted_blob)
+
+
+  def update_storage(self):
+    logging.error('-------> DEPRECATED <--------')
+    # TODO(tierney): Failure rollback?
+    self.update_path()
+    self.update_blob()
 
 
   def update_metadata(self):
@@ -67,7 +79,7 @@ class UpdateCloudFile(object):
 
     # New file so we should also set the file_path.
     if not self.hash_of_prev_blob:
-      logging.info('Metadata like a new file.')
+      logging.info('Metadata like a NEW file.')
       self.metadata_store.set_path(
         self.hash_of_file_path, self.hash_of_raw_data_of_encrypted_blob_path)
 

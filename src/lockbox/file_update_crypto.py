@@ -35,6 +35,7 @@ class FileUpdateCrypto(object):
     self.path_to_encrypted_blob = ''
     self.hash_of_raw_data_of_encrypted_blob_path = ''
     self.raw_data_of_encrypted_blob_path = ''
+    self.delta_file_path = ''
 
 
   def run(self):
@@ -53,7 +54,8 @@ class FileUpdateCrypto(object):
 
 
   def rsync_signature(self):
-    # Calculate rsync signature to be used when calculating / applying deltas.
+    """Calculate rsync signature of entire file to be used when calculating /
+    applying deltas."""
     with open(self.file_path) as cleartext_file:
       sigfile = SigFile(cleartext_file)
       self.ascii_signature = b2a_base64(sigfile.read())
@@ -61,14 +63,19 @@ class FileUpdateCrypto(object):
                  (self.file_path, self.ascii_signature))
 
 
-  @staticmethod
-  def compute_cleartext_delta(prev_signature, latest_filename):
+  def compute_cleartext_delta(self, prev_signature, latest_filename):
     with NamedTemporaryFile(delete=False) as cleartext_delta_file:
       with open(latest_filename) as latest_file:
         delta_file = DeltaFile(a2b_base64(prev_signature), latest_file)
         delta = b2a_base64(delta_file.read())
       cleartext_delta_file.write(delta)
+      self.delta_file_path = cleartext_delta_file.name
       return cleartext_delta_file.name
+
+
+  def encrypt_delta_file(self):
+    assert os.path.exists(self.delta_file_path)
+    self.encrypt_file(self.delta_file_path)
 
 
   def encrypt_file(self, file_path):
@@ -79,14 +86,16 @@ class FileUpdateCrypto(object):
         self.gpg.encrypt_file(cleartext_file, self.recipients,
                               always_trust=True, armor=False,
                               output=self.path_to_encrypted_blob)
+    self.hash_of_encrypted_blob = hash_filename(self.path_to_encrypted_blob)
 
 
   def encrypt(self):
     self.encrypt_file(self.file_path)
     self.hash_of_encrypted_blob = hash_filename(self.path_to_encrypted_blob)
+
+    # File path encryption.
     encrypted_blob_path = self.gpg.encrypt(self.file_path, self.recipients,
                                            always_trust=True, armor=False)
-
     self.raw_data_of_encrypted_blob_path = encrypted_blob_path.data
     self.hash_of_raw_data_of_encrypted_blob_path =\
       hash_string(self.raw_data_of_encrypted_blob_path)

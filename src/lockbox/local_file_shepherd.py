@@ -63,8 +63,8 @@ class LocalFileShepherd(threading.Thread):
 
   def _run_encryption(self):
     self.crypto.run()
-    self.metadata_store.set_version(self.crypto.hash_of_encrypted_blob,
-                                    self.crypto.ascii_signature)
+    self.metadata_store.set_signature(self.crypto.hash_of_encrypted_blob,
+                                      self.crypto.ascii_signature)
 
 
   def _update_cloud_file(self):
@@ -76,11 +76,12 @@ class LocalFileShepherd(threading.Thread):
     if not self.updater.update_metadata():
       logging.warning('Could not update the metadata.')
       return False
-
     logging.info('Updated metadata.')
 
     logging.info('Sending blobdata.')
-    self.updater.update_storage()
+    if self.event_type == EVENT_TYPE_CREATED:
+      self.updater.update_path()
+    self.updater.update_blob()
     logging.info('Updated blobdata.')
 
 
@@ -107,27 +108,39 @@ class LocalFileShepherd(threading.Thread):
 
   def _modified(self):
     # Look up the signature of the previous whole file (from the src_path index?)
-    latest = self.metadata_store.local_view_of_previous(hash_of_file_path)
+    logging.info('Getting local view of previous.')
+    latest = self.metadata_store.local_view_of_previous(
+      hash_string(self.src_path))
     if not latest:
       logging.error('Have not seen this file before (%s), yet '
                     'we are shepherding a modification.' % self.src_path)
       return False
 
+    logging.info('Getting signature of hash_of_blob (%s).' % latest)
     latest_signature = self.metadata_store.lookup_signature(latest)
     if not latest_signature:
       logging.error('We do not have the latest signature.')
       return False
 
+    logging.info('Computing the delta.')
     # compute_cleartext_delta(prev_sig, latest_filename)
-    self.crypto.compute_cleartext_delta(latest_signature, self.src_path)
+    delta_file_name = self.crypto.compute_cleartext_delta(
+      latest_signature, self.src_path)
+    logging.info('Updating crypto file path to delta file (%s).' %
+                 delta_file_name)
 
+
+    logging.info('Encrypting.')
     # encrypt delta (get back the hash_of_encrypted_blob)
     self.crypto.rsync_signature()
-    self.crypto.encrypt_file(self.src_path)
+    self.crypto.encrypt_delta_file()
 
     # Locally store: hash(gpg(delta)) -> signature(file)
-    self.metadata_store.set_version(self.crypto.hash_of_encrypted_blob,
-                                    self.crypto.ascii_signature)
+    logging.info('Setting new signature (%s) : (%s).' %
+                 (self.crypto.hash_of_encrypted_blob,
+                  self.crypto.ascii_signature))
+    self.metadata_store.set_signature(self.crypto.hash_of_encrypted_blob,
+                                      self.crypto.ascii_signature)
 
 
   def run(self):

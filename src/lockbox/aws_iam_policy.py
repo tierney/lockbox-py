@@ -82,6 +82,7 @@ class AWSIAMPolicy(object):
 
 
   def create_user(self, user_name):
+    self.iam_connection = boto.connect_iam()
     try:
       resp = self.iam_connection.create_user(user_name)
     except boto.exception.BotoServerError, e:
@@ -95,7 +96,8 @@ class AWSIAMPolicy(object):
       return False
 
     try:
-      access_key = resp['create_access_key_response']['create_access_key_result']['access_key']
+      access_key = resp['create_access_key_response']['create_access_key_result'
+                                                      ]['access_key']
     except Exception, e:
       logging.error('FIX CODE with more specific exception handling (%s).' % e)
       return False

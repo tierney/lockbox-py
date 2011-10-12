@@ -18,13 +18,15 @@ if not os.path.exists(_DEFAULT_DATABASE_DIRECTORY):
 
 class GroupManager(object):
   """Creates groups, manages local state of group membership."""
-  def __init__(self, sns_connection, sqs_connection,
+  def __init__(self, sns_connection, sqs_connection, iam_connection,
                database_directory=_DEFAULT_DATABASE_DIRECTORY,
                database_name=_DEFAULT_DATABASE_NAME):
     assert isinstance(sns_connection, boto.sns.connection.SNSConnection)
     assert isinstance(sqs_connection, boto.sqs.connection.SQSConnection)
+    assert isinstance(iam_connection, boto.iam.connection.IAMConnection)
     self.sns_connection = sns_connection
     self.sqs_connection = sqs_connection
+    self.iam_connection = iam_connection
     self.database_directory = database_directory
     self.database_path = os.path.join(self.database_directory,
                                       self.database_name)
@@ -48,6 +50,23 @@ class GroupManager(object):
       logging.error('SQLite error (%s).' % e)
 
 
+  def _initialize_generated_members_table(self):
+    logging.info('Initializing generated_members table.')
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute('CREATE TABLE generated_members('
+                       'user_name text, '
+                       'fingerprint text, '
+                       'aws_access_key_id text, '
+                       'aws_secret_access_key text, '
+                       'PRIMARY KEY (user_name))')
+    except sqlite3.OperationalError, e:
+      if 'table generated_members already exists' in e:
+        logging.info(e)
+        return
+      logging.error('SQLite error (%s).' % e)
+
+
   def _initialize_groups_internal(self):
     logging.info('Initializing groups internal.')
     try:
@@ -57,14 +76,49 @@ class GroupManager(object):
                        'human_name text, '
                        'fingerprint text, '
                        'permissions text, '
-                       'aws_access_key text, '
-                       'aws_secret_key text, '
                        'PRIMARY KEY (group_id, human_name))')
     except sqlite3.OperationalError, e:
       if 'table groups_internal already exists' in e:
         logging.info(e)
         return
       logging.error('SQLite error (%s).' % e)
+
+
+  def create_user(self, user_name, fingerprint):
+    # TODO(tierney): Check that user_name already exists.
+    try:
+      resp = self.iam_connection.create_user(user_name)
+    except boto.exception.BotoServerError, e:
+      logging.error(e)
+      return False
+
+    #
+    try:
+      resp = self.iam_connection.create_access_key(user_name)
+    except Exception, e:
+      logging.error('FIX CODE with more specific exception handling (%s).' % e)
+      return False
+
+    try:
+      access_key = resp['create_access_key_response']['create_access_key_result'
+                                                      ]['access_key']
+    except Exception, e:
+      logging.error('FIX CODE with more specific exception handling (%s).' % e)
+      return False
+
+    access_key_id = access_key['access_key_id']
+    secret_access_key = access_key['secret_access_key']
+
+    print access_key_id, secret_access_key
+
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute('INSERT INTO generated_members VALUES (?, ?, ?, ?)',
+                       (user_name, fingerprint, access_key_id,
+                        secret_access_key))
+    except sqlite3.OperationalError, e:
+      logging.error(e)
+      return False
 
 
   def create_group(self, name_prefix):

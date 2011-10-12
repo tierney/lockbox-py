@@ -33,23 +33,6 @@ class GroupManager(object):
     self.group_to_messages = {}
 
 
-  def _initialize_groups_apparent(self):
-    logging.info('Initialzing groups table.')
-    try:
-      with MasterDBConnection(self.database_path) as cursor:
-        cursor.execute('CREATE TABLE groups_apparent('
-                       'group_id text, '
-                       'name text, '
-                       'sqs text, '
-                       'sns text, '
-                       'PRIMARY KEY (group_id))')
-    except sqlite3.OperationalError, e:
-      if 'table groups_apparent already exists' in e:
-        logging.info(e)
-        return
-      logging.error('SQLite error (%s).' % e)
-
-
   def _initialize_generated_members_table(self):
     logging.info('Initializing generated_members table.')
     try:
@@ -62,6 +45,23 @@ class GroupManager(object):
                        'PRIMARY KEY (user_name))')
     except sqlite3.OperationalError, e:
       if 'table generated_members already exists' in e:
+        logging.info(e)
+        return
+      logging.error('SQLite error (%s).' % e)
+
+
+  def _initialize_groups_apparent(self):
+    logging.info('Initialzing groups table.')
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute('CREATE TABLE groups_apparent('
+                       'group_id text, '
+                       'name text, '
+                       'sqs text, '
+                       'sns text, '
+                       'PRIMARY KEY (group_id))')
+    except sqlite3.OperationalError, e:
+      if 'table groups_apparent already exists' in e:
         logging.info(e)
         return
       logging.error('SQLite error (%s).' % e)
@@ -85,14 +85,14 @@ class GroupManager(object):
 
 
   def create_user(self, user_name, fingerprint):
-    # TODO(tierney): Check that user_name already exists.
+    # TODO(tierney): Check if user_name already exists.
     try:
       resp = self.iam_connection.create_user(user_name)
     except boto.exception.BotoServerError, e:
       logging.error(e)
       return False
 
-    #
+    # Create the user on the AWS IAM.
     try:
       resp = self.iam_connection.create_access_key(user_name)
     except Exception, e:
@@ -109,8 +109,9 @@ class GroupManager(object):
     access_key_id = access_key['access_key_id']
     secret_access_key = access_key['secret_access_key']
 
-    print access_key_id, secret_access_key
-
+    # Persist the data in our own local database.
+    logging.info('Keys generated for user_name (%s) are (%s) and (%s).' %
+                 (user_name, access_key_id, secret_access_key))
     try:
       with MasterDBConnection(self.database_path) as cursor:
         cursor.execute('INSERT INTO generated_members VALUES (?, ?, ?, ?)',
@@ -121,22 +122,38 @@ class GroupManager(object):
       return False
 
 
-  def create_group(self, name_prefix):
+  def create_group(self, group_name):
     """Create a group that I will own."""
     gmsgs = group_messages.GroupMessages(
-      self.sns_connection, self.sqs_connection, name_prefix, name_prefix)
+      self.sns_connection, self.sqs_connection, group_name, group_name)
     if not gmsgs.setup_topic_queue():
       logging.error('Topic and queue not setup properly')
       return False
 
-    self.group_to_messages[name_prefix] = gmsgs
-    # TODO(tierney): Serialize and save this information somewhere persistent.
+    self.group_to_messages[group_name] = gmsgs
+
+    # Create group on AWS IAM. 'arn:aws:iam:::group/group_name'.
+    self.iam_connection.create_group(group_name)
+
+    # Create policy for group.
+    self.iam_connection.put_group_policy(group_name, 'members', json_policy)
+
+    # Make this information locally persistent.
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute('INSERT INTO groups_apparent(group_id, name, sqs, sns) '
+                       'VALUES (?, ?, ?, ?)', (group_name, group_name,
+                                               group_name, group_name))
+    except sqlite3.OperationalError, e:
+      logging.error(e)
+      return False
 
     return True
 
 
-  def join_group(self, name_prefix, address, more_info):
-    pass
+  def join_group(self, user_name, group_name, more_info):
+    # TODO(tierney): Check that group exists.
+    self.iam_connection.add_user_to_group(user_name, group_name)
 
 
   def delete_group(self, name_prefix):

@@ -80,18 +80,44 @@ class AWSIAMPolicy(object):
 }''' % (self.bucket_name, self.account_id, self.lock_domain, self.account_id,
         self.data_domain, self.account_id, self.topic_name)
 
-account_id = '135090458419'
-account_alias = '0d08b0ac664c432ba4265de479ecfee4'
-aws = AWSIAMPolicy(account_alias, 'safe-deposit-box', 'lock_domain',
-                   'data_domain', 'group0')
 
-iam_connection = boto.connect_iam()
-# account_alias = get_random_uuid()
-# print "Account alias:", account_alias
-# iam_connection.create_account_alias(account_alias)
-group_name = get_random_uuid()
-print "Group name:", group_name
-iam_connection.create_group(group_name)
-iam_connection.put_group_policy(group_name, group_name + '-policy',
-                                aws.json_policy())
+  def create_user(self, user_name):
+    try:
+      resp = self.iam_connection.create_user(user_name)
+    except boto.exception.BotoServerError, e:
+      logging.error(e)
+      return False
+
+    try:
+      resp = self.iam_connection.create_access_key(user_name)
+    except Exception, e:
+      logging.error('FIX CODE with more specific exception handling (%s).' % e)
+      return False
+
+    try:
+      access_key = resp['create_access_key_response']['create_access_key_result']['access_key']
+    except Exception, e:
+      logging.error('FIX CODE with more specific exception handling (%s).' % e)
+      return False
+
+    access_key_id = access_key['access_key_id']
+    secret_access_key = access_key['secret_access_key']
+    print access_key_id, secret_access_key
+
+
+def main():
+  account_id = '135090458419'
+  account_alias = '0d08b0ac664c432ba4265de479ecfee4'
+  aws = AWSIAMPolicy(account_alias, 'safe-deposit-box', 'lock_domain',
+                     'data_domain', 'group0')
+
+  iam_connection = boto.connect_iam()
+  # account_alias = get_random_uuid()
+  # print "Account alias:", account_alias
+  # iam_connection.create_account_alias(account_alias)
+  group_name = get_random_uuid()
+  print "Group name:", group_name
+  iam_connection.create_group(group_name)
+  iam_connection.put_group_policy(group_name, group_name + '-policy',
+                                  aws.json_policy())
 

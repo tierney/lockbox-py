@@ -57,6 +57,8 @@ class GroupManager(object):
                        'human_name text, '
                        'fingerprint text, '
                        'permissions text, '
+                       'aws_access_key text, '
+                       'aws_secret_key text, '
                        'PRIMARY KEY (group_id, human_name))')
     except sqlite3.OperationalError, e:
       if 'table groups_internal already exists' in e:

@@ -28,26 +28,11 @@ class GroupManager(object):
     self.sqs_connection = sqs_connection
     self.iam_connection = iam_connection
     self.database_directory = database_directory
+    self.database_name = database_name
     self.database_path = os.path.join(self.database_directory,
                                       self.database_name)
     self.group_to_messages = {}
 
-
-  def _initialize_generated_members_table(self):
-    logging.info('Initializing generated_members table.')
-    try:
-      with MasterDBConnection(self.database_path) as cursor:
-        cursor.execute('CREATE TABLE generated_members('
-                       'user_name text, '
-                       'fingerprint text, '
-                       'aws_access_key_id text, '
-                       'aws_secret_access_key text, '
-                       'PRIMARY KEY (user_name))')
-    except sqlite3.OperationalError, e:
-      if 'table generated_members already exists' in e:
-        logging.info(e)
-        return
-      logging.error('SQLite error (%s).' % e)
 
 
   def _initialize_groups_apparent(self):

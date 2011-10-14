@@ -73,7 +73,7 @@ class Users(object):
     if not fingerprint:
       return False
 
-    return self._create_user(user_name.replace(' ','_'), fingerprint)
+    return self._create_user(user_name.replace(' ', '_'), fingerprint)
 
 
   def _create_user(self, user_name, fingerprint):
@@ -115,13 +115,33 @@ class Users(object):
       logging.error(e)
       return False
 
+
   def _lookup_user_access_key(user_name):
-    pass
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        result = cursor.execute('SELECT access_key_id FROM users WHERE '
+                                'user_name = ?', (user_name,))
+        access_key_id = result.fetchone()[0]
+        return access_key_id
+    except sqlite3.OperationalError, e:
+      logging.error('Unable to retrieve user (%s) from local database (%s).' %
+                    (user_name, e))
+      return None
+
 
   def delete_user(self, user_name):
-    self._lookup_user_access_key(user_name)
-    self.iam_connection.delete_
+    access_key_id = self._lookup_user_access_key(user_name)
+    if not access_key_id:
+      logging.error('Not able to find locally stored access key so we cannot '
+                    'delete user (%s).' % user_name)
+
+    resp = self.iam_connection.delete_access_key(access_key_id,
+                                                 user_name=user_name)
+    logging.info('Delete access key response (%s).' % resp)
+
     resp = self.iam_connection.delete_user(user_name)
+    logging.info('Delete user response (%s).' % user_name)
+
     # Delete from local database too.
     return True
 

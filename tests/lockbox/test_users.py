@@ -12,10 +12,10 @@ class UsersTestCase(unittest.TestCase):
     self.gpg = gnupg.GPG()
     self.users = Users(self.iam_connection, self.gpg)
     self.random_user_name = get_random_uuid()
-    
-  def tearDown(self):
-    self.users.delete_user(self.random_user_name)
 
-  def test_create_user(self):
+  def tearDown(self):
+    pass
+
+  def test_create_and_delete_user(self):
     self.assertTrue(self.users.create_user(self.random_user_name))
     self.assertTrue(self.users.delete_user(self.random_user_name))

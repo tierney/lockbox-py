@@ -34,7 +34,6 @@ class GroupManager(object):
     self.group_to_messages = {}
 
 
-
   def _initialize_groups_apparent(self):
     logging.info('Initialzing groups table.')
     try:

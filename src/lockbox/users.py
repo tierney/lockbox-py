@@ -26,27 +26,47 @@ class Users(object):
     self.database_path = os.path.join(self.database_directory,
                                       self.database_name)
 
-    if not self._initialize_users_table():
-      return False
+    # TODO(tierney): Call these methods from a separate driver method so that
+    # if we have an actual problem, then we can handle the error separate from
+    # initialization of the class. 
+    self._initialize_aws_users_table()
+    self._initialize_users_keys_table()
 
-  def _initialize_users_table(self):
-    logging.info('Initializing users table.')
+
+  def _initialize_aws_users_table(self):
+    logging.info('Initializing aws_users table.')
     try:
       with MasterDBConnection(self.database_path) as cursor:
-        cursor.execute('CREATE TABLE users('
+        cursor.execute('CREATE TABLE aws_users('
                        'user_name text, '
-                       'fingerprint text, '
                        'aws_access_key_id text, '
                        'aws_secret_access_key text, '
                        'PRIMARY KEY (user_name))')
+      return True
     except sqlite3.OperationalError, e:
-      if 'table users already exists' in e:
+      if 'table aws_users already exists' in e:
         logging.info(e)
         return True
       logging.error('SQLite error (%s).' % e)
       return False
 
-    return True
+
+  def _initialize_users_keys_table(self):
+    logging.info('Initializing users_keys table.')
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute('CREATE TABLE users_keys('
+                       'user_name text, '
+                       'fingerprint text, '
+                       'PRIMARY KEY (user_name))')
+      return True
+    except sqlite3.OperationalError, e:
+      if 'table users_key already exists in e':
+        logging.info(e)
+        return True
+      logging.error('SQLite error (%s).' % e)
+      return False
+
 
   def _choose_fingerprint(self, important_keys_values):
     # Prompt user with ability to choose the appropriate key for a given
@@ -106,9 +126,9 @@ class Users(object):
                  (user_name, access_key_id, secret_access_key))
     try:
       with MasterDBConnection(self.database_path) as cursor:
-        cursor.execute('INSERT INTO users VALUES (?, ?, ?, ?)',
-                       (user_name, fingerprint, access_key_id,
-                        secret_access_key))
+        cursor.execute('INSERT INTO aws_users(user_name, aws_access_key_id,'
+                       'aws_secret_access_key) VALUES (?, ?, ?)',
+                       (user_name, access_key_id, secret_access_key))
       return True
     except sqlite3.OperationalError, e:
       logging.error('UNABLE TO PERSIST keys!')
@@ -116,10 +136,10 @@ class Users(object):
       return False
 
 
-  def _lookup_user_access_key(user_name):
+  def _lookup_user_access_key(self, user_name):
     try:
       with MasterDBConnection(self.database_path) as cursor:
-        result = cursor.execute('SELECT access_key_id FROM users WHERE '
+        result = cursor.execute('SELECT aws_access_key_id FROM aws_users WHERE '
                                 'user_name = ?', (user_name,))
         access_key_id = result.fetchone()[0]
         return access_key_id
@@ -127,6 +147,18 @@ class Users(object):
       logging.error('Unable to retrieve user (%s) from local database (%s).' %
                     (user_name, e))
       return None
+
+
+  def _delete_aws_user_entry(self, user_name, access_key_id):
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        cursor.execute('DELETE FROM aws_users WHERE user_name = ? AND '
+                       'aws_access_key_id = ?', (user_name, access_key_id))
+      return True
+    except sqlite3.OperationalError, e:
+      logging.error('Unable to delete local aws_user entry for user (%s).' %
+                    user_name)
+      return False
 
 
   def delete_user(self, user_name):
@@ -140,8 +172,7 @@ class Users(object):
     logging.info('Delete access key response (%s).' % resp)
 
     resp = self.iam_connection.delete_user(user_name)
-    logging.info('Delete user response (%s).' % user_name)
+    logging.info('Delete user response (%s).' % resp)
 
     # Delete from local database too.
-    return True
-
+    return self._delete_aws_user_entry(user_name, access_key_id)

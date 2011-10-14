@@ -10,6 +10,7 @@ _DEFAULT_DATABASE_DIRECTORY = os.path.join(os.path.expanduser('~'), '.lockbox')
 if not os.path.exists(_DEFAULT_DATABASE_DIRECTORY):
   os.makedirs(_DEFAULT_DATABASE_DIRECTORY)
 
+_PERMISSIONS = ['OWNER', 'RW', 'RO']
 
 class Credentials(object):
   def __init__(self, database_name=_DEFAULT_DATABASE_NAME,
@@ -26,12 +27,12 @@ class Credentials(object):
     try:
       with MasterDBConnection(self.database_path) as cursor:
         cursor.execute('CREATE TABLE credentials('
-                       'group_name text,'
-                       'region text, '
-                       'namespace text, '
-                       'aws_access_key_id text, '
-                       'aws_secret_access_key text, '
-                       'permissions text, '
+                       'group_name text NOT NULL,'
+                       'region text NOT NULL, '
+                       'namespace text NOT NULL, '
+                       'aws_access_key_id text NOT NULL, '
+                       'aws_secret_access_key text NOT NULL, '
+                       'permissions text NOT NULL, '
                        'PRIMARY KEY (group_name))')
         return True
     except sqlite3.OperationalError, e:
@@ -61,6 +62,22 @@ class Credentials(object):
       return False
 
 
+  def owner(self):
+    logging.info('Retrieving groups of which I am the owner.')
+    try:
+      with MasterDBConnection(self.database_path) as cursor:
+        results = cursor.execute('SELECT group_name, aws_access_key_id,'
+                                 'aws_secret_access_key FROM credentials '
+                                 'WHERE permissions LIKE "OWNER"')
+        if not results:
+          return None
+        response = result.fetchall()
+        return response
+    except sqlite3.OperationalError, e:
+      logging.error('Not able to query for groups that I own.')
+      return None
+
+
   def get(self, group_name):
     try:
       with MasterDBConnection(self.database_path) as cursor:
@@ -85,4 +102,3 @@ class Credentials(object):
     except sqlite3.OperationalError, e:
       logging.error('Unable to delete credentials for group (%s).' % group_name)
       return False
-

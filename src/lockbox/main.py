@@ -3,6 +3,7 @@
 
 __author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
 
+import os
 import logging
 import sys
 
@@ -11,7 +12,8 @@ FORMAT = "%(asctime)-15s %(levelname)-8s %(module)-30s %(lineno)-3d "\
 
 logging.basicConfig(level=logging.INFO,
                     format=FORMAT,
-                    stream=sys.stderr)
+                    filename=os.path.expanduser('~/.lockbox/lockbox.log'),
+                    filemode='wb')
 
 import boto
 import gflags

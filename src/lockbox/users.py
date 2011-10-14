@@ -115,7 +115,12 @@ class Users(object):
       logging.error(e)
       return False
 
+  def _lookup_user_access_key(user_name):
+    pass
+
   def delete_user(self, user_name):
+    self._lookup_user_access_key(user_name)
+    self.iam_connection.delete_
     resp = self.iam_connection.delete_user(user_name)
     # Delete from local database too.
     return True

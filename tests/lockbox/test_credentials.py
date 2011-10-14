@@ -28,7 +28,7 @@ class CredentialsTestCase(unittest.TestCase):
                          self.my_aws_secret_access_key, self.my_permissions)
 
     # Retrieve and parse the credentials for the group.
-    response = self.get(self.my_group_name)
+    response = self.credentials.get(self.my_group_name)
     self.assert_(response)
     group = response[0]
     region = response[1]

@@ -45,7 +45,7 @@ class Credentials(object):
   def set(self, group_name, region, namespace, aws_access_key_id,
           aws_secret_access_key, permissions):
     logging.info('Setting credentials %(group_name)s, %(region)s, '
-                 '%(namespace)s, %(aws_access_key_id, '
+                 '%(namespace)s, %(aws_access_key_id)s, '
                  '%(aws_secret_access_key)s, %(permissions)s.' % locals())
     try:
       with MasterDBConnection(self.database_path) as cursor:
@@ -67,7 +67,7 @@ class Credentials(object):
         results = cursor.execute('SELECT group_name, region, namespace, '
                                  'aws_access_key_id, aws_secret_access_key, '
                                  'permissions FROM credentials WHERE '
-                                 'group_name = ?', group_name)
+                                 'group_name = ?', (group_name,))
         if results:
           return results.fetchone()
         return None
@@ -80,7 +80,7 @@ class Credentials(object):
     try:
       with MasterDBConnection(self.database_path) as cursor:
         cursor.execute('DELETE FROM credentials WHERE group_name = ?',
-                       group_name)
+                       (group_name,))
       return True
     except sqlite3.OperationalError, e:
       logging.error('Unable to delete credentials for group (%s).' % group_name)

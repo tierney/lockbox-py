@@ -42,7 +42,7 @@ class GroupMessages(object):
 
   def _create_and_set_topic_arn(self, topic_name):
     topic = self.sns_connection.create_topic(topic_name)
-    self.topic_arn =\
+    self.topic_arn = \
         topic[u'CreateTopicResponse'][u'CreateTopicResult'][u'TopicArn']
 
 
@@ -89,7 +89,8 @@ class GroupMessages(object):
     if self.sqs_connection.lookup(self.queue.name):
       self.sqs_connection.delete_queue(self.queue, force_deletion=True)
     else:
-      logging.warning('Could not find the queue to delete (%s).' % (self.queue.name))
+      logging.warning('Could not find the queue to delete (%s).' %
+                      (self.queue.name))
 
     self.sns_connection.delete_topic(self.topic_arn)
     return True
@@ -172,5 +173,5 @@ def main():
     logging.error('Topic and queue not setup.')
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
   main()

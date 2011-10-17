@@ -56,7 +56,9 @@ class FirstTime(object):
   group_manager = GroupManager(sns_connection, sqs_connection, iam_connection,
                                database_directory=FLAGS.internal_directory)
 
-  # 
+  # Credentials table.
+  credentials = Credentials(database_directory=FLAGS.internal_directory)
+  credentials.set(FLAGS.)
 
 
 def main(argv):

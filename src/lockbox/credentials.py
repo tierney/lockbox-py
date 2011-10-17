@@ -27,7 +27,8 @@ class Credentials(object):
     try:
       with MasterDBConnection(self.database_path) as cursor:
         cursor.execute('CREATE TABLE credentials('
-                       'group_name text NOT NULL,'
+                       'group_id text NOT NULL,'
+                       'group_name text NOT NULL'
                        'region text NOT NULL, '
                        'namespace text NOT NULL, '
                        'aws_access_key_id text NOT NULL, '
@@ -45,6 +46,9 @@ class Credentials(object):
 
   def set(self, group_name, region, namespace, aws_access_key_id,
           aws_secret_access_key, permissions):
+    # Sanity check the input.
+    assert permissions in _PERMISSIONS
+
     logging.info('Setting credentials %(group_name)s, %(region)s, '
                  '%(namespace)s, %(aws_access_key_id)s, '
                  '%(aws_secret_access_key)s, %(permissions)s.' % locals())

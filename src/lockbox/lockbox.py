@@ -16,9 +16,9 @@ from threading import Thread, Lock
 from blob_store import BlobStore
 from group_manager import GroupManager
 from crypto_util import get_random_uuid
-
 from watchdog.observers import Observer
 from util import enum
+
 
 _DIR_AGE = enum('UNKNOWN', 'NEW', 'EXISTING')
 

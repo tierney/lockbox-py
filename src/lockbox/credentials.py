@@ -75,10 +75,10 @@ class Credentials(object):
                                  'WHERE permissions LIKE "OWNER"')
         if not results:
           return None
-        response = result.fetchall()
+        response = results.fetchall()
         return response
     except sqlite3.OperationalError, e:
-      logging.error('Not able to query for groups that I own.')
+      logging.error('Not able to query for groups that I own (%s).' % e)
       return None
 
 

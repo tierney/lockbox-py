@@ -44,8 +44,8 @@ class Credentials(object):
       return False
 
 
-  def set(self, group_name, region, namespace, aws_access_key_id,
-          aws_secret_access_key, permissions):
+  def set_credentials(self, group_name, region, namespace, aws_access_key_id,
+                      aws_secret_access_key, permissions):
     # Sanity check the input.
     assert permissions in _PERMISSIONS
 
@@ -62,7 +62,8 @@ class Credentials(object):
                         aws_secret_access_key, permissions))
       return True
     except sqlite3.OperationalError, e:
-      logging.error('Unable to store credentials for group (%s).' % group_name)
+      logging.error('Unable to store credentials for group (%s): (%s).' % 
+                    (group_name, e))
       return False
 
 
@@ -93,7 +94,7 @@ class Credentials(object):
           return results.fetchone()
         return None
     except sqlite3.OperationalError, e:
-      logging.error('Unable to find group (%s).' % group_name)
+      logging.error('Unable to find group (%s): (%s).' % (group_name, e))
       return None
 
 
@@ -104,5 +105,6 @@ class Credentials(object):
                        (group_name,))
       return True
     except sqlite3.OperationalError, e:
-      logging.error('Unable to delete credentials for group (%s).' % group_name)
+      logging.error('Unable to delete credentials for group (%s): (%s).' % 
+                    (group_name, e))
       return False

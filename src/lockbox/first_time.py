@@ -7,6 +7,7 @@ import os
 import sys
 from credentials import Credentials
 from crypto_util import get_random_uuid
+from group_manager import GroupManager
 
 FLAGS = gflags.FLAGS
 

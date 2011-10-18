@@ -8,10 +8,12 @@ import time
 from gnupg import GPG
 from master_db_connection import MasterDBConnection
 
+
 _DEFAULT_DATABASE_NAME = 'users.db'
 _DEFAULT_DATABASE_DIRECTORY = os.path.join(os.path.expanduser('~'), '.lockbox')
 if not os.path.exists(_DEFAULT_DATABASE_DIRECTORY):
   os.makedirs(_DEFAULT_DATABASE_DIRECTORY)
+
 
 class Users(object):
   def __init__(self, iam_connection, gpg,

@@ -4,6 +4,7 @@ import boto
 import group
 import group_messages
 import logging
+import os
 import random
 import sys
 import time

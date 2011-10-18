@@ -36,7 +36,7 @@ logging.basicConfig(level=logging.INFO)
 def first_time():
   # Clear databases.
   for afile in os.listdir(FLAGS.internal_directory):
-    os.remove(afile)
+    os.remove(os.path.join(FLAGS.internal_directory, afile))
   os.removedirs(FLAGS.internal_directory)
   os.makedirs(FLAGS.internal_directory)
 

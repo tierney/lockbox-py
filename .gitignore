@@ -35,5 +35,7 @@ Icon?
 Thumbs.db
 
 bin/
+build/
+.
 .project
 .pydevproject

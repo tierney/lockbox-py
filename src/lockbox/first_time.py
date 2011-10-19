@@ -25,12 +25,13 @@ gflags.DEFINE_string('namespace', None, 'Namespace (usually, AWS account ID.')
 gflags.DEFINE_string('aws_access_key_id', None, 'AWS Access Key ID.')
 gflags.DEFINE_string('aws_secret_access_key', None, 'AWS Secret Access Key.')
 
-gflags.MarkFlagAsRequired('lock_domain_name')
-gflags.MarkFlagAsRequired('data_domain_name')
-gflags.MarkFlagAsRequired('blob_bucket_name')
-gflags.MarkFlagAsRequired('lockbox_directory')
 gflags.MarkFlagAsRequired('aws_access_key_id')
 gflags.MarkFlagAsRequired('aws_secret_access_key')
+gflags.MarkFlagAsRequired('blob_bucket_name')
+gflags.MarkFlagAsRequired('data_domain_name')
+gflags.MarkFlagAsRequired('lock_domain_name')
+gflags.MarkFlagAsRequired('lockbox_directory')
+gflags.MarkFlagAsRequired('namespace')
 
 logging.basicConfig(level=logging.INFO)
 
@@ -52,6 +53,7 @@ def first_time():
   # Make internal databases' directory.
   os.makedirs(FLAGS.internal_directory)
 
+  # Create connections for different AWS services.
   s3_connection = boto.connect_s3(
     aws_access_key_id=FLAGS.aws_access_key_id,
     aws_secret_access_key=FLAGS.aws_secret_access_key)
@@ -75,16 +77,16 @@ def first_time():
   # Creates S3 Bucket.
   blob_store = BlobStore(s3_connection, FLAGS.blob_bucket_name)
   assert isinstance(blob_store.bucket, boto.s3.bucket.Bucket)
-  
+
   # Creates SimpleDB domains.
   metadata_store = MetadataStore(sdb_connection, FLAGS.lock_domain_name,
-                                 FLAGS.data_domain_name, 
+                                 FLAGS.data_domain_name,
                                  database_directory=FLAGS.internal_directory)
 
   # Credentials table.
   credentials = Credentials(database_directory=FLAGS.internal_directory)
-  if not credentials.set_credentials(get_random_uuid(), 'us-east-1', 
-                                     FLAGS.namespace, FLAGS.aws_access_key_id, 
+  if not credentials.set_credentials(get_random_uuid(), 'us-east-1',
+                                     FLAGS.namespace, FLAGS.aws_access_key_id,
                                      FLAGS.aws_secret_access_key, 'OWNER'):
     logging.error('We were unable to set our own owner credentials.')
 

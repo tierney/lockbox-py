@@ -6,13 +6,15 @@ import group_messages
 import logging
 import os
 import random
+import sqlite3
 import sys
 import time
+from master_db_connection import MasterDBConnection
 
 logging.basicConfig(level=logging.DEBUG)
 
 _DEFAULT_DATABASE_NAME = 'groups.db'
-_DEFAULT_DATABASE_DIRECTORY = os.path.join(os.path.expanduser('~'), '.lockbox')
+_DEFAULT_DATABASE_DIRECTORY = os.path.expanduser('~/.lockbox')
 if not os.path.exists(_DEFAULT_DATABASE_DIRECTORY):
   os.makedirs(_DEFAULT_DATABASE_DIRECTORY)
 

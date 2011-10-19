@@ -27,8 +27,7 @@ class Credentials(object):
     try:
       with MasterDBConnection(self.database_path) as cursor:
         cursor.execute('CREATE TABLE credentials('
-                       'group_id text NOT NULL,'
-                       'group_name text NOT NULL'
+                       'group_name text NOT NULL, '
                        'region text NOT NULL, '
                        'namespace text NOT NULL, '
                        'aws_access_key_id text NOT NULL, '

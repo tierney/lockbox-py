@@ -5,9 +5,11 @@ import gflags
 import logging
 import os
 import sys
+from blob_store import BlobStore
 from credentials import Credentials
 from crypto_util import get_random_uuid
 from group_manager import GroupManager
+from metadata_store import MetadataStore
 
 FLAGS = gflags.FLAGS
 
@@ -33,11 +35,21 @@ gflags.MarkFlagAsRequired('aws_secret_access_key')
 logging.basicConfig(level=logging.INFO)
 
 
+def _rm_rf(directory):
+  for afile in os.listdir(directory):
+    if os.path.isdir(afile):
+      _rm_rf(os.path.join(directory, afile))
+      os.rmdir(afile)
+      continue
+    os.remove(os.path.join(os.path.join(directory), afile))
+  os.removedirs(directory)
+
+
 def first_time():
-  # Clear databases.
-  for afile in os.listdir(FLAGS.internal_directory):
-    os.remove(os.path.join(FLAGS.internal_directory, afile))
-  os.removedirs(FLAGS.internal_directory)
+  # Clear internal databases' directory.
+  _rm_rf(FLAGS.internal_directory)
+
+  # Make internal databases' directory.
   os.makedirs(FLAGS.internal_directory)
 
   s3_connection = boto.connect_s3(
@@ -56,14 +68,24 @@ def first_time():
     aws_access_key_id=FLAGS.aws_access_key_id,
     aws_secret_access_key=FLAGS.aws_secret_access_key)
 
+  # Creates notification service topics and queues.
   group_manager = GroupManager(sns_connection, sqs_connection, iam_connection,
                                database_directory=FLAGS.internal_directory)
 
+  # Creates S3 Bucket.
+  blob_store = BlobStore(s3_connection, FLAGS.blob_bucket_name)
+  assert isinstance(blob_store.bucket, boto.s3.bucket.Bucket)
+  
+  # Creates SimpleDB domains.
+  metadata_store = MetadataStore(sdb_connection, FLAGS.lock_domain_name,
+                                 FLAGS.data_domain_name, 
+                                 database_directory=FLAGS.internal_directory)
+
   # Credentials table.
   credentials = Credentials(database_directory=FLAGS.internal_directory)
-  if not credentials.set(get_random_uuid(), 'us-east-1', FLAGS.namespace,
-                         FLAGS.aws_access_key_id, FLAGS.aws_secret_access_key,
-                         'owner'):
+  if not credentials.set_credentials(get_random_uuid(), 'us-east-1', 
+                                     FLAGS.namespace, FLAGS.aws_access_key_id, 
+                                     FLAGS.aws_secret_access_key, 'OWNER'):
     logging.error('We were unable to set our own owner credentials.')
 
 

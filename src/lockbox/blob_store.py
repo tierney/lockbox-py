@@ -7,7 +7,6 @@ local testing.
 '''
 import logging
 import sys
-import time
 
 
 BUCKET_NAME_PADDING_LEN = 20
@@ -57,14 +56,11 @@ class BlobStore(object):
   def put_file(self, hash_file, fp):
     key = self._get_key(hash_file)
     # TODO(tierney): Would want to have a callback to monitor the progress of
-    # the upload.
+    # pthe upload.
     key.set_contents_from_file(fp, cb=_progress_meter)
 
 
   def put_filename(self, hash_file, filename):
     with open(filename) as fp:
       self.put_file(hash_file, fp)
-
-
-if __name__ == '__main__':
-  main()
+      

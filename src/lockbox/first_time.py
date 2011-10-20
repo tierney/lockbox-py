@@ -27,7 +27,7 @@ gflags.MarkFlagAsRequired('aws_secret_access_key')
 gflags.MarkFlagAsRequired('lockbox_directory')
 gflags.MarkFlagAsRequired('namespace')
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level = logging.INFO)
 
 
 def _rm_rf(directory):
@@ -49,24 +49,24 @@ def first_time():
 
   # Create connections for different AWS services.
   s3_connection = boto.connect_s3(
-    aws_access_key_id=FLAGS.aws_access_key_id,
-    aws_secret_access_key=FLAGS.aws_secret_access_key)
+    aws_access_key_id = FLAGS.aws_access_key_id,
+    aws_secret_access_key = FLAGS.aws_secret_access_key)
   sdb_connection = boto.connect_sdb(
-    aws_access_key_id=FLAGS.aws_access_key_id,
-    aws_secret_access_key=FLAGS.aws_secret_access_key)
+    aws_access_key_id = FLAGS.aws_access_key_id,
+    aws_secret_access_key = FLAGS.aws_secret_access_key)
   sqs_connection = boto.connect_sqs(
-    aws_access_key_id=FLAGS.aws_access_key_id,
-    aws_secret_access_key=FLAGS.aws_secret_access_key)
+    aws_access_key_id = FLAGS.aws_access_key_id,
+    aws_secret_access_key = FLAGS.aws_secret_access_key)
   sns_connection = boto.connect_sns(
-    aws_access_key_id=FLAGS.aws_access_key_id,
-    aws_secret_access_key=FLAGS.aws_secret_access_key)
+    aws_access_key_id = FLAGS.aws_access_key_id,
+    aws_secret_access_key = FLAGS.aws_secret_access_key)
   iam_connection = boto.connect_iam(
-    aws_access_key_id=FLAGS.aws_access_key_id,
-    aws_secret_access_key=FLAGS.aws_secret_access_key)
+    aws_access_key_id = FLAGS.aws_access_key_id,
+    aws_secret_access_key = FLAGS.aws_secret_access_key)
 
   # Creates notification service topics and queues.
   group_manager = GroupManager(sns_connection, sqs_connection, iam_connection,
-                               database_directory=FLAGS.internal_directory)
+                               database_directory = FLAGS.internal_directory)
 
   group_id = get_random_uuid()
 
@@ -80,10 +80,10 @@ def first_time():
   lock_domain_name = bucket_name + '_locks'
   metadata_store = MetadataStore(sdb_connection, lock_domain_name,
                                  data_domain_name,
-                                 database_directory=FLAGS.internal_directory)
+                                 database_directory = FLAGS.internal_directory)
 
   # Credentials table.
-  credentials = Credentials(database_directory=FLAGS.internal_directory)
+  credentials = Credentials(database_directory = FLAGS.internal_directory)
   if not credentials.set_credentials(group_id, 'us-east-1',
                                      FLAGS.namespace, FLAGS.aws_access_key_id,
                                      FLAGS.aws_secret_access_key, 'OWNER'):

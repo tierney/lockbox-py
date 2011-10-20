@@ -8,11 +8,11 @@ import time
 
 from notifications import NotificationSerializer as MessageSerializer
 
-_POLLING_INTERVAL = 3
+_POLLING_INTERVAL = 3 # Seconds.
 
 class RemoteObserver(threading.Thread):
   def __init__(self, group_manager, group_id, remote_local_mediator,
-               polling_interval=_POLLING_INTERVAL):
+               polling_interval = _POLLING_INTERVAL):
     threading.Thread.__init__(self)
     self.group_manager = group_manager
     self.group_id = group_id
@@ -21,7 +21,7 @@ class RemoteObserver(threading.Thread):
     self._stop = False
 
 
-  def polling_interval(self, value=None):
+  def polling_interval(self, value = None):
     if value:
       self.polling_interval = value
     return self.polling_interval

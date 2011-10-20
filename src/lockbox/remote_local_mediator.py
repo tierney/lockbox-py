@@ -7,6 +7,8 @@ import sqlite3
 import time
 import file_change_status
 import watchdog.events
+from watchdog.observers import Observer
+from watchdog.events import LoggingEventHandler
 from file_change_status import FileChangeStatus
 from local_file_shepherd import LocalFileShepherd, SHEPHERD_STATE_READY, \
     SHEPHERD_STATE_ASSIGNED, SHEPHERD_STATE_ENCRYPTING, \
@@ -24,8 +26,8 @@ if not os.path.exists(_DEFAULT_DATABASE_DIRECTORY):
 
 class RemoteLocalMediator(threading.Thread):
   def __init__(self, gpg, blob_store, metadata_store,
-               database_directory=_DEFAULT_DATABASE_DIRECTORY,
-               database_name=_DEFAULT_DATABASE_NAME):
+               database_directory = _DEFAULT_DATABASE_DIRECTORY,
+               database_name = _DEFAULT_DATABASE_NAME):
     threading.Thread.__init__(self)
     self.gpg = gpg
     self.blob_store = blob_store
@@ -39,6 +41,11 @@ class RemoteLocalMediator(threading.Thread):
     self.shepherds = list()
     self.num_shepherds = 2
     self.file_to_shepherd = dict()
+    self.observer = None
+
+    # Directory to watchdog.observers.ObservedWatch object.
+    self.observed_watches = dict()
+    self.directories = list()
 
 
   def _initialize_queue(self):
@@ -56,6 +63,31 @@ class RemoteLocalMediator(threading.Thread):
           ')')
     except sqlite3.OperationalError, e:
       logging.info('SQLite error (%s).' % e)
+
+
+  def add_directory(self, directory):
+    logging.info('Adding directory (%s).' % directory)
+    self.directories.append(directory)
+
+    logging.info('Stopping current observer since we are adding (%s).' %
+                 directory)
+    self.observer.stop()
+    self.observer.join()
+
+    logging.info('Rescheduling all old directories.')
+    self.observer = Observer()
+    for directory_to_schedule in self.directories:
+      logging.info('Scheduling (%s).' % directory_to_schedule)
+      self.observer.schedule(self.event_handler, directory_to_schedule)
+
+    self.observer.start()
+
+
+  def del_directory(self, directory):
+    if directory not in self.directories:
+      return False
+    self.directories.remove(directory)
+    return True
 
 
   def _prepare_shepherds(self):
@@ -127,6 +159,9 @@ class RemoteLocalMediator(threading.Thread):
     self._prepare_shepherds()
 
     while not self._stop.is_set():
+      # TODO(tierney): Add a facility that checks if a shepherd has died. If so,
+      # then we should restart a thread so that we can continue make progress.
+
       _wip_files = self._wip_files()
       with MasterDBConnection(self.database_path) as cursor:
         query = 'SELECT rowid, timestamp, state, event_type, src_path, ' \
@@ -138,12 +173,12 @@ class RemoteLocalMediator(threading.Thread):
           time.sleep(1)
           continue
 
-        rowid      = result[0]
-        timestamp  = result[1]
-        state      = result[2]
+        rowid = result[0]
+        timestamp = result[1]
+        state = result[2]
         event_type = result[3]
-        src_path   = result[4]
-        dest_path  = result[5]
+        src_path = result[4]
+        dest_path = result[5]
         logging.info('selected row: (%(rowid)d, %(timestamp)f, '
                      '%(state)s, %(event_type)s, %(src_path)s, '
                      '%(dest_path)s).' % locals())

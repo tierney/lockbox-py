@@ -39,3 +39,11 @@ build/
 .
 .project
 .pydevproject
+
+# virtualenv.py
+################
+include/
+lib/
+local
+man/
+share/

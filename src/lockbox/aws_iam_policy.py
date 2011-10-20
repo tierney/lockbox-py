@@ -14,6 +14,7 @@ Amazon S3 are global, so they omit the region field: arn:aws:s3:::bucket/*
 """
 
 import boto
+import logging
 from crypto_util import get_random_uuid
 
 class AWSIAMPolicy(object):

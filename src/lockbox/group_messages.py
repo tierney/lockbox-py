@@ -66,7 +66,7 @@ class GroupMessages(object):
     return self.queue.read()
 
 
-  def delete(self, message):
+  def delete_message(self, message):
     assert isinstance(message, boto.sqs.message.Message)
     if not self.queue.delete_message(message):
       logging.error('Unable to delete message (%s).' % (message.get_body()))
@@ -85,13 +85,12 @@ class GroupMessages(object):
       return False
 
 
-  def delete(self):
+  def delete_group_messages(self):
     if self.sqs_connection.lookup(self.queue.name):
       self.sqs_connection.delete_queue(self.queue, force_deletion=True)
     else:
       logging.warning('Could not find the queue to delete (%s).' %
                       (self.queue.name))
-
     self.sns_connection.delete_topic(self.topic_arn)
     return True
 
@@ -122,7 +121,7 @@ class GroupMessages(object):
     return message_ret
 
 
-  def receive_and_delete_messages(queue, number_messages):
+  def receive_and_delete_messages(self, queue, number_messages):
     # TODO(tierney): This is more of a hack cut-and-paste job to save some code
     # that might be useful for debugging later.
     msgs = self.sqs_connection.receive_message(queue, number_messages)

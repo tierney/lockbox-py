@@ -20,7 +20,8 @@ if not os.path.exists(_DEFAULT_DATABASE_DIRECTORY):
 
 
 class GroupManager(object):
-  """Creates groups, manages local state of group membership."""
+  """Creates groups, manages local state of group membership for groups that I 
+  own."""
   def __init__(self, sns_connection, sqs_connection, iam_connection,
                database_directory=_DEFAULT_DATABASE_DIRECTORY,
                database_name=_DEFAULT_DATABASE_NAME):
@@ -37,33 +38,16 @@ class GroupManager(object):
     self.group_to_messages = {}
 
 
-  def _initialize_groups_apparent(self):
-    logging.info('Initialzing groups table.')
-    try:
-      with MasterDBConnection(self.database_path) as cursor:
-        cursor.execute('CREATE TABLE groups_apparent('
-                       'group_id text, '
-                       'name text, '
-                       'sqs text, '
-                       'sns text, '
-                       'PRIMARY KEY (group_id))')
-    except sqlite3.OperationalError, e:
-      if 'table groups_apparent already exists' in e:
-        logging.info(e)
-        return
-      logging.error('SQLite error (%s).' % e)
-
-
   def _initialize_groups_internal(self):
     logging.info('Initializing groups internal.')
     try:
       with MasterDBConnection(self.database_path) as cursor:
         cursor.execute('CREATE TABLE groups_internal('
                        'group_id text, '
-                       'human_name text, '
+                       'user_name text, '
                        'fingerprint text, '
                        'permissions text, '
-                       'PRIMARY KEY (group_id, human_name))')
+                       'PRIMARY KEY (group_id, user_name))')
     except sqlite3.OperationalError, e:
       if 'table groups_internal already exists' in e:
         logging.info(e)
@@ -71,28 +55,28 @@ class GroupManager(object):
       logging.error('SQLite error (%s).' % e)
 
 
-  def create_group(self, group_name):
+  def create_group(self, group_id):
     """Create a group that I will own."""
     gmsgs = group_messages.GroupMessages(
-      self.sns_connection, self.sqs_connection, group_name, group_name)
+      self.sns_connection, self.sqs_connection, group_id, group_id)
     if not gmsgs.setup_topic_queue():
       logging.error('Topic and queue not setup properly')
       return False
 
-    self.group_to_messages[group_name] = gmsgs
+    self.group_to_messages[group_id] = gmsgs
 
-    # Create group on AWS IAM. 'arn:aws:iam:::group/group_name'.
-    self.iam_connection.create_group(group_name)
+    # Create group on AWS IAM. 'arn:aws:iam:::group/group_id'.
+    self.iam_connection.create_group(group_id)
 
     # Create policy for group.
-    self.iam_connection.put_group_policy(group_name, 'members', json_policy)
+    self.iam_connection.put_group_policy(group_id, 'members', json_policy)
 
     # Make this information locally persistent.
     try:
       with MasterDBConnection(self.database_path) as cursor:
         cursor.execute('INSERT INTO groups_apparent(group_id, name, sqs, sns) '
-                       'VALUES (?, ?, ?, ?)', (group_name, group_name,
-                                               group_name, group_name))
+                       'VALUES (?, ?, ?, ?)', (group_id, group_id,
+                                               group_id, group_id))
     except sqlite3.OperationalError, e:
       logging.error(e)
       return False
@@ -100,9 +84,9 @@ class GroupManager(object):
     return True
 
 
-  def join_group(self, user_name, group_name, more_info):
+  def join_group(self, user_name, group_id, more_info):
     # TODO(tierney): Check that group exists.
-    self.iam_connection.add_user_to_group(user_name, group_name)
+    self.iam_connection.add_user_to_group(user_name, group_id)
 
 
   def delete_group(self, name_prefix):
@@ -113,7 +97,7 @@ class GroupManager(object):
     # Fit this into a retry decorator (e.g., util.retry).
     retries = 3
     while retries > 0:
-      if gms.delete():
+      if gms.delete_group_messages():
         break
       sleep_duration = random.randint(2, 5)
       logging.warning('Could not delete group (%s) so sleeping %d sec. '

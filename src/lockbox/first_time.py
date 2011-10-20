@@ -16,9 +16,6 @@ FLAGS = gflags.FLAGS
 gflags.DEFINE_boolean('debug', False, 'Sets debug logging.')
 gflags.DEFINE_string('internal_directory', os.path.expanduser('~/.lockbox'),
                      'Internal data directory path.')
-gflags.DEFINE_string('lock_domain_name', None, 'Lock domain name for a group.')
-gflags.DEFINE_string('data_domain_name', None, 'Data domain name for a group.')
-gflags.DEFINE_string('blob_bucket_name', None, 'Blob bucket name.')
 gflags.DEFINE_string('lockbox_directory', os.path.expanduser('~/lockbox'),
                      'Directory to monitor.')
 gflags.DEFINE_string('namespace', None, 'Namespace (usually, AWS account ID.')
@@ -27,9 +24,6 @@ gflags.DEFINE_string('aws_secret_access_key', None, 'AWS Secret Access Key.')
 
 gflags.MarkFlagAsRequired('aws_access_key_id')
 gflags.MarkFlagAsRequired('aws_secret_access_key')
-gflags.MarkFlagAsRequired('blob_bucket_name')
-gflags.MarkFlagAsRequired('data_domain_name')
-gflags.MarkFlagAsRequired('lock_domain_name')
 gflags.MarkFlagAsRequired('lockbox_directory')
 gflags.MarkFlagAsRequired('namespace')
 
@@ -74,18 +68,23 @@ def first_time():
   group_manager = GroupManager(sns_connection, sqs_connection, iam_connection,
                                database_directory=FLAGS.internal_directory)
 
+  group_id = get_random_uuid()
+
   # Creates S3 Bucket.
-  blob_store = BlobStore(s3_connection, FLAGS.blob_bucket_name)
+  bucket_name = group_id
+  blob_store = BlobStore(s3_connection, bucket_name)
   assert isinstance(blob_store.bucket, boto.s3.bucket.Bucket)
 
   # Creates SimpleDB domains.
-  metadata_store = MetadataStore(sdb_connection, FLAGS.lock_domain_name,
-                                 FLAGS.data_domain_name,
+  data_domain_name = bucket_name + '_data'
+  lock_domain_name = bucket_name + '_locks'
+  metadata_store = MetadataStore(sdb_connection, lock_domain_name,
+                                 data_domain_name,
                                  database_directory=FLAGS.internal_directory)
 
   # Credentials table.
   credentials = Credentials(database_directory=FLAGS.internal_directory)
-  if not credentials.set_credentials(get_random_uuid(), 'us-east-1',
+  if not credentials.set_credentials(group_id, 'us-east-1',
                                      FLAGS.namespace, FLAGS.aws_access_key_id,
                                      FLAGS.aws_secret_access_key, 'OWNER'):
     logging.error('We were unable to set our own owner credentials.')

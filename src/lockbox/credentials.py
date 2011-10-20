@@ -27,13 +27,13 @@ class Credentials(object):
     try:
       with MasterDBConnection(self.database_path) as cursor:
         cursor.execute('CREATE TABLE credentials('
-                       'group_name text NOT NULL, '
+                       'group_id text NOT NULL, '
                        'region text NOT NULL, '
                        'namespace text NOT NULL, '
                        'aws_access_key_id text NOT NULL, '
                        'aws_secret_access_key text NOT NULL, '
                        'permissions text NOT NULL, '
-                       'PRIMARY KEY (group_name))')
+                       'PRIMARY KEY (group_id))')
         return True
     except sqlite3.OperationalError, e:
       if 'table credentials already exists' in e:
@@ -43,26 +43,26 @@ class Credentials(object):
       return False
 
 
-  def set_credentials(self, group_name, region, namespace, aws_access_key_id,
+  def set_credentials(self, group_id, region, namespace, aws_access_key_id,
                       aws_secret_access_key, permissions):
     # Sanity check the input.
     assert permissions in _PERMISSIONS
 
-    logging.info('Setting credentials %(group_name)s, %(region)s, '
+    logging.info('Setting credentials %(group_id)s, %(region)s, '
                  '%(namespace)s, %(aws_access_key_id)s, '
                  '%(aws_secret_access_key)s, %(permissions)s.' % locals())
     try:
       with MasterDBConnection(self.database_path) as cursor:
-        cursor.execute('INSERT OR REPLACE INTO credentials(group_name, '
+        cursor.execute('INSERT OR REPLACE INTO credentials(group_id, '
                        'region, namespace, aws_access_key_id, '
                        'aws_secret_access_key, permissions) VALUES'
                        '(?, ?, ?, ?, ?, ?)',
-                       (group_name, region, namespace, aws_access_key_id,
+                       (group_id, region, namespace, aws_access_key_id,
                         aws_secret_access_key, permissions))
       return True
     except sqlite3.OperationalError, e:
-      logging.error('Unable to store credentials for group (%s): (%s).' % 
-                    (group_name, e))
+      logging.error('Unable to store credentials for group (%s): (%s).' %
+                    (group_id, e))
       return False
 
 
@@ -70,7 +70,7 @@ class Credentials(object):
     logging.info('Retrieving groups of which I am the owner.')
     try:
       with MasterDBConnection(self.database_path) as cursor:
-        results = cursor.execute('SELECT group_name, aws_access_key_id,'
+        results = cursor.execute('SELECT group_id, aws_access_key_id,'
                                  'aws_secret_access_key FROM credentials '
                                  'WHERE permissions LIKE "OWNER"')
         if not results:
@@ -82,28 +82,28 @@ class Credentials(object):
       return None
 
 
-  def get(self, group_name):
+  def get(self, group_id):
     try:
       with MasterDBConnection(self.database_path) as cursor:
-        results = cursor.execute('SELECT group_name, region, namespace, '
+        results = cursor.execute('SELECT group_id, region, namespace, '
                                  'aws_access_key_id, aws_secret_access_key, '
                                  'permissions FROM credentials WHERE '
-                                 'group_name = ?', (group_name,))
+                                 'group_id = ?', (group_id,))
         if results:
           return results.fetchone()
         return None
     except sqlite3.OperationalError, e:
-      logging.error('Unable to find group (%s): (%s).' % (group_name, e))
+      logging.error('Unable to find group (%s): (%s).' % (group_id, e))
       return None
 
 
-  def delete(self, group_name):
+  def delete(self, group_id):
     try:
       with MasterDBConnection(self.database_path) as cursor:
-        cursor.execute('DELETE FROM credentials WHERE group_name = ?',
-                       (group_name,))
+        cursor.execute('DELETE FROM credentials WHERE group_id = ?',
+                       (group_id,))
       return True
     except sqlite3.OperationalError, e:
-      logging.error('Unable to delete credentials for group (%s): (%s).' % 
-                    (group_name, e))
+      logging.error('Unable to delete credentials for group (%s): (%s).' %
+                    (group_id, e))
       return False

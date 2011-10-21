@@ -19,6 +19,7 @@ Usage:
 __author__ = 'tierney@cs.nyu.edu (Matt Tierney)'
 
 import logging
+import os
 from watchdog.events import FileSystemEventHandler, FileMovedEvent, \
     DirMovedEvent, FileModifiedEvent, DirModifiedEvent, FileCreatedEvent, \
     DirCreatedEvent, FileDeletedEvent, DirDeletedEvent, EVENT_TYPE_MOVED, \
@@ -34,11 +35,20 @@ class LockboxEventHandler(FileSystemEventHandler):
   """
   def __init__(self, mediator):
     self.mediator = mediator
+    self.directory_to_specific_file = dict()
+
+
+  def specific_file(self, file_path):
+    assert os.path.exists(file_path)
+    directory_path, file_name = os.path.split(file_path)
+    if directory_path not in self.directory_to_specific_file:
+      self.directory_to_specific_file[directory_path] = list()
+    self.directory_to_specific_file[directory_path].append(file_name)
 
 
   def on_any_event(self, event):
     # log values from here?
-    log_statement = 'type (%s) is_dir (%s) src (%s)' %\
+    log_statement = 'type (%s) is_dir (%s) src (%s)' % \
         (event.event_type, event.is_directory, event.src_path)
     if event.event_type is EVENT_TYPE_MOVED:
       log_statement += ' dest (%s).' % event.dest_path

@@ -15,52 +15,54 @@ shutdown_time = -1
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-RESOURCE_DIR = './res/web/'
+RESOURCE_DIR = '../../../res/web/'
 
 class HTMLTemplate(Template):
-  delimiter = '%'  
+  delimiter = '%'
 
 class ConfigHandler(BaseHTTPServer.BaseHTTPRequestHandler):
-  def write(self, ctype, data, code=200):
+  def write(self, ctype, data, code = 200):
     self.send_response(code)
-    self.send_header('Content-Type', ctype)      
+    self.send_header('Content-Type', ctype)
     self.end_headers()
     self.wfile.write(data)
-  
+
   def try_send_content(self, path):
     path = './' + path[1:]
     if not isfile(join(RESOURCE_DIR, path)):
       return False
-    
+
     mtype = mimetypes.guess_type('file://' + path)
     self.write(mtype[0], open(join(RESOURCE_DIR, path)).read())
-    return True  
+    return True
 
   def tree_json(self, path, q):
     d = expanduser(q['path'][0])
     children = []
-    for f in sorted(os.listdir(d)):            
+    for f in sorted(os.listdir(d)):
       if isdir(join(d, f)) and not f.startswith('.'):
-        children.append(dict(data = f, attr = {"path" : join(d, f)}, state = "closed", children = []))
+        children.append(dict(data = f, attr = {"path" : join(d, f)},
+                             state = "closed", children = []))
 
     if d != '~':
       out = children
     else:
-      out = [dict(data = split(d)[1], attr = {"path" : d}, state = 'open', children = children)]      
-    
-    self.write('text/javascript', json.dumps(out, indent=2))
-    
+      out = [dict(data = split(d)[1], attr = {"path" : d}, state = 'open',
+                  children = children)]
+
+    self.write('text/javascript', json.dumps(out, indent = 2))
+
   def tmpl(self, path, q):
     path = q['template'][0]
     path = './' + path[1:]
     mtype = mimetypes.guess_type('file://' + path)
     ctmpl = HTMLTemplate(open(join(RESOURCE_DIR, path)).read())
-    
+
     content = ctmpl.substitute(dict(USER_EMAIL = '%s@%s' % (getpass.getuser(), socket.gethostname()),
                                     COMPUTER_NAME = '%s' % platform.node()))
-    
+
     self.write(mtype[0], content)
-  
+
   def configure(self, path, q):
     c = ConfigParser.ConfigParser()
     c.add_section('sdb')
@@ -72,7 +74,7 @@ class ConfigHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                  'computerName',
                  'sdbDirectory']:
       c.set('sdb', key, q[key][0])
-    
+
     admin_dir = os.path.join(os.environ["HOME"], ".safedepositbox")
     try:
       os.makedirs(admin_dir)
@@ -80,26 +82,27 @@ class ConfigHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       import errno
       if e[0] != errno.EEXIST:
         raise
-    c.write(open(os.path.join(admin_dir, 'safedepositbox.conf'), 'w'))
-    
-    self.send_content('/success.html')
-    
+
+    # c.write(open(os.path.join(admin_dir, 'safedepositbox.conf'), 'w'))
+
+    self.try_send_content('../../../res/web/success.html')
+
     # let this request out, then shutdown
-    global shutdown_time 
+    global shutdown_time
     shutdown_time = time.time() + 3
-    
+
   def do_GET(self):
     if self.path == '/':
       self.path = '/tmpl?template=/configure.html'
 
-    url = urlparse.urlsplit(self.path, scheme='http')
+    url = urlparse.urlsplit(self.path, scheme = 'http')
     path = url.path
     q = urlparse.parse_qs(url.query)
 
-    
+
     if self.try_send_content(path):
       return
-          
+
     f = getattr(self, path[1:], None)
     if not f:
       self.send_error(404, 'Missing resource "%s"' % path[1:])
@@ -109,9 +112,9 @@ class ConfigHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       except:
         import cStringIO
         f = cStringIO.StringIO()
-        cgitb.Hook(file=f).handle()
-        self.write('text/html', f.getvalue(), code=500)
-            
+        cgitb.Hook(file = f).handle()
+        self.write('text/html', f.getvalue(), code = 500)
+
 
 def configure():
   def start_httpd():
@@ -122,18 +125,18 @@ def configure():
       httpd.handle_request()
       if shutdown_time > 0:
         print 'Shutting down in: %.2f' % (shutdown_time - time.time())
-        if time.time() > shutdown_time: 
+        if time.time() > shutdown_time:
           break
-     
+
   import threading
   httpd_thread = threading.Thread(target = start_httpd)
-  httpd_thread.setDaemon(True)  
+  httpd_thread.setDaemon(True)
   httpd_thread.start()
-  
+
   import webbrowser
   webbrowser.open_new('http://localhost:8080')
-   
+
   httpd_thread.join()
-  
+
 if __name__ == '__main__':
   configure()

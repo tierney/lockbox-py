@@ -77,7 +77,7 @@ class Credential(Base):
   __tablename__ = 'credentials'
 
   id = Column(Integer, primary_key = True)
-  group = relationship(Group)
+  group = Column(Integer, ForeignKey('groups.id'))
   region = Column(String)
   namespace = Column(String)
   aws_access_key_id = Column(String)

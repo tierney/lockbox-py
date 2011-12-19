@@ -1,3 +1,6 @@
+import LoggingHelper
+LoggingHelper.LoggingHelper()
+
 import json
 import string
 import logging
@@ -10,7 +13,6 @@ from sqlalchemy import orm
 from sqlalchemy.orm import scoped_session, sessionmaker
 from model import *
 
-logging.basicConfig(level=logging.INFO)
 
 urls = (
   "/", "Index",

@@ -1,0 +1,209 @@
+<!DOCTTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+		<title>Lockbox Preferences</title>
+		<link type="text/css" href="/static/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
+		<link type="text/css" href="/static/css/matt.css" rel="stylesheet" />
+		<script type="text/javascript" src="/static/js/jquery-1.7.min.js"></script>
+		<script type="text/javascript" src="/static/js/jquery.validate.js"></script>
+		<script type="text/javascript" src="/static/js/jquery.cookie.js"></script>
+		<script type="text/javascript" src="/static/js/jquery.hotkeys.js"></script>
+		<script type="text/javascript" src="/static/js/jquery.jstree.js"></script>
+		<script type="text/javascript" src="/static/js/tree.js"></script>
+		<script type="text/javascript" src="/static/js/json2.js"></script>
+
+		<script type="text/javascript" src="/static/js/jquery-ui-1.8.16.custom.min.js"></script>
+		<script type="text/javascript" src="/static/js/matt.js"></script>
+		<style type="text/css">
+			/*demo page css*/
+
+			body {
+					margin: 0px;
+					font-family: Arial, sans-serif;
+			}
+
+			#dialog_link {
+					padding: .4em 1em .4em 20px;
+					text-decoration: none;
+					position: relative;
+			}
+			#dialog_link span.ui-icon {
+					margin: 0 5px 0 0;
+					position: absolute;
+					left: .2em;
+					top: 50%;
+					margin-top: -8px;
+			}
+
+			/* Tabs on the left. */
+			#tabs-left {
+					position: relative;
+
+      }
+      #tabs-left .ui-tabs-nav {
+          position: fixed;
+					padding: 0;
+					float: left;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 216px;
+      }
+      #tabs-left .ui-tabs-nav li {
+					-webkit-box-shadow: 0px 1px 3px rgba(0, 0, 0, 0);
+					background: transparent -webkit-linear-gradient(transparent, transparent, transparent);
+					background: transparent -moz-linear-gradient(transparent, transparent, transparent);
+					border-color: transparent;
+					clear: left;
+					width: 100%;
+					border-bottom-width: 1px !important;
+					border-right-width: 0 !important;
+					margin: 0 -1px .2em 0;
+					color: #426dc9;
+					cursor: pointer;
+					display: block;
+					font-size: 95%;
+					outline: none;
+					padding: 0;
+					text-align: end;
+					text-shadow: white 0 1px 1px;
+			}
+			#tabs-left .ui-tabs-nav li.ui-tabs-selected {
+					-webkit-box-shadow: 0px 1px 0px #f7f7f7;
+					-moz-box-shadow: 0px 1px 0px #f7f7f7;
+					background: -webkit-linear-gradient(left, #bbcee9, #bbcee9 97%, #aabedc);
+					background: -moz-linear-gradient(left, #bbcee9, #bbcee9 97%, #aabedc);
+					border-bottom: 1px solid #8faad9;
+					border-top: 1px solid #8faad9;
+					color: black;
+					text-shadow: #bbcee9 0 1px 1px;
+					border-right-width: 1px;
+			}
+			#tabs-left .ui-tabs-nav li a {
+					display: block;
+					float: right;
+					width: 100%;
+					text-align: right;
+			}
+			#tabs-left > div {
+					height: 35em;
+			}
+		body {
+			font-family: "Lucida Grande", "Lucida Sans Unicode", verdana, sans-serif;
+		}
+
+		span.label {
+			display: inline-block;
+			background-color: #eeeeee;
+			clear: none;
+			width: 300px;
+		}
+
+		input {
+			clear: none;
+		}
+		</style>
+	</head>
+	<body>
+		<div id="dialog" title="Select a Directory to Sync">
+			<p>
+        <div id="dirtree"></div>
+			</p>
+		</div>
+
+    <div id="edit-collection" title="Which users should be apart of this collection?">
+      <div id="collection_collaborators"></div>
+    </div>
+
+		<div id="collaborators-new" title="Create a new collaborator">
+      <form>
+        <fieldset>
+		      <label for="name">Name</label>
+		      <input type="text" name="name" id="name" class="text ui-widget-content
+                                                          ui-corner-all" />
+		      <label for="email">Email</label>
+		      <input type="text" name="email" id="email" value="" class="text
+                                                                   ui-widget-content
+                                                                   ui-corner-all"
+                 />
+        </fieldset>
+      </form>
+		</div>
+
+		<div id="tabs-left" style="min-height:100%; position:relative;">
+			<ul>
+				<li><h1 id="navbar-title" style="color: #53637D; padding-right:15px; ">Preferences</h1></li>
+				<li><a href="#tabs-collections">Collections</a></li>
+				<li><a href="#tabs-collaborators">Collaborators</a></li>
+				<li><a href="#tabs-storage">Storage</a></li>
+			</ul>
+			<div id="tabs-collections">
+				<h1>Collections</h1>
+				<div class="displaytable">
+					<section>
+						<h3>Your Collections</h3>
+						<div id="collections_current">
+							Placeholder.
+						</div>
+					</section>
+					<section>
+						<h3>Collaborators' Collections</h3>
+						<div id="collections_collaborators">
+							Placeholder
+						</div>
+					</section>
+					<section>
+						<h3>Create a Collection</h3>
+						<div>
+							<p>
+								<a href="#" id="dialog_link" class="ui-state-default ui-corner-all">
+								<span class="ui-icon ui-icon-newwin"></span>Create Collection</a>
+							</p>
+						</div>
+					</section>
+				</div>
+			</div>
+			<div id="tabs-collaborators">
+				<h1>Collaborators</h1>
+				<div class="displaytable">
+          <section>
+						<h3>Current Collaborators</h3>
+            <div id="collaborators_current"></div>
+					</section>
+					<section>
+						<h3>Add a Collaborator</h3>
+						<div>
+								<a href="#" id="collaborators_new_link" class="ui-state-default ui-corner-all">
+								<span class="ui-icon ui-icon-newwin"></span>Create new collaborator</a>
+						</div>
+					</section>
+				</div>
+			</div>
+			<div id="tabs-storage">
+				<h1>Storage</h1>
+				<div class="displaytable">
+					<section>
+						<h3>Current Storage Service</h3>
+						<div>
+							Amazon Web Services
+						</div>
+					</section>
+					<section>
+						<h3>Current Usage Costs</h3>
+						<div>
+							None.
+						</div>
+					</section>
+					<section>
+						<h3>Storage Breakdowns</h3>
+						<div>
+							<div>Directory breakdown.</div>
+							<div>Versioning breakdown.</div>
+						</div>
+					</section>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

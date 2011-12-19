@@ -1,0 +1,81 @@
+/* Display a collection of sections as a table in order to display nicely
+ * in multiple locales.  The left column should expand to accomodate the
+ * widest label without introducing excessive whitespace.  Labels in
+ * languages such as German or Dutch tend to be wider than for English.
+ */
+.displaytable {
+  display: table;
+  width: 100%;
+}
+
+.displaytable > section {
+  display: table-row;
+}
+
+/* right table column containing settable options */
+.displaytable > section > h3 + div,
+.displaytable > section > h3 + table {
+  padding-top: 17px;
+  padding-bottom: 20px;
+}
+
+.displaytable > section > * {
+  display: table-cell;
+  vertical-align: baseline;
+  border-bottom: 1px solid #eeeeee;
+}
+
+section {
+  -webkit-box-orient: horizontal;
+  border-bottom: 1px solid #eeeeee;
+  display: -webkit-box;
+  margin-top: 17px;
+  padding-bottom: 20px;
+}
+h1 {
+  -webkit-padding-end: 24px;
+  -webkit-user-select: none;
+  border-bottom: 1px solid #eeeeee;
+  color: #53637d;
+  font-size: 200%;
+  font-weight: normal;
+  margin: 0;
+  padding-bottom: 4px;
+  padding-top: 13px;
+  text-shadow: white 0 1px 2px;
+}
+h3 {
+  font-size: 105%;
+  font-weight: bold;
+  margin: 20px 0 10px 0;
+}
+
+section > h3 {
+  margin: 0;
+  vertical-align: middle;
+  width: 130px;
+  -webkit-padding-end: 10px;
+}
+
+table#collectionstable {
+	border-collapse: collapse;
+}
+#collectionstable .ui-selecting { background: #FECA40; }
+#collectionstable .ui-selected { background: #F39814; color: green; }
+#collectionstable tr {
+}
+#collectionstable tr:hover {
+	background: #bbcee9;
+}
+#collectionstable th {
+}
+#collectionstable th, #collectionstable td {
+    padding: 3px 5px;
+}
+#collectionstable td:hover {
+    cursor: pointer;
+}
+	#selectable .ui-selecting { background: #FECA40; }
+	#selectable .ui-selected { background: #F39814; color: white; }
+	#selectable { list-style-type: none; margin: 0; padding: 0; width: 60%; }
+	#selectable li { margin: 3px; padding: 0.4em; font-size: 1.4em; height: 18px; }

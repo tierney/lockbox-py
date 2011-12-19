@@ -1,0 +1,10 @@
+$def with (form, message)
+
+<h1>New Group</h1>
+
+$if message:
+  <b>$message</b>
+
+<form action="" method="post">
+	$:form.render()
+</form>

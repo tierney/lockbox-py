@@ -4,14 +4,14 @@ import math
 import os, re, subprocess, sys
 import logging
 import atexit
-
+from calendar import timegm
 from logging import DEBUG, INFO, WARN, ERROR, FATAL
 from time import time
 from collections import defaultdict
 import tempfile as tf
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO,
-                    format="%(levelname).1s %(filename)s:%(lineno)s -- %(message)s ")
+logging.basicConfig(stream = sys.stderr, level = logging.INFO,
+                    format = "%(levelname).1s %(filename)s:%(lineno)s -- %(message)s ")
 
 
 def enum(*sequential, **named):
@@ -22,15 +22,15 @@ def enum(*sequential, **named):
 
 def _lm_to_epoch(self, last_modified_time):
   # TODO(tierney): May not be useful anymore.
-  return timegm(time.strptime(last_modified_time.replace("Z",''),
+  return timegm(time.strptime(last_modified_time.replace("Z", ''),
                               u"%Y-%m-%dT%H:%M:%S.000"))
 
 def tempfile(conf):
-  return tf.TemporaryFile(dir=conf['staging_directory'])
+  return tf.TemporaryFile(dir = conf['staging_directory'])
 
 def execute(cmd):
-    subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                     stderr=subprocess.PIPE).communicate()
+    subprocess.Popen(cmd, shell = True, stdout = subprocess.PIPE,
+                     stderr = subprocess.PIPE).communicate()
 
 def init_dir(directory):
   if not os.path.exists(directory):
@@ -130,7 +130,7 @@ class Flags():
     self.parser = ArgumentParser()
     self.add_default_options()
 
-  def parse(self, argv=None):
+  def parse(self, argv = None):
     if not argv:
       argv = sys.argv
 
@@ -147,13 +147,13 @@ class Flags():
     if self.stats:
       def dump_stats():
         for k, v in STATS.items():
-          print >>sys.stderr, '%40s :: %s' % (k, v)
+          print >> sys.stderr, '%40s :: %s' % (k, v)
       atexit.register(dump_stats)
 
   def add_default_options(self):
-    self.parser.add_argument("--profile", action="store_true", default=False, help="Capture profiling data.")
-    self.parser.add_argument("--log_level", action="store", default="info")
-    self.parser.add_argument("--stats", action="store_true", default=False, help="Dump statistics on pass timing.")
+    self.parser.add_argument("--profile", action = "store_true", default = False, help = "Capture profiling data.")
+    self.parser.add_argument("--log_level", action = "store", default = "info")
+    self.parser.add_argument("--stats", action = "store_true", default = False, help = "Dump statistics on pass timing.")
 
   def add_argument(self, *args, **kw):
     self.parser.add_argument(*args, **kw)
@@ -220,7 +220,7 @@ def clean_string(v):
 import time
 
 # Retry decorator with exponential backoff
-def retry(tries, delay=2, backoff=2):
+def retry(tries, delay = 2, backoff = 2):
   """Retries a function or method until it returns True.
 
   delay sets the initial delay, and backoff sets how much the delay should

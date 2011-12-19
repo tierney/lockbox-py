@@ -1,0 +1,82 @@
+<html>
+<head>
+<title>Safe Deposit Box Configuration</title>
+<script type="text/javascript" src="/static/js/jquery-1.7.min.js"></script>
+<script type="text/javascript" src="/static/js/jquery.validate.js"></script>
+<script type="text/javascript" src="/static/js/jquery.cookie.js"></script>
+<script type="text/javascript" src="/static/js/jquery.hotkeys.js"></script>
+<script type="text/javascript" src="/static/js/jquery.jstree.js"></script>
+<script type="text/javascript" src="/static/js/tree.js"></script>
+<style>
+body {
+	font-family: "Lucida Grande", "Lucida Sans Unicode", verdana, sans-serif;
+}
+
+span.label {
+	display: inline-block;
+	background-color: #eeeeee;
+	clear: none;
+	width: 300px;
+}
+
+input {
+	clear: none;
+}
+</style>
+</head>
+<body>
+  <h3>Almost there -- setup your SafeDepositBox!</h3>
+  <form id="configurationForm" action="/configure" method="get">
+    <table>
+      <tr>
+        <td>Name</td>
+        <td><input class="required" type="text" name="name" />
+        </td>
+      </tr>
+      <tr>
+        <td>Email</td>
+        <td><input class="required email" type="text"
+          name="userEmailAddress" value="%{USER_EMAIL}"></input>
+        </td>
+      </tr>
+      <tr>
+        <td>Computer Name</td>
+        <td><input class="required" type="text" name="computerName"
+          value="%{COMPUTER_NAME}"></input>
+        </td>
+      </tr>
+      <tr>
+        <td>Amazon Access Key</td>
+        <td><input class="required" type="text" name="awsAccessKey" />
+        </td>
+      </tr>
+      <tr>
+        <td>Amazon Secret Key</td>
+        <td><input class="required" type="text" name="awsSecretKey" />
+        </td>
+      </tr>
+      <tr>
+        <td>Password</td>
+        <td><input type="password" id="userPassword" name="userPassword" />
+        </td>
+      </tr>
+      <tr>
+        <td>Verify Password</td>
+        <td><input type="password" id="verifyPassword" name="verifyPassword" />
+        </td>
+      </tr>
+      <tr>
+        <td>Sync Directory</td>
+        <td><input class="required" id="sdbDirectory" name="sdbDirectory"
+        value="/home/tierney" type="text"></input>
+        </td>
+      <tr>
+        <td colspan="2">
+          <div id="dirtree"></div>
+        </td>
+      </tr>
+    </table>
+    <input type="submit" name="submit"></input>
+  </form>
+</body>
+</html>

@@ -1,0 +1,14 @@
+$def with (page, menuitems)
+
+<h1 id="navbar-content-title">Lockbox Settings</h1>
+<ul id="navbar">
+$for item in menuitems:
+  $if item[0] == page:
+    <li id=$item[0] class="navbar-item navbar-item-selected">
+	    <a style="color: #000000" href="/$item[0]">$item[1]</a>
+    </li>
+  $else:
+    <li id=$item[0] class="navbar-item">
+      <a href="/$item[0]">$item[1]</a>
+		</li>
+</ul>

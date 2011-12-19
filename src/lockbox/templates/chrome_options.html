@@ -1,0 +1,2121 @@
+$def with (foo)
+
+<div class="header">
+</div>
+<div id="overlay" class="overlay transparent" hidden>
+  <div id="alertOverlay" class="page" hidden>
+  <h1 id="alertOverlayTitle"></h1>
+  <div class="content-area">
+    <div id="alertOverlayMessage"></div>
+  </div>
+  <div class="action-area">
+    <div class="button-strip">
+      <button id="alertOverlayCancel" type="reset"></button>
+      <button id="alertOverlayOk" type="submit"></button>
+    </div>
+  </div>
+</div>
+
+  <div id="autofill-edit-address-overlay" class="page" hidden>
+  <h1 id="autofill-address-title"></h1>
+  <div class="content-area">
+    <div class="input">
+      <label>
+        <div><span i18n-content="fullNameLabel"></span></div>
+        <list id="full-name-list"
+            i18n-values="placeholder:addNewNamePlaceholder"></list>
+      </label>
+    </div>
+    <div class="input">
+      <label>
+        <div><span i18n-content="companyNameLabel"></span></div>
+        <input id="company-name" type="text" class="autofill-form">
+      </label>
+    </div>
+    <div class="input">
+      <label>
+        <div><span i18n-content="addrLine1Label"></span></div>
+        <input id="addr-line-1" type="text" class="autofill-form">
+      </label>
+    </div>
+    <div class="input">
+      <label>
+        <div><span i18n-content="addrLine2Label"></span></div>
+        <input id="addr-line-2" type="text" class="autofill-form">
+      </label>
+    </div>
+    <div class="table">
+      <div class="row">
+        <div class="input cell">
+          <label for="city">
+            <span i18n-content="cityLabel"></span>
+          </label>
+        </div>
+        <div class="input cell">
+          <label id="state-label" for="state"></label>
+        </div>
+        <div class="input cell">
+          <label id="postal-code-label" for="postal-code"></label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input cell">
+          <input id="city" type="text" class="autofill-form">
+        </div>
+        <div class="input cell">
+          <input id="state" type="text" class="autofill-form">
+        </div>
+        <div class="input cell">
+          <input id="postal-code" type="text" class="autofill-form">
+        </div>
+      </div>
+    </div>
+    <div class="input">
+      <label>
+        <div>
+          <span i18n-content="countryLabel"></span>
+        </div>
+        <select id="country"></select>
+      </label>
+    </div>
+    <div class="table">
+      <div class="row">
+        <div class="input cell">
+          <label for="phone-list">
+            <span i18n-content="phoneLabel"></span>
+          </label>
+        </div>
+        <div class="input cell">
+          <label for="fax-list">
+            <span i18n-content="faxLabel"></span>
+          </label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input cell">
+          <list id="phone-list"
+              i18n-values="placeholder:addNewPhonePlaceholder"></list>
+        </div>
+        <div class="input cell">
+          <list id="fax-list"
+              i18n-values="placeholder:addNewFaxPlaceholder"></list>
+        </div>
+      </div>
+    </div>
+    <div class="table">
+      <div class="row">
+        <div class="input cell">
+          <label for="email-list">
+            <span i18n-content="emailLabel"></span>
+          </label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input cell">
+          <list id="email-list"
+              i18n-values="placeholder:addNewEmailPlaceholder"></list>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="action-area button-strip">
+    <button id="autofill-edit-address-cancel-button" type="reset"
+        i18n-content="cancel"></button>
+    <button id="autofill-edit-address-apply-button" type="submit"
+        i18n-content="ok" disabled></button>
+  </div>
+</div>
+
+  <div id="autofill-edit-credit-card-overlay" class="page" hidden>
+  <h1 id="autofill-credit-card-title"></h1>
+  <div class="content-area">
+    <div class="input">
+      <label>
+        <span i18n-content="nameOnCardLabel"></span><br>
+        <input id="name-on-card" type="text">
+      </label>
+    </div>
+    <div class="input">
+      <label>
+        <span i18n-content="creditCardNumberLabel"></span><br>
+        <input id="credit-card-number" type="text">
+      </label>
+    </div>
+    <div class="input">
+      <label>
+        <span i18n-content="creditCardExpirationDateLabel"></span><br>
+        <select id="expiration-month"></select>
+        <select id="expiration-year"></select>
+      </label>
+    </div>
+  </div>
+  <div class="action-area button-strip">
+    <button id="autofill-edit-credit-card-cancel-button" type="reset"
+        i18n-content="cancel"></button>
+    <button id="autofill-edit-credit-card-apply-button" type="submit"
+        i18n-content="ok" disabled></button>
+  </div>
+</div>
+
+  <div id="clearBrowserDataOverlay" class="page" hidden>
+  <h1 i18n-content="clearBrowserDataOverlay"></h1>
+  <div id="cbdContentArea" class="content-area">
+    <span i18n-content="clearBrowserDataLabel"></span>
+    <select id="clearBrowserDataTimePeriod"
+        i18n-options="clearBrowserDataTimeList"
+        pref="browser.clear_data.time_period"
+        dataType="number">
+    </select>
+    <div id="clear-data-checkboxes">
+      <div class="checkbox">
+        <label>
+          <input id="deleteBrowsingHistoryCheckbox"
+              pref="browser.clear_data.browsing_history" type="checkbox">
+          <span i18n-content="deleteBrowsingHistoryCheckbox"></span>
+        </label>
+      </div>
+      <div class="checkbox">
+        <label>
+          <input id="deleteDownloadHistoryCheckbox"
+              pref="browser.clear_data.download_history" type="checkbox">
+          <span i18n-content="deleteDownloadHistoryCheckbox"></span>
+        </label>
+      </div>
+      <div class="checkbox">
+        <label>
+          <input id="deleteCacheCheckbox"
+              pref="browser.clear_data.cache" type="checkbox">
+          <span i18n-content="deleteCacheCheckbox"></span>
+        </label>
+      </div>
+      <div class="checkbox">
+        <label>
+          <input id="deleteCookiesCheckbox"
+              pref="browser.clear_data.cookies" type="checkbox">
+          <span i18n-content="deleteCookiesFlashCheckbox"
+              class="clear-plugin-lso-data-enabled"></span>
+          <span i18n-content="deleteCookiesCheckbox"
+              class="clear-plugin-lso-data-disabled"></span>
+        </label>
+      </div>
+      <div class="checkbox">
+        <label>
+          <input id="deletePasswordsCheckbox"
+              pref="browser.clear_data.passwords" type="checkbox">
+          <span i18n-content="deletePasswordsCheckbox"></span>
+        </label>
+      </div>
+      <div class="checkbox">
+        <label>
+          <input id="deleteFormDataCheckbox"
+              pref="browser.clear_data.form_data" type="checkbox">
+          <span i18n-content="deleteFormDataCheckbox"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="action-area">
+    <div class="flash-plugin-area">
+      <a target="_blank" i18n-content="flash_storage_settings"
+          i18n-values="href:flash_storage_url"></a>
+    </div>
+    <div class="action-area-right">
+      <div id="cbdThrobber" class="throbber"></div>
+      <div class="button-strip">
+        <button id="clearBrowserDataDismiss" i18n-content="cancel"></button>
+        <button id="clearBrowserDataCommit"
+            i18n-content="clearBrowserDataCommit">
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="import-data-overlay" class="page" hidden>
+  <h1 i18n-content="importDataOverlay"></h1>
+  <div id="import-data-configure">
+    <div class="content-area">
+      <div id="import-from-div">
+        <span i18n-content="importFromLabel"></span>
+        <select id="import-browsers">
+          <option i18n-content="importLoading"></option>
+        </select>
+      </div>
+      <div id="import-checkboxes">
+        <div i18n-content="importDescription"></div>
+        <div>
+          <input id="import-history" type="checkbox" pref="import_history">
+          <label for="import-history" i18n-content="importHistory"></label>
+        </div>
+        <div>
+          <input id="import-favorites" type="checkbox" pref="import_bookmarks">
+          <label for="import-favorites" i18n-content="importFavorites"></label>
+        </div>
+        <div>
+          <input id="import-passwords" type="checkbox"
+              pref="import_saved_passwords">
+          <label for="import-passwords" i18n-content="importPasswords"></label>
+        </div>
+        <div>
+          <input id="import-search" type="checkbox" pref="import_search_engine">
+          <label for="import-search" i18n-content="importSearch"></label>
+        </div>
+      </div>
+    </div>
+    <div class="action-area">
+      <div class="action-area-right">
+        <div id="import-throbber" class="throbber"></div>
+        <div class="button-strip">
+          <button id="import-data-cancel" i18n-content="cancel"></button>
+          <button id="import-data-commit" i18n-content="importCommit"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="import-data-success" hidden>
+    <div class="content-area">
+      <div id="import-success-header">
+        <strong i18n-content="importSucceeded"></strong>
+      </div>
+      <div id="import-success-image">
+        <img src="data:image/png;base64,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" />
+      </div>
+      <div id="import-find-your-bookmarks">
+        <span i18n-content="findYourImportedBookmarks"></span>
+        <div class="checkbox">
+          <label>
+            <input id="import-data-show-bookmarks-bar"
+                pref="bookmark_bar.show_on_all_tabs"
+                metric="Options_ShowBookmarksBar" type="checkbox">
+            <span i18n-content="toolbarShowBookmarksBar"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="action-area">
+      <div class="action-area-right">
+        <div class="button-strip">
+          <button id="import-data-confirm" i18n-content="ok"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="instantConfirmOverlay" class="page" hidden>
+  <h1 i18n-content="instantConfirmTitle"></h1>
+  <!-- The text has line breaks, so we must use a pre. -->
+  <div class="content-area">
+    <pre id="instantConfirmText" i18n-content="instantConfirmMessage"></pre>
+    <a id="instantConfirmLearnMore" target="_blank" i18n-content="learnMore"
+        i18n-values="href:instantLearnMoreLink"></a>
+  </div>
+  <div class="action-area">
+    <div class="button-strip">
+      <button id="instantConfirmCancel" i18n-content="cancel"
+          class="cancel-button"></button>
+      <button id="instantConfirmOk" i18n-content="ok"></button>
+    </div>
+  </div>
+</div>
+
+  <div id="add-language-overlay-page" class="page" hidden>
+
+<h1 i18n-content="add_language_title"></h1>
+  <div class="content-area">
+    <label>
+      <span i18n-content="add_language_select_label"></span>
+      <select id="add-language-overlay-language-list"></select>
+    </label>
+  </div>
+  <div class="action-area">
+    <div class="button-strip">
+      <button id="add-language-overlay-cancel-button" i18n-content="cancel">
+      </button>
+      <button id="add-language-overlay-ok-button" i18n-content="ok"></button>
+    </div>
+  </div>
+</div>
+
+  <div id="manage-profile-overlay" class="page" hidden>
+  <!-- Dialog for managing profiles. -->
+  <div id="manage-profile-overlay-manage" hidden>
+    <h1 i18n-content="manageProfilesTitle"></h1>
+    <div id="manage-profile-content" class="content-area">
+      <div id="manage-profile-name-div">
+        <span id="manage-profile-name-label"
+            i18n-content="manageProfilesNameLabel"></span>
+        <input id="manage-profile-name" type="text">
+      </div>
+      <div id="manage-profile-duplicate-name-error"
+          class="hiding" i18n-content="manageProfilesDuplicateNameError">
+      </div>
+      <div id="manage-profile-icon-label"
+          i18n-content="manageProfilesIconLabel"></div>
+      <grid id="manage-profile-icon-grid"></grid>
+    </div>
+    <div class="action-area">
+      <div class="button-strip">
+        <button id="manage-profile-cancel" i18n-content="cancel"></button>
+        <button id="manage-profile-ok" i18n-content="ok"></button>
+      </div>
+    </div>
+  </div>
+  <!-- Dialog for deleting profiles. -->
+  <div id="manage-profile-overlay-delete" hidden>
+    <h1 i18n-content="deleteProfileTitle"></h1>
+    <div class="content-area">
+      <div id="delete-profile-message"></div>
+    </div>
+    <div class="action-area">
+      <div class="button-strip">
+        <button id="delete-profile-cancel" i18n-content="cancel"></button>
+        <button id="delete-profile-ok"
+            i18n-content="deleteProfileOK"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="packExtensionOverlay" class="page" hidden>
+  <h1 i18n-content="packExtensionOverlay"></h1>
+  <div id="cbdContentArea" class="content-area">
+    <div class="packExtensionHeading" i18n-content="packExtensionHeading"></div>
+    <div class="packExtensionTextBoxes">
+      <label i18n-content="packExtensionRootDir"></label>
+      <input class="packExtensionTextArea" id="extensionRootDir" type="text" />
+      <button id="browseExtensionDir"
+              i18n-content="packExtensionBrowseButton"></button>
+    </div>
+    <div class="packExtensionTextBoxes">
+      <label i18n-content="packExtensionPrivateKey"></label>
+      <input class="packExtensionTextArea"
+             id="extensionPrivateKey" type="text" />
+      <button id="browsePrivateKey"
+              i18n-content="packExtensionBrowseButton"></button>
+    </div>
+  </div>
+  <div class="action-area">
+    <div class="action-area-right">
+      <div class="button-strip">
+        <button id="packExtensionDismiss" i18n-content="cancel"></button>
+        <button id="packExtensionCommit"
+                i18n-content="packExtensionCommit"></button>
+      </div>
+    </div>
+  </div>
+</div>
+  <div id="sync-setup-overlay" class="page" hidden>
+  <div id="sync-setup-login" hidden>
+    <h1 i18n-content="syncSetupOverlayTitle"></h1>
+    <div class="content-area">
+      <div>
+        <!-- top-blurb-error's reset state is handled differently from most
+             elements. Instead of being [hidden] it is visibility:hidden so it
+             still takes up space. But it is also [hidden] when we display the
+             captcha, so when it is reset, it needs to be shown. -->
+        <div id="top-blurb-error"
+            class="reset-shown reset-visibility-hidden">
+          <span id="error-signing-in" i18n-content="errorSigningIn"></span>
+          <span id="error-custom" hidden></span>
+        </div>
+        <form id="gaia-login-form">
+          <div id="gaia-login-box">
+            <table id="content-table" cellspacing="0"
+                cellpadding="5" width="75%" border="0" align="center">
+              <tr>
+                <td valign="top" style="text-align:center" nowrap="nowrap"
+                    bgcolor="#e8eefa">
+                  <div>
+                    <table id="gaia-table" align="center" border="0"
+                        cellpadding="1" cellspacing="0">
+                      <tr>
+                        <td colspan="2" align="center">
+                          <table>
+                            <tr>
+                              <td>
+                                <span id="gaia-account-text-prefix"
+                                    i18n-content="signinPrefix"></span>
+                              </td>
+                              <td id="gaia-logo" valign="top">
+                                <img src="/static/images/google-transparent.png" alt="Google">
+                              </td>
+                              <td valign="middle">
+                                <span id="gaia-account-text"
+                                    i18n-content="signinSuffix"></span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" align="center"> </td>
+                      </tr>
+                      <tr id="email-row" class="reset-shown">
+                        <td nowrap="nowrap">
+                          <div class="end-aligned">
+                            <span i18n-content="emailLabel">
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <input id="gaia-email" type="text" name="email"
+                              size="18" value=""
+                              class="reset-enabled reset-shown reset-value"
+                              autocomplete="off">
+                          <span id="email-readonly" class="reset-hidden"
+                              hidden></span>
+                        </td>
+                      </tr>
+                      <tr id="access-code-label-row"
+                          class="access-code-row reset-hidden" hidden>
+                        <td colspan="2">
+                          <span i18n-content="enterAccessCode"></span>
+                        </td>
+                      </tr>
+                      <tr id="access-code-help-row"
+                          class="access-code-row reset-hidden" hidden>
+                        <td colspan="2">
+                          <a i18n-values="href:getAccessCodeURL"
+                              i18n-content="getAccessCodeHelp" target="_blank">
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td>
+                          <div id="errormsg-0-email"
+                              class="errormsg reset-hidden"
+                              i18n-content="cannotBeBlank"
+                              hidden>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr id="password-row" class="reset-shown">
+                        <td class="end-aligned">
+                          <span i18n-content="passwordLabel"></span>
+                        </td>
+                        <td>
+                          <input id="gaia-passwd" type="password" name="passwd"
+                              size="18" class="reset-enabled reset-value"
+                              autocomplete="off">
+                        </td>
+                      </tr>
+                      <tr id="access-code-input-row"
+                          class="access-code-row reset-hidden" hidden>
+                        <td colspan="2">
+                          <input id="access-code" type="password"
+                              name="accessCode" size="18"
+                              class="reset-enabled reset-value">
+                        </td>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td>
+                          <div class="error-msg-spacer">
+                            <div id="errormsg-0-password"
+                                class="errormsg reset-hidden"
+                                i18n-content="cannotBeBlank"
+                                hidden>
+                            </div>
+                            <div id="errormsg-1-password"
+                                class="errormsg reset-hidden"
+                                hidden>
+                              <span i18n-content="invalidCredentials"></span>
+                              <!-- Brackets are intentional -->
+                              [<a i18n-values="href:invalidPasswordHelpURL"
+                                   target="_blank">?</a>]
+                            </div>
+                            <div id="errormsg-0-access-code"
+                                class="errormsg reset-hidden"
+                                i18n-content="invalidAccessCode"
+                                hidden>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2">
+                          <div id="captcha-div" class="reset-hidden" hidden>
+                            <div id="captcha-instructions"
+                                i18n-content="captchaInstructions"
+                                class="bottom-padded-cell">
+                            </div>
+                            <div class="bottom-padded-cell">
+                              <div id="captcha-wrapper">
+                                <div id="captcha-image"></div>
+                              </div>
+                            </div>
+                            <div>
+                              <input id="captcha-value" type="text"
+                                  name="captchaValue" size="18" value=""
+                                  class="reset-disabled">
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" align="center">
+                          <div id="errormsg-0-connection"
+                              class="errormsg reset-hidden"
+                              i18n-content="couldNotConnect"
+                              hidden>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr id="action-area">
+                        <td colspan="2">
+                          <table align="center" cellpadding="0"
+                              cellspacing="0">
+                            <tr>
+                              <td>
+                                <div id="logging-in-throbber" class="throbber">
+                                </div>
+                              </td>
+                              <td class="no-vertical-padding">
+                                <input id="sign-in" type="submit"
+                                    i18n-content="signin">
+                                </button>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr id="ga-fprow">
+                        <td colspan="2" height="16.0"
+                            align="center" valign="bottom">
+                          <a i18n-values="href:cannotAccessAccountURL"
+                              target="_blank"
+                              i18n-content="cannotAccessAccount">
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td id="create-account-cell" colspan="2" height="16.0"
+                            align="center" valign="bottom">
+                          <div id="create-account-div">
+                            <a i18n-values="href:createNewAccountURL"
+                                i18n-content="createAccount" target="_blank">
+                            </a>
+                          </div>
+                       </td>
+                      </tr>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </form>
+      </div>
+      <div>
+        <div id="cancel-space-no-captcha" colspan="2">
+        </div>
+      </div>
+    </div>
+    <div class="action-area">
+      <div class="button-strip">
+        <button id="sync-setup-cancel" type="reset" i18n-content="cancel">
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="sync-setup-configure" hidden>
+    <div id="confirm-sync-preferences">
+      <h1 i18n-content="confirmSyncPreferences"></h1>
+      <div id="sync-instructions-container" class="content-area">
+        <span i18n-content="chooseDataTypesInstructions"></span>
+        <a i18n-values="href:encryptionHelpURL" target="_blank"
+            i18n-content="learnMore"></a>
+      </div>
+      <div>
+        <div class="action-area">
+          <div class="action-area-link-container">
+            <a id="customize-link" href="#" i18n-content="customizeLinkLabel"
+                class="reset-opaque reset-shown">
+            </a>
+          </div>
+          <div id="confirm-everything-throbber" class="throbber"></div>
+          <input id="confirm-everything-ok" type="button"
+              i18n-values="value:syncEverything">
+          <input id="confirm-everything-cancel" type="button"
+              i18n-values="value:cancel">
+        </div>
+      </div>
+    </div>
+    <div id="customize-sync-preferences" hidden>
+      <h1 i18n-content="syncSetupConfigureTitle"></h1>
+      <form id="choose-data-types-form">
+        <div id="sync-configure-content" class="content-area">
+          <div id="sync-select-container">
+            <select id="sync-select-datatypes">
+              <option i18n-content="keepEverythingSynced" selected></option>
+              <option i18n-content="chooseDataTypes"></option>
+            </select>
+            <div id="choose-data-types-body">
+              <div>
+                <div id="apps-item" class="sync-item-show">
+                  <input id="apps-checkbox" type="checkbox"
+                      name="dataTypeCheckbox">
+                  <label for="apps-checkbox" i18n-content="apps"
+                      i18n-values="title:apps" name="dataTypeLabel"></label>
+                </div>
+                <div id="autofill-item" class="sync-item-show">
+                  <input id="autofill-checkbox" type="checkbox"
+                      name="dataTypeCheckbox">
+                  <label for="autofill-checkbox" i18n-content="autofill"
+                      i18n-values="title:autofill" name="dataTypeLabel"></label>
+                </div>
+                <div class="sync-item-show">
+                  <input id="bookmarks-checkbox" type="checkbox"
+                      name="dataTypeCheckbox">
+                  <label for="bookmarks-checkbox" i18n-content="bookmarks"
+                      i18n-values="title:bookmarks" name="dataTypeLabel">
+                  </label>
+                </div>
+                <div id="extensions-item" class="sync-item-show">
+                  <input id="extensions-checkbox" type="checkbox"
+                      name="dataTypeCheckbox">
+                  <label for="extensions-checkbox" i18n-content="extensions"
+                      i18n-values="title:extensions" name="dataTypeLabel">
+                  </label>
+                </div>
+                <div id="omnibox-item" class="sync-item-show">
+                  <input id="typed-urls-checkbox" type="checkbox"
+                      name="dataTypeCheckbox">
+                  <label for="typed-urls-checkbox" i18n-content="typedURLs"
+                      i18n-values="title:typedURLs" name="dataTypeLabel">
+                  </label>
+                </div>
+                <div id="passwords-item" class="sync-item-show">
+                  <input id="passwords-checkbox" type="checkbox"
+                      name="dataTypeCheckbox">
+                  <label for="passwords-checkbox" i18n-content="passwords"
+                      i18n-values="title:passwords" name="dataTypeLabel">
+                  </label>
+                </div>
+                <div class="sync-item-show">
+                  <input id="preferences-checkbox" type="checkbox"
+                      name="dataTypeCheckbox">
+                  <label for="preferences-checkbox" i18n-content="preferences"
+                      i18n-values="title:preferences" name="dataTypeLabel">
+                  </label>
+                </div>
+                <div class="sync-item-show">
+                  <input id="themes-checkbox" type="checkbox"
+                      name="dataTypeCheckbox">
+                  <label for="themes-checkbox" i18n-content="themes"
+                      i18n-values="title:themes" name="dataTypeLabel"></label>
+                </div>
+                <div id="sessions-item" class="sync-item-show">
+                  <input id="sessions-checkbox" type="checkbox"
+                      name="dataTypeCheckbox">
+                  <label for="sessions-checkbox" i18n-content="foreignSessions"
+                      il8n-values="title:sessions" name="dataTypeLabel"></label>
+                </div>
+                <div id="search-engines-item" class="sync-item-show">
+                  <input id="search-engines-checkbox" type="checkbox"
+                      name="dataTypeCheckbox">
+                  <label for="search-engines-checkbox"
+                      i18n-content="searchEngines"
+                      il8n-values="title:searchEngines"
+                      name="dataTypeLabel"></label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="sync-configuration-errors">
+            <div id="error-text" i18n-content="syncZeroDataTypesError"
+                class="sync-configuration-error reset-hidden" hidden></div>
+            <div id="aborted-text" i18n-content="abortedError"
+                class="sync-configuration-error reset-hidden" hidden></div>
+          </div>
+          <div id="customize-sync-encryption">
+            <hr>
+            <h4 i18n-content="encryptedDataTypesTitle"></h4>
+            <div class="sync-customize-section-container">
+              <div id="passphrase-encryption-message"
+                  i18n-content="passphraseEncryptionMessage"></div>
+              <div>
+                <input id="encrypt-sensitive-option" name="encrypt" type="radio"
+                    value="sensitive">
+                <label for="encrypt-sensitive-option"
+                    i18n-content="encryptSensitiveOption"></label>
+              </div>
+              <div>
+                <input id="encrypt-all-option" name="encrypt" type="radio"
+                    value="all">
+                <label for="encrypt-all-option" i18n-content="encryptAllOption">
+                </label>
+              </div>
+            </div>
+          </div>
+          <hr>
+          <h4 i18n-content="passphraseSectionTitle"></h4>
+          <div id="sync-custom-passphrase-container"
+              class="sync-customize-section-container">
+            <div>
+              <input id="google-option" name="option" type="radio"
+                  value="google">
+              <label for="google-option" i18n-content="googleOption"></label>
+            </div>
+            <div>
+              <input id="explicit-option" name="option" type="radio"
+                  value="explicit">
+              <label for="explicit-option" i18n-content="explicitOption">
+              </label>
+              <a i18n-values="href:encryptionHelpURL" target="_blank"
+                  i18n-content="learnMore"></a>
+            </div>
+            <div id="sync-custom-passphrase"
+                class="reset-hidden" hidden>
+              <div id="sync-passphrase-message">
+                <span i18n-content="sectionExplicitMessagePrefix"></span>
+                <a href="http://google.com/dashboard" target="_blank"
+                    i18n-content="sectionExplicitMessagePostfix"></a>
+                <span>.</span>
+              </div>
+              <div class="sync-custom-passphrase-input">
+                <input id="custom-passphrase" type="password"
+                    class="reset-value"
+                    i18n-values="placeholder:passphraseLabel">
+              </div>
+              <div class="sync-custom-passphrase-input">
+                <input id="confirm-passphrase" type="password"
+                    class="reset-value"
+                    i18n-values="placeholder:confirmLabel">
+              </div>
+              <div id="empty-error" class="error"
+                  i18n-content="emptyErrorMessage" hidden></div>
+              <div id="mismatch-error" class="error"
+                  i18n-content="mismatchErrorMessage" hidden></div>
+            </div>
+          </div>
+          <div id="sync-existing-passphrase-container" hidden>
+            <div id="enter-passphrase">
+              <div id="normal-body" i18n-content="enterPassphraseBody" hidden>
+              </div>
+              <div id="passphrase-rejected-body"
+                  i18n-content="enterOtherPassphraseBody" hidden>
+              </div>
+              <div id="google-passphrase-needed-body"
+                  i18n-content="enterGooglePassphraseBody" hidden>
+              </div>
+            </div>
+            <div id="passphrase-input">
+              <input id="passphrase" name="passphrase" type="password"
+                  class="reset-value"
+                  i18n-values="placeholder:passphraseLabel">
+              <div id="incorrect-passphrase" class="error"
+                   i18n-content="incorrectPassphrase" hidden>
+              </div>
+            </div>
+            <div id="sync-passphrase-warning"
+                 i18n-values=".innerHTML:passphraseRecover" hidden>
+            </div>
+          </div>
+        </div>
+        <div class="action-area">
+          <div class="action-area-link-container">
+            <a id="use-default-link" href="#" i18n-content="useDefaultSettings"
+                class="reset-opaque reset-shown">
+            </a>
+          </div>
+          <div id="choose-datatypes-throbber" class="throbber"></div>
+          <input id="choose-datatypes-ok" type="submit" i18n-values="value:ok">
+          <input id="choose-datatypes-cancel" type="button"
+              i18n-values="value:cancel">
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="sync-setup-stop-syncing" hidden>
+    <h1 i18n-content="stopSyncingTitle"></h1>
+    <div class="content-area">
+      <span i18n-content="stopSyncingExplanation"></span>
+    </div>
+    <div class="action-area">
+      <input id="stop-syncing-ok" type="button"
+        i18n-values="value:stopSyncingConfirm">
+      <input id="stop-syncing-cancel" type="button"
+        i18n-values="value:cancel">
+    </div>
+  </div>
+</div>
+
+
+  <div id="certificateRestoreOverlay" class="page" hidden>
+  <h1 i18n-content="certificateRestorePasswordDescription"></h1>
+  <div class="content-area">
+    <label id="certificateRestorePasswordLabel">
+      <span i18n-content="certificatePasswordLabel"></span>
+      <input id="certificateRestorePassword" type="password">
+    </label>
+  </div>
+  <div class="action-area">
+    <div class="button-strip">
+      <button id="certificateRestoreCancelButton" type="reset"
+          i18n-content="cancel"></button>
+      <button id="certificateRestoreOkButton" type="submit" i18n-content="ok">
+      </button>
+    </div>
+  </div>
+</div>
+
+    <div id="certificateBackupOverlay" class="page" hidden>
+  <h1 i18n-content="certificateExportPasswordDescription"></h1>
+  <div class="content-area">
+    <table>
+      <tr>
+        <td>
+          <label for="certificateBackupPassword">
+            <span i18n-content="certificatePasswordLabel"></span>
+          </label>
+        </td>
+        <td>
+          <input id="certificateBackupPassword" type="password">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="certificateBackupPassword2">
+            <span i18n-content="certificateConfirmPasswordLabel"></span>
+          </label>
+        </td>
+        <td>
+          <input id="certificateBackupPassword2" type="password">
+        </td>
+      </tr>
+    </table>
+    <p>
+      <span i18n-content="certificateExportPasswordHelp"></span>
+    </p>
+  </div>
+  <div class="action-area">
+    <div class="button-strip">
+      <button id="certificateBackupCancelButton" type="reset"
+          i18n-content="cancel"></button>
+      <button id="certificateBackupOkButton" type="submit" i18n-content="ok"
+          disabled></button>
+    </div>
+  </div>
+</div>
+
+    <div id="certificateEditCaTrustOverlay" class="page" hidden>
+  <div class="content-area">
+    <p>
+      <span id="certificateEditCaTrustDescription"></span>
+    </p>
+    <p>
+      <span i18n-content="certificateEditTrustLabel"></span>
+      <br>
+      <label id="certificateCaTrustSSLLabel">
+        <input id="certificateCaTrustSSLCheckbox" type="checkbox">
+        <span i18n-content="certificateCaTrustSSLLabel"></span>
+      </label>
+      <br>
+      <label id="certificateCaTrustEmailLabel">
+        <input id="certificateCaTrustEmailCheckbox" type="checkbox">
+        <span i18n-content="certificateCaTrustEmailLabel"></span>
+      </label>
+      <br>
+      <label id="certificateCaTrustObjSignLabel">
+        <input id="certificateCaTrustObjSignCheckbox" type="checkbox">
+        <span i18n-content="certificateCaTrustObjSignLabel"></span>
+      </label>
+    </p>
+  </div>
+  <div class="action-area">
+    <div class="button-strip">
+      <button id="certificateEditCaTrustCancelButton" type="reset"
+          i18n-content="cancel"></button>
+      <button id="certificateEditCaTrustOkButton" type="submit"
+          i18n-content="ok"></button>
+    </div>
+  </div>
+</div>
+
+    <div id="certificateImportErrorOverlay" class="page" hidden>
+  <h1 id="certificateImportErrorOverlayTitle"></h1>
+  <div class="content-area">
+    <div id="certificateImportErrorOverlayMessage"></div>
+    <ul id="certificateImportErrorOverlayCertErrors"></ul>
+  </div>
+  <div class="action-area">
+    <div class="button-strip">
+      <button id="certificateImportErrorOverlayOk" type="submit"
+          i18n-content="ok"></button>
+    </div>
+  </div>
+</div>
+</div>
+<div id="main-content">
+  <div id="navbar-container">
+     <h1 id="navbar-content-title" i18n-content="title"></h1>
+     <ul id="navbar" role="tablist">
+     </ul>
+  </div>
+  <div id="mainview">
+     <div id="managed-prefs-banner" hidden>
+       <span id="managed-prefs-icon"></span>
+       <span id="managed-prefs-text"></span>
+     </div>
+     <div id="subpage-backdrop" hidden></div>
+     <div id="mainview-content">
+       <div id="page-container">
+         <!-- Please keep the main pages in desired order of display.  This will
+              allow search results to display in the desired order. -->
+         <div id="searchPage" class="page" hidden>
+  <h1 i18n-content="searchPage"></h1>
+  <div id="searchPageNoMatches">
+    <p i18n-content="searchPageNoMatches"></p>
+    <p><span i18n-content="searchPageHelpLabel"></span>
+      <a target="_blank" i18n-content="searchPageHelpTitle"
+          i18n-values="href:searchPageHelpURL"></a>
+    </p>
+  </div>
+</div>
+
+         <div id="browserPage" class="page" hidden>
+  <h1 i18n-content="browserPage"></h1>
+  <div class="displaytable">
+    <section id="startupSection">
+      <h3 i18n-content="startupGroupName"></h3>
+      <div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="startup" value="0"
+                pref="session.restore_on_startup"
+                metric="Options_Startup_Homepage">
+            <span i18n-content="startupShowDefaultAndNewTab"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="startup" value="1"
+                pref="session.restore_on_startup"
+                metric="Options_Startup_LastSession">
+            <span i18n-content="startupShowLastSession"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input id="startupShowPagesButton" type="radio" name="startup"
+                pref="session.restore_on_startup"
+                value="4" metric="Options_Startup_Custom">
+            <span id="startupShowPagesLabel"
+                i18n-content="startupShowPages"></span>
+          </label>
+        </div>
+        <div class="suboption">
+          <div id="startupPageManagement" class="settings-list">
+            <list id="startupPagesList"></list>
+            <div>
+              <button id="startupUseCurrentButton"
+                  i18n-content="startupUseCurrent"></button>
+            </div>
+          </div>
+          <div id="startupPagesListDropmarker"></div>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h3 i18n-content="homepageGroupName"></h3>
+      <div>
+        <div class="radio">
+          <label>
+            <input id="homepageUseNTPButton" type="radio" name="homepage"
+                value="true" metric="Options_Homepage_IsNewTabPage">
+            <span i18n-content="homepageUseNewTab"></span>
+          </label>
+        </div>
+        <div id="customHomePageGroup">
+          <div class="radio">
+            <label>
+              <input id="homepageUseURLButton" type="radio" name="homepage"
+                  value="false" metric="Options_Homepage_IsNewTabPage">
+              <span i18n-content="homepageUseURL"></span>
+            </label>
+          </div>
+          <div>
+            <input id="homepageURL" class="weakrtl favicon-cell" type="url">
+          </div>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h3 i18n-content="toolbarGroupName"></h3>
+      <div>
+        <div class="checkbox">
+          <label>
+            <input id="toolbarShowHomeButton" pref="browser.show_home_button"
+                metric="Options_Homepage_HomeButton" type="checkbox">
+            <span i18n-content="toolbarShowHomeButton"></span>
+          </label>
+        </div>
+        <div class="checkbox">
+          <label>
+            <input id="toolbarShowBookmarksBar"
+                pref="bookmark_bar.show_on_all_tabs"
+                metric="Options_ShowBookmarksBar" type="checkbox">
+            <span i18n-content="toolbarShowBookmarksBar"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h3 i18n-content="defaultSearchGroupName"></h3>
+        <div id="defaultSearchEngineGroup">
+          <div>
+            <select id="defaultSearchEngine" class="weakrtl"></select>
+            <button id="defaultSearchManageEnginesButton"
+                i18n-content="defaultSearchManageEngines"></button>
+          </div>
+          <div id="instantOption" class="checkbox">
+            <label>
+              <!-- TODO(estade): metric? -->
+              <input id="instantFieldTrialCheckbox" type="checkbox"
+                  checked="checked" hidden>
+              <input id="instantEnabledCheckbox" type="checkbox"
+                  pref="instant.enabled">
+              <span i18n-content="instantName"></span>
+            </label>
+          </div>
+          <div class="suboption informational-text">
+            <span i18n-content="instantWarningText"></span>
+            <a target="_blank" i18n-values="href:instantLearnMoreLink"
+               i18n-content="learnMore"></a>
+          </div>
+        </div>
+    </section>
+<section>
+      <h3 i18n-content="defaultBrowserGroupName"></h3>
+      <div>
+        <button id="defaultBrowserUseAsDefaultButton"
+            i18n-content="defaultBrowserUseAsDefault"></button>
+        <div id="defaultBrowserState"
+            i18n-content="defaultBrowserUnknown"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+         <div id="personal-page" class="page" hidden>
+  <h1 i18n-content="personalPage"></h1>
+  <div class="displaytable">
+
+    <section id="sync-section">
+      <h3 i18n-content="syncSection"></h3>
+      <div>
+        <div id="sync-overview" hidden>
+          <div i18n-content="syncOverview"></div>
+          <div i18n-content="syncFurtherOverview"></div>
+        </div>
+        <div id="sync-status" hidden>
+          <span id="sync-status-text"></span>
+          <button id="sync-action-link" class="link-button"></button>
+        </div>
+        <div id="sync-buttons">
+          <button id="start-stop-sync" hidden></button>
+          <button id="customize-sync" i18n-content="customizeSync" hidden>
+          </button>
+        </div>
+      </div>
+    </section>
+    <section id="profiles-section" hidden>
+      <h3 i18n-content="profiles"></h3>
+      <div>
+        <list id="profiles-list" class="settings-list" hidden></list>
+        <button id="profiles-create" i18n-content="profilesCreate"></button>
+        <button id="profiles-manage" i18n-content="profilesManage" disabled>
+        </button>
+        <button id="profiles-delete" i18n-content="profilesDelete" disabled>
+        </button>
+      </div>
+    </section>
+    <section>
+      <h3 i18n-content="passwords"></h3>
+      <div>
+        <div class="radio">
+          <label>
+            <input id="passwords-offersave" type="radio" name="passwords_radio"
+                value="true" pref="profile.password_manager_enabled"
+                metric="Options_PasswordManager">
+            <span i18n-content="passwordsAskToSave"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input id="passwords-neversave" type="radio" name="passwords_radio"
+                value="false" pref="profile.password_manager_enabled"
+                metric="Options_PasswordManager">
+            <span i18n-content="passwordsNeverSave"></span>
+          </label>
+        </div>
+        <div><button id="manage-passwords" i18n-content="manage_passwords"
+            pref="profile.password_manager_enabled"></button></div>
+        <!-- This makes the managed-banner appear when the "pref" is
+        configured by the IT administrator. -->
+        <input name="password_allow_show_hidden" type="text"
+            pref="profile.password_manager_allow_show_passwords" hidden>
+        <div class="checkbox" id="enable-auto-login-checkbox" hidden>
+          <label>
+            <input id="enable-auto-login" pref="autologin.enabled"
+                metric="Options_Autologin" type="checkbox">
+            <span i18n-content="autologinEnabled"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h3 i18n-content="autofill"></h3>
+      <div>
+        <div class="checkbox">
+          <label>
+            <input id="autofill-enabled" pref="autofill.enabled"
+                metric="Options_FormAutofill" type="checkbox">
+            <span i18n-content="autofillEnabled"></span>
+          </label>
+        </div>
+        <button id="autofill-settings" pref="autofill.enabled"
+            i18n-content="manageAutofillSettings"></button>
+      </div>
+    </section>
+<section>
+      <h3 i18n-content="browsingData"></h3>
+      <div>
+        <button id="import-data" i18n-content="importData"></button>
+      </div>
+    </section>
+
+<section>
+      <h3 i18n-content="themes"></h3>
+      <div>
+        <div>
+          <button id="themes-reset" i18n-content="themesReset"></button>
+        </div>
+        <div id="themes-gallery-div">
+          <a id="themes-gallery" i18n-content="themesGallery"
+              i18n-values="href:themesGalleryURL" target="_blank"></a>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+
+         <div id="advancedPage" class="page" hidden>
+  <h1 i18n-content="advancedPage"></h1>
+  <div class="displaytable">
+    <section>
+      <h3 i18n-content="advancedSectionTitlePrivacy"></h3>
+      <div>
+        <div class="section-group">
+          <button id="privacyContentSettingsButton"
+              i18n-content="privacyContentSettingsButton"></button>
+          <button id="privacyClearDataButton"
+              i18n-content="privacyClearDataButton"></button>
+        </div>
+        <div i18n-content="improveBrowsingExperience"
+            class="informational-text">
+        </div>
+        <div>
+          <span i18n-content="disableWebServices"
+              class="informational-text">
+          </span>
+          <a target="_blank" i18n-content="learnMore"
+              i18n-values="href:privacyLearnMoreURL"></a>
+        </div>
+        <div class="checkbox">
+          <label>
+            <input id="alternateErrorPagesEnabled"
+                pref="alternate_error_pages.enabled"
+                metric="Options_LinkDoctorCheckbox" type="checkbox">
+            <span i18n-content="linkDoctorPref"></span>
+          </label>
+        </div>
+        <div class="checkbox">
+          <label>
+            <input id="searchSuggestEnabled" pref="search.suggest_enabled"
+                metric="Options_UseSuggestCheckbox" type="checkbox">
+            <span i18n-content="suggestPref"></span>
+          </label>
+        </div>
+        <div class="checkbox">
+          <label>
+            <input id="dnsPrefetchingEnabled" pref="dns_prefetching.enabled"
+                metric="Options_DnsPrefetchCheckbox" type="checkbox">
+            <span i18n-content="networkPredictionEnabledDescription"></span>
+          </label>
+        </div>
+        <div class="checkbox">
+          <label>
+            <input id="safeBrowsingEnabled" pref="safebrowsing.enabled"
+                metric="Options_SafeBrowsingCheckbox" type="checkbox">
+            <span i18n-content="safeBrowsingEnableProtection"></span>
+          </label>
+        </div>
+
+<div id="metricsReportingSetting" class="checkbox">
+          <label>
+            <input id="metricsReportingEnabled" type="checkbox">
+            <span i18n-content="enableLogging"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h3 i18n-content="advancedSectionTitleContent"></h3>
+      <div>
+        <div class="section-group">
+          <label class="web-content-select-label">
+            <span i18n-content="defaultFontSizeLabel"></span>
+            <select id="defaultFontSize">
+              <option value="9" i18n-content="fontSizeLabelVerySmall">
+              </option>
+              <option value="12" i18n-content="fontSizeLabelSmall"></option>
+              <option value="16" i18n-content="fontSizeLabelMedium"></option>
+              <option value="20" i18n-content="fontSizeLabelLarge"></option>
+              <option value="24" i18n-content="fontSizeLabelVeryLarge">
+              </option>
+            </select>
+          </label>
+          <button id="fontSettingsCustomizeFontsButton"
+              i18n-content="fontSettingsCustomizeFontsButton"></button>
+        </div>
+        <div class="section-group">
+          <label class="web-content-select-label">
+            <span i18n-content="defaultZoomLevelLabel"></span>
+            <select id="defaultZoomLevel" pref="profile.default_zoom_level"
+                    dataType="double" metric="Options_ChangeDefaultZoomLevel">
+              <option value="-3">57%</option>
+              <option value="-2">69%</option>
+              <option value="-1">83%</option>
+              <option value="0">100%</option>
+              <option value="1">120%</option>
+              <option value="2">144%</option>
+              <option value="3">172%</option>
+              <option value="4">207%</option>
+              <option value="5">248%</option>
+              <option value="6">298%</option>
+            </select>
+          </label>
+        </div>
+<div class="section-group">
+<button id="language-button"
+              i18n-content="languageAndSpellCheckSettingsButton"></button>
+</div>
+<div class="checkbox">
+          <label>
+            <input id="tabsToLinksPref" pref="webkit.webprefs.tabs_to_links"
+                metric="Options_TabsToLinks" type="checkbox">
+            <span i18n-content="tabsToLinksPref"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+<section>
+      <h3 i18n-content="advancedSectionTitleNetwork"></h3>
+      <div>
+        <div id="proxiesLabel"></div>
+        <div class="section-group">
+          <button id="proxiesConfigureButton"
+              i18n-content="proxiesConfigureButton"></button>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h3 i18n-content="advancedSectionTitleTranslate"></h3>
+      <div class="checkbox">
+        <label>
+          <input id="enableTranslate" pref="translate.enabled"
+              metric="Options_Translate" type="checkbox">
+          <span i18n-content="translateEnableTranslate"></span>
+        </label>
+      </div>
+    </section>
+<section>
+      <h3 i18n-content="downloadLocationGroupName"></h3>
+      <div>
+        <div id="download-location-group">
+          <label>
+            <span i18n-content="downloadLocationBrowseTitle"></span>
+            <input id="downloadLocationPath" class="weakrtl" type="text" size="36" disabled>
+          </label>
+          <button id="downloadLocationChangeButton"
+              i18n-content="downloadLocationChangeButton"></button>
+        </div>
+        <div class="checkbox">
+          <label>
+            <input id="promptForDownload" metric="Options_AskForSaveLocation"
+                type="checkbox">
+            <span id="promptForDownloadLabel"
+                i18n-content="downloadLocationAskForSaveLocation"></span>
+          </label>
+        </div>
+        <div id="auto-open-file-types-label"
+            i18n-content="autoOpenFileTypesInfo"></div>
+        <div class="section-group">
+          <button id="autoOpenFileTypesResetToDefault"
+              i18n-content="autoOpenFileTypesResetToDefault"></button>
+        </div>
+      </div>
+    </section>
+  <section>
+      <h3 i18n-content="advancedSectionTitleSecurity"></h3>
+      <div>
+        <div><button id="certificatesManageButton"
+            i18n-content="certificatesManageButton"></button></div>
+        <div class="checkbox">
+          <label>
+            <input id="sslCheckRevocation" type="checkbox">
+            <span i18n-content="sslCheckRevocation"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+<section id="cloud-print-proxy-section">
+      <h3 i18n-content="advancedSectionTitleCloudPrint"></h3>
+      <div>
+        <div id="cloudPrintProxyLabel"
+             i18n-content="cloudPrintProxyDisabledLabel"></div>
+        <div class="section-group">
+          <button id="cloudPrintProxySetupButton"
+                  i18n-content="cloudPrintProxyDisabledButton"></button>
+          <button id="cloudPrintProxyManageButton"
+                  i18n-content="cloudPrintProxyEnabledManageButton"></button>
+        </div>
+      </div>
+    </section>
+
+
+  </div>
+</div>
+
+         <div id="extension-settings" class="page" hidden>
+  <h1 i18n-content="extensionSettingsTitle"></h1>
+  <div id="dev-toggle">
+    <input id="toggle-dev-on" type="checkbox" value="off"></input>
+    <label for="toggle-dev-on" i18n-content="extensionSettingsDeveloperMode" />
+  </div>
+  <div class="displaytable">
+    <div id="dev" class="dev-closed">
+      <table id="dev-table" width="100%">
+        <tr>
+          <td>
+            <button id="load-unpacked"
+                    i18n-content="extensionSettingsLoadUnpackedButton"></button>
+            <button id="pack-extension"
+                    i18n-content="extensionSettingsPackButton"></button>
+          </td>
+          <td align="right">
+            <button id="update-extensions-now"
+                    i18n-content="extensionSettingsUpdateButton"></button>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <section class="extension-settings-content">
+      <div class="extension-settings">
+        <list id="extension-settings-list"></list>
+      </div>
+    </section>
+  </div>
+  <section>
+    <div><strong id="no-extensions"
+                 i18n-content="extensionSettingsNoExtensions"
+                 hidden="true"></strong></div>
+    <div id="suggest-gallery" hidden="true"></div>
+    <div id="get-more-extensions-container" hidden="true">
+      <!-- <image src="chrome://theme/IDR_WEBSTORE_ICON_32"> -->
+      <div id="get-more-extensions"></div>
+    </div>
+  </section>
+</div>
+
+       </div>
+       <div id="subpage-sheet-container-1"
+           class="subpage-sheet-container transparent" hidden>
+         <div id="subpage-sheet-1" class="subpage-sheet">
+           <button class="raw-button close-subpage"></button>
+           <div class="subpage-sheet-contents">
+
+             <div id="certificateManagerPage" class="page" hidden>
+  <h1 i18n-content="certificateManagerPage"></h1>
+  <!-- Navigation tabs -->
+  <div class="subpages-nav-tabs">
+    <span id="personal-certs-nav-tab" class="tab"
+        tab-contents="personalCertsTab">
+      <span class="tab-label"
+          i18n-content="personalCertsTabTitle"></span>
+      <span class="active-tab-label"
+          i18n-content="personalCertsTabTitle"></span>
+    </span>
+    <span id="server-certs-nav-tab" class="tab"
+        tab-contents="serverCertsTab">
+      <span class="tab-label"
+          i18n-content="serverCertsTabTitle"></span>
+      <span class="active-tab-label" i18n-content="serverCertsTabTitle"></span>
+    </span>
+    <span id="ca-certs-nav-tab" class="tab"
+        tab-contents="caCertsTab">
+      <span class="tab-label" i18n-content="caCertsTabTitle"></span>
+      <span class="active-tab-label" i18n-content="caCertsTabTitle"></span>
+    </span>
+    <span id="other-certs-nav-tab" class="tab"
+        tab-contents="otherCertsTab">
+      <span class="tab-label"
+          i18n-content="unknownCertsTabTitle"></span>
+      <span class="active-tab-label" i18n-content="unknownCertsTabTitle"></span>
+    </span>
+  </div>
+  <!-- TODO(mattm): get rid of use of tables? -->
+  <!-- Tab contents -->
+  <div id="personalCertsTab" class="subpages-tab-contents">
+    <table class="certificate-tree-table">
+      <tr><td>
+        <span i18n-content="personalCertsTabDescription"></span>
+      </td></tr>
+      <tr><td>
+        <tree id="personalCertsTab-tree" class="certificate-tree"></tree>
+      </td></tr>
+      <tr><td>
+        <button id="personalCertsTab-view" i18n-content="view_certificate"
+          disabled></button>
+        <!-- TODO(mattm):
+        <button id="personalCertsTab-backup-all"
+          i18n-content="export_all_certificates"
+          disabled></button>
+        -->
+        <button id="personalCertsTab-import" i18n-content="import_certificate"
+          ></button>
+
+        <button id="personalCertsTab-backup" i18n-content="export_certificate"
+          disabled></button>
+        <button id="personalCertsTab-delete" i18n-content="delete_certificate"
+          disabled></button>
+      </td></tr>
+    </table>
+  </div>
+  <div id="serverCertsTab" class="subpages-tab-contents">
+    <table class="certificate-tree-table">
+      <tr><td>
+        <span i18n-content="serverCertsTabDescription"></span>
+      </td></tr>
+      <tr><td>
+        <tree id="serverCertsTab-tree" class="certificate-tree"></tree>
+      </td></tr>
+      <tr><td>
+        <button id="serverCertsTab-view" i18n-content="view_certificate"
+          disabled></button>
+        <!-- TODO(mattm):
+        <button id="serverCertsTab-edit" i18n-content="edit_certificate"
+          disabled></button>
+        -->
+        <button id="serverCertsTab-import" i18n-content="import_certificate"
+          ></button>
+        <button id="serverCertsTab-export" i18n-content="export_certificate"
+          disabled></button>
+        <button id="serverCertsTab-delete" i18n-content="delete_certificate"
+          disabled></button>
+      </td></tr>
+    </table>
+  </div>
+  <div id="caCertsTab" class="subpages-tab-contents">
+    <table class="certificate-tree-table">
+      <tr><td>
+        <span i18n-content="caCertsTabDescription"></span>
+      </td></tr>
+      <tr><td>
+        <tree id="caCertsTab-tree" class="certificate-tree"></tree>
+      </td></tr>
+      <tr><td>
+        <button id="caCertsTab-view" i18n-content="view_certificate"
+          disabled></button>
+        <button id="caCertsTab-edit" i18n-content="edit_certificate"
+          disabled></button>
+        <button id="caCertsTab-import" i18n-content="import_certificate"
+          ></button>
+        <button id="caCertsTab-export" i18n-content="export_certificate"
+          disabled></button>
+        <button id="caCertsTab-delete" i18n-content="delete_certificate"
+          disabled></button>
+      </td></tr>
+    </table>
+  </div>
+  <div id="otherCertsTab" class="subpages-tab-contents">
+    <table class="certificate-tree-table">
+      <tr><td>
+        <span i18n-content="unknownCertsTabDescription"></span>
+      </td></tr>
+      <tr><td>
+        <tree id="otherCertsTab-tree" class="certificate-tree"></tree>
+      </td></tr>
+      <tr><td>
+        <button id="otherCertsTab-view" i18n-content="view_certificate"
+          disabled></button>
+        <button id="otherCertsTab-export" i18n-content="export_certificate"
+          disabled></button>
+        <button id="otherCertsTab-delete" i18n-content="delete_certificate"
+          disabled></button>
+      </td></tr>
+    </table>
+  </div>
+</div>
+             <div id="autofill-options" class="page" hidden>
+  <h1 i18n-content="autofillOptionsPage"></h1>
+<div class="checkbox">
+    <label>
+      <input pref="autofill.auxiliary_profiles_enabled" type="checkbox"
+           metric="Options_AutofillAuxiliaryProfiles">
+      <span i18n-content="auxiliaryProfilesEnabled"></span>
+    </label>
+  </div>
+  <h3 i18n-content="autofillAddresses"></h3>
+  <div class="settings-list">
+    <list id="address-list"></list>
+    <div>
+      <button id="autofill-add-address" i18n-content="autofillAddAddress">
+      </button>
+    </div>
+  </div>
+  <h3 i18n-content="autofillCreditCards"></h3>
+  <div class="settings-list">
+    <list id="creditcard-list"></list>
+    <div>
+      <button id="autofill-add-creditcard"
+          i18n-content="autofillAddCreditCard"></button>
+    </div>
+  </div>
+  <div>
+
+<a href="https://www.google.com/support/chrome/bin/answer.py?answer=142893"
+        target="_blank" i18n-content="helpButton"></a>
+  </div>
+</div>
+
+             <div id="content-settings-page" class="page" hidden>
+  <h1 i18n-content="contentSettingsPage"></h1>
+  <div class="displaytable">
+    <!-- Cookie filter tab contents -->
+    <section>
+      <h3 i18n-content="cookies_tab_label"></h3>
+      <div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="cookies" value="allow">
+            <span i18n-content="cookies_allow"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="cookies" value="session">
+            <span i18n-content="cookies_session_only"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="cookies" value="block">
+            <span i18n-content="cookies_block"></span>
+          </label>
+        </div>
+        <div class="checkbox">
+          <label>
+            <input pref="profile.block_third_party_cookies" type="checkbox">
+            <span i18n-content="cookies_block_3rd_party"></span>
+          </label>
+        </div>
+        <div class="checkbox">
+          <label>
+            <input id="clear-cookies-on-exit"
+                pref="profile.clear_site_data_on_exit" type="checkbox">
+            <span i18n-content="cookies_lso_clear_when_close"
+                class="clear-plugin-lso-data-enabled"></span>
+            <span i18n-content="cookies_clear_when_close"
+                class="clear-plugin-lso-data-disabled"></span>
+          </label>
+        </div>
+        <button class="exceptions-list-button" contentType="cookies"
+            i18n-content="manage_exceptions"></button>
+        <button id="show-cookies-button"
+            i18n-content="cookies_show_cookies"></button>
+     </div>
+    </section>
+    <!-- Image filter -->
+    <section>
+      <h3 i18n-content="images_tab_label"></h3>
+      <div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="images" value="allow">
+            <span i18n-content="images_allow"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="images" value="block">
+            <span i18n-content="images_block"></span>
+          </label>
+        </div>
+        <button class="exceptions-list-button" contentType="images"
+            i18n-content="manage_exceptions"></button>
+      </div>
+    </section>
+    <!-- JavaScript filter -->
+    <section>
+      <h3 i18n-content="javascript_tab_label"></h3>
+      <div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="javascript" value="allow">
+            <span i18n-content="javascript_allow"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="javascript" value="block">
+            <span i18n-content="javascript_block"></span>
+          </label>
+        </div>
+        <button class="exceptions-list-button" contentType="javascript"
+            i18n-content="manage_exceptions"></button>
+      </div>
+    </section>
+    <!-- Handlers settings -->
+    <section id="handlers-section">
+        <h3 i18n-content="handlers_tab_label"></h3>
+        <div>
+          <div class="radio">
+            <label>
+              <input type="radio" name="handlers" value="allow"
+                  class="handler-radio">
+              <span i18n-content="handlers_allow"></span>
+            </label>
+          </div>
+          <div class="radio">
+            <label>
+              <input type="radio" name="handlers" value="block"
+                  class="handler-radio">
+              <span i18n-content="handlers_block"></span>
+            </label>
+          </div>
+          <button id="manage-handlers-button" contentType="handlers"
+              i18n-content="manage_handlers"></button>
+        </div>
+      </section>
+    <!-- Plug-ins filter -->
+    <section>
+      <h3 i18n-content="plugins_tab_label"></h3>
+      <div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="plugins" value="allow">
+            <span i18n-content="plugins_allow"></span>
+          </label>
+        </div>
+        <div id="click_to_play" class="radio">
+          <label>
+            <input type="radio" name="plugins" value="ask">
+            <span i18n-content="plugins_ask"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="plugins" value="block">
+            <span i18n-content="plugins_block"></span>
+          </label>
+        </div>
+        <button class="exceptions-list-button" contentType="plugins"
+            i18n-content="manage_exceptions"></button>
+        <div id="disable-plugins-container">
+          <a href="about:plugins" i18n-content="disableIndividualPlugins"
+              target="_blank"></a>
+        </div>
+      </div>
+    </section>
+    <!-- Pop-ups filter -->
+    <section>
+      <h3 i18n-content="popups_tab_label" class="content-settings-header"></h3>
+      <div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="popups" value="allow">
+            <span i18n-content="popups_allow"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="popups" value="block">
+            <span i18n-content="popups_block"></span>
+          </label>
+        </div>
+        <button class="exceptions-list-button" contentType="popups"
+            i18n-content="manage_exceptions"></button>
+      </div>
+    </section>
+    <!-- Location filter -->
+    <section>
+      <h3 i18n-content="location_tab_label"></h3>
+      <div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="location" value="allow">
+            <span i18n-content="location_allow"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="location" value="ask">
+            <span i18n-content="location_ask"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="location" value="block">
+            <span i18n-content="location_block"></span>
+          </label>
+        </div>
+        <button class="exceptions-list-button" contentType="location"
+            i18n-content="manage_exceptions"></button>
+      </div>
+    </section>
+    <!-- Notifications filter tab contents -->
+    <section>
+      <h3 i18n-content="notifications_tab_label"></h3>
+      <div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="notifications" value="allow">
+            <span i18n-content="notifications_allow"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="notifications" value="ask">
+            <span i18n-content="notifications_ask"></span>
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="notifications" value="block">
+            <span i18n-content="notifications_block"></span>
+          </label>
+        </div>
+        <button class="exceptions-list-button" contentType="notifications"
+            i18n-content="manage_exceptions"></button>
+      </div>
+    </section>
+    <!-- Intent registration filter tab contents -->
+
+  </div>
+</div>
+
+             <div id="font-settings" class="page" hidden>
+  <h1 i18n-content="fontSettingsPage"></h1>
+  <section>
+    <h3 i18n-content="fontSettingsStandard"></h3>
+    <div class="font-input-div">
+      <div>
+        <select id="standard-font-family" class="font-input" dataType="string"
+            pref="webkit.webprefs.standard_font_family"
+            metric="Options_ChangeStandardFont"></select>
+      </div>
+      <div>
+        <input id="standard-font-size" type="range" min="0" max="24"
+            pref="webkit.webprefs.default_font_size">
+        <div>
+          <span i18n-content="fontSettingsSizeTiny"></span>
+          <span i18n-content="fontSettingsSizeHuge" class="font-settings-huge">
+          </span>
+        </div>
+      </div>
+    </div>
+    <div id="standard-font-sample" class="font-sample-div"></div>
+  </section>
+  <section>
+    <h3 i18n-content="fontSettingsSerif"></h3>
+    <div class="font-input-div">
+      <div>
+        <select id="serif-font-family" class="font-input" dataType="string"
+            pref="webkit.webprefs.serif_font_family"
+            metric="Options_ChangeSerifFont"></select>
+      </div>
+    </div>
+    <div id="serif-font-sample" class="font-sample-div"></div>
+  </section>
+  <section>
+    <h3 i18n-content="fontSettingsSansSerif"></h3>
+    <div class="font-input-div">
+      <div>
+        <select id="sans-serif-font-family" class="font-input" dataType="string"
+            pref="webkit.webprefs.sansserif_font_family"
+            metric="Options_ChangeSansSerifFont"></select>
+      </div>
+    </div>
+    <div id="sans-serif-font-sample" class="font-sample-div"></div>
+  </section>
+  <section>
+    <h3 i18n-content="fontSettingsFixedWidth"></h3>
+    <div class="font-input-div">
+      <div>
+        <select id="fixed-font-family" class="font-input" dataType="string"
+            pref="webkit.webprefs.fixed_font_family"
+            metric="Options_ChangeFixedFont"></select>
+      </div>
+    </div>
+    <div id="fixed-font-sample" class="font-sample-div"></div>
+  </section>
+  <section>
+    <h3 i18n-content="fontSettingsMinimumSize"></h3>
+    <div class="font-input-div">
+      <div>
+        <input id="minimum-font-size" type="range" min="0" max="15"
+            pref="webkit.webprefs.minimum_font_size">
+        <div>
+          <span i18n-content="fontSettingsSizeTiny"></span>
+          <span i18n-content="fontSettingsSizeHuge" class="font-settings-huge">
+          </span>
+        </div>
+      </div>
+    </div>
+    <div id="minimum-font-sample" class="font-sample-div"></div>
+  </section>
+  <section>
+    <h3 i18n-content="fontSettingsEncoding"></h3>
+    <div class="font-input-div">
+      <div>
+        <select id="font-encoding" dataType="string"
+            pref="intl.charset_default"
+            metric="Options_ChangeFontEncoding"></select>
+      </div>
+    </div>
+  </section>
+</div>
+
+             <div id="languagePage" class="page" hidden>
+  <h1 i18n-content="languagePage"></h1>
+  <div id="notification">
+    <span>&nbsp;</span>
+    <span class="link"><span class="link-color"></span></span>
+  </div>
+  <div class="language-options-header">
+    <div i18n-content="add_language_instructions"></div>
+
+  </div>
+  <div class="language-options">
+    <div class="language-options-left">
+      <h3 i18n-content="languages"></h3>
+      <list id="language-options-list"></list>
+      <div class="language-options-lower-left">
+        <button id="language-options-add-button"
+                i18n-content="add_button"></button>
+      </div>
+      <div id="language-options-list-dropmarker"></div>
+    </div>
+    <div class="language-options-right">
+      <h3 id="language-options-language-name"></h3>
+
+      <div class="language-options-contents">
+        <button id="language-options-spell-check-language-button"></button>
+      </div>
+      <div id="language-options-ui-notification-bar"
+           class="language-options-notification">
+        <div i18n-content="restart_required"></div>
+
+      </div>
+
+    </div>
+  </div>
+  <div class="language-options-footer">
+
+<div id="spell-check-option" class="checkbox">
+      <label>
+        <input id="enable-spell-check" pref="browser.enable_spellchecking"
+            metric="Options_SpellCheck" type="checkbox">
+        <span i18n-content="enable_spell_check"></span>
+      </label>
+    </div>
+    <div id="auto-spell-correction-option" class="checkbox" hidden>
+      <label>
+        <input id="enable-auto-spell-correction"
+            pref="browser.enable_autospellcorrect"
+            metric="Options_AutoSpellCorrection" type="checkbox">
+        <span i18n-content="enable_auto_spell_correction"></span>
+      </label>
+    </div>
+  </div>
+</div>
+
+             <div id="password-manager" class="page" hidden>
+  <h1 i18n-content="passwordsPage"></h1>
+  <div id="password-list-headers">
+    <div id="passwords-title">
+      <h3 i18n-content="savedPasswordsTitle"></h3>
+    </div>
+    <div id="password-search-column">
+      <input id="password-search-box" type="search"
+          i18n-values="placeholder:passwordSearchPlaceholder" incremental
+          results="10" autosave="org.chromium.options.passwords.search">
+    </div>
+  </div>
+  <list id="saved-passwords-list" class="settings-list"></list>
+  <div id="saved-passwords-list-empty-placeholder"
+       class="settings-list-empty" hidden>
+    <span i18n-content="passwordsNoPasswordsDescription"></span>
+    <a target="_blank" i18n-content="learnMore"
+       i18n-values="href:passwordManagerLearnMoreURL"></a>
+  </div>
+  <h3 i18n-content="passwordExceptionsTitle"></h3>
+  <list id="password-exceptions-list" class="settings-list"></list>
+  <div id="password-exceptions-list-empty-placeholder" hidden
+       class="settings-list-empty">
+    <span i18n-content="passwordsNoExceptionsDescription"></span>
+    <a target="_blank" i18n-content="learnMore"
+       i18n-values="href:passwordManagerLearnMoreURL"></a>
+  </div>
+</div>
+
+             <div id="search-engine-manager-page" class="page" hidden>
+  <h1 i18n-content="searchEngineManagerPage"></h1>
+  <h3 i18n-content="defaultSearchEngineListTitle"></h3>
+  <list id="default-search-engine-list"
+      class="search-engine-list settings-list"></list>
+  <h3 i18n-content="otherSearchEngineListTitle"></h3>
+  <list id="other-search-engine-list"
+      class="search-engine-list settings-list"></list>
+  <div id="extension-keyword-div" hidden>
+    <h3 id="extension-keyword-list-title"
+        i18n-content="extensionKeywordsListTitle"></h3>
+    <list id="extension-keyword-list"
+        class="search-engine-list settings-list"></list>
+    <div id="manage-extension-link">
+      <!-- <a href="chrome://settings/extensionSettings/" -->
+      <!--    i18n-content="manageExtensionsLinkText"></a> -->
+    </div>
+  </div>
+</div>
+
+           </div>
+         </div>
+       </div>
+       <div id="subpage-sheet-container-2"
+           class="subpage-sheet-container transparent" hidden>
+         <div id="subpage-sheet-2" class="subpage-sheet">
+           <button class="raw-button close-subpage"></button>
+           <div class="subpage-sheet-contents">
+
+
+             <div id="cookiesViewPage" class="page" hidden>
+  <h1 i18n-content="cookiesViewPage"></h1>
+  <div id="cookies-column-headers">
+    <div id="cookies-site-column"><h3 i18n-content="cookie_domain"></h3></div>
+    <div id="cookies-data-column"><h3 i18n-content="cookie_local_data"></h3></div>
+    <div id="remove-all-cookies-search-column">
+      <button id="remove-all-cookies-button"
+          i18n-content="remove_all_cookie"></button>
+      <input id="cookies-search-box" type="search"
+          i18n-values="placeholder:search_cookies" incremental
+          results="10" autosave="org.chromium.options.cookies.search">
+    </div>
+  </div>
+  <list id="cookies-list"></list>
+</div>
+
+             <div id="handler-options" class="page" hidden>
+  <h1 i18n-content="handlersPage"></h1>
+  <h3 i18n-content="handlers_active_heading"></h3>
+  <div class="handlers-column-headers">
+    <div class="handlers-type-column">
+      <div i18n-content="handlers_type_column_header"></div>
+    </div>
+    <div class="handlers-site-column">
+      <div i18n-content="handlers_site_column_header"></div>
+    </div>
+    <div class="handlers-remove-column"></div>
+  </div>
+  <list id="handlers-list"></list>
+
+  <div id="ignored-handlers-section">
+    <h3 i18n-content="handlers_ignored_heading"></h3>
+    <div class="handlers-column-headers">
+      <div class="handlers-type-column">
+        <h3 i18n-content="handlers_type_column_header"></h3>
+      </div>
+      <div class="handlers-site-column">
+        <h3 i18n-content="handlers_site_column_header"></h3>
+      </div>
+      <div class="handlers-remove-column"></div>
+    </div>
+    <list id="ignored-handlers-list"></list>
+  </div>
+</div>
+
+             <div id="content-settings-exceptions-area" class="page" hidden>
+  <h1></h1>
+  <div id="exception-column-headers">
+    <div id="exception-pattern-column" i18n-content="exceptionPatternHeader">
+    </div>
+    <div id="exception-behavior-column" i18n-content="exceptionBehaviorHeader">
+    </div>
+  </div>
+  <div contentType="cookies">
+    <list mode="normal"></list>
+    <div>
+      <span class="otr-explanation"
+            i18n-content="otr_exceptions_explanation"></span>
+      <list mode="otr"></list>
+    </div>
+    <div class="flash-plugin-area">
+      <a i18n-values="href:flash_storage_url"
+         i18n-content="flash_storage_settings" target="_blank"></a>
+    </div>
+  </div>
+  <div contentType="images">
+    <list mode="normal"></list>
+    <div>
+      <span class="otr-explanation"
+            i18n-content="otr_exceptions_explanation"></span>
+      <list mode="otr"></list>
+    </div>
+  </div>
+  <div contentType="javascript">
+    <list mode="normal"></list>
+    <div>
+      <span class="otr-explanation"
+            i18n-content="otr_exceptions_explanation"></span>
+      <list mode="otr"></list>
+    </div>
+  </div>
+  <div contentType="plugins">
+    <list mode="normal"></list>
+    <div>
+      <span class="otr-explanation"
+            i18n-content="otr_exceptions_explanation"></span>
+      <list mode="otr"></list>
+    </div>
+  </div>
+  <div contentType="popups">
+    <list mode="normal"></list>
+    <div>
+      <span class="otr-explanation"
+            i18n-content="otr_exceptions_explanation"></span>
+      <list mode="otr"></list>
+    </div>
+  </div>
+  <div contentType="location">
+    <list mode="normal"></list>
+  </div>
+  <div contentType="notifications">
+    <list mode="normal"></list>
+  </div>
+  <div contentType="intents">
+    <list mode="normal"></list>
+  </div>
+</div>
+
+           </div>
+         </div>
+       </div>
+     </div>
+  </div>
+</div>

@@ -6,7 +6,6 @@ import cPickle
 import os
 import logging
 import sqlite3
-from util import enum
 import watchdog.events
 from watchdog.events import EVENT_TYPE_CREATED, EVENT_TYPE_MODIFIED, \
     EVENT_TYPE_DELETED, EVENT_TYPE_MOVED, FileMovedEvent, FileDeletedEvent, \
@@ -20,7 +19,7 @@ STATUS_FAILED = 'failed'
 STATUS_COMPLETED = 'completed'
 
 class FileChangeStatus(object):
-  def __init__(self, timestamp, event, state=STATUS_PREPARE):
+  def __init__(self, timestamp, event, state = STATUS_PREPARE):
     assert isinstance(timestamp, float)
     self.timestamp = timestamp
     self.state = state
@@ -50,7 +49,7 @@ def adapt_file_change_status(file_change_status):
 
 
 def convert_file_change_status(string):
-  str_timestamp, str_state, str_event_type,\
+  str_timestamp, str_state, str_event_type, \
       str_src_path, str_dest_path = string.split(';')
   event = None
   if str_event_type == EVENT_TYPE_MOVED:

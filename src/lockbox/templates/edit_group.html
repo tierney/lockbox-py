@@ -1,0 +1,11 @@
+$def with (group_name, form, message)
+
+<h1 class>Which users should be apart of this group?</h1>
+
+$if message:
+  <b>$message</b>
+<h2>Select "$group_name" group members:</h2>
+<form action="" method="post">
+$:form.render()
+</form>
+

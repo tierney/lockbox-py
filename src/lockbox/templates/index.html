@@ -1,0 +1,37 @@
+$def with (new_group_form, groups)
+
+<h1>Groups</h1>
+
+<div class="displaytable">
+<section>
+<h3>Groups you can modify</h3>
+	<div>
+			$for group in groups:
+			  <a href="/edit_group/$group.id">$group.name</a><br />
+		</ul>
+	</div>
+</section>
+<section>
+	<h3>New Group</h3>
+	<div>
+		Click here to create a new group (j/k).
+	</div>
+</section>
+</div>
+
+<div id="subpage-sheet-container-1" class="subpage-sheet-container">
+	<div id="subpage-sheet-1" class="subpage-sheet">
+		<button class="raw-button close-subpage"></button>
+		<div class="subpage-sheet-contents">
+			<h1>Create a New Group</h1>
+			<div class="displaytable">
+				<section>
+					<h3>New group name:</h3>
+					<div>
+						$:new_group_form.render()
+					</div>
+				</section>
+			</div>
+		</div>
+	</div>
+</div>

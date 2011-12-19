@@ -40,6 +40,7 @@ class ConfigHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     d = expanduser(q['path'][0])
     children = []
     for f in sorted(os.listdir(d)):
+      # Include directories but not '.' directories.
       if isdir(join(d, f)) and not f.startswith('.'):
         children.append(dict(data = f, attr = {"path" : join(d, f)},
                              state = "closed", children = []))

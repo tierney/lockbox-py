@@ -1,0 +1,10 @@
+$def with (users)
+
+<h1>Lockbox Users</h1>
+
+<ul>
+	$for user in users:
+	<li>
+		<a href="/edit_user/$user.id">$user.name</a>
+	</li>
+</ul>

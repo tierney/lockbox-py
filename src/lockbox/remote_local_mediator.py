@@ -173,12 +173,7 @@ class RemoteLocalMediator(threading.Thread):
           time.sleep(1)
           continue
 
-        rowid = result[0]
-        timestamp = result[1]
-        state = result[2]
-        event_type = result[3]
-        src_path = result[4]
-        dest_path = result[5]
+        [rowid, timestamp, state, event_type, src_path, dest_path] = result
         logging.info('selected row: (%(rowid)d, %(timestamp)f, '
                      '%(state)s, %(event_type)s, %(src_path)s, '
                      '%(dest_path)s).' % locals())
